@@ -1,0 +1,661 @@
+
+#define DEBUG
+
+
+fonts {
+   font: "Vera.ttf"   "Edje Vera";
+   font: "VeraBd.ttf" "Edje Vera Bold";
+}
+
+images {
+   image: "wallpaper.png" COMP;
+   image: "selbox_glow.png" COMP;
+   image: "settings.png" COMP;
+   image: "homebrew.png" COMP;
+   image: "device.png" COMP;
+}
+
+collections {
+   group {
+      name: "main";
+      min: 640 480;
+      max: 1920 1080;
+      script {
+         public clock_cb(unused) {
+            new year, month, day, yearday, weekday, hour, minute;
+            new Float:second;
+            new buf[13];
+
+            date(year, month, day, yearday, weekday, hour, minute, second);
+            // timer resolution
+            timer(61.0 - second, "clock_cb", 1);
+            snprintf(buf, 10, "%i%i:%i%i", hour/10, hour%10, minute/10, minute%10);
+            set_text(PART:"clock", buf);
+         }
+      }
+      parts {
+         part {
+	    name: "background";
+	    mouse_events:  0;
+	    type:          RECT;
+	    description {
+	       state: "default" 0.0;
+	       rel1 {
+		  relative: 0.0 0.0;
+		  offset: 0 0;
+	       }
+	       rel2 {
+		  relative: 1.0 1.0;
+		  offset: -1 -1;
+	       }
+	       color: 0 0 0 255;
+	    }
+         }
+         part {
+	    name: "FLHOC";
+	    mouse_events:  0;
+            type: SWALLOW;
+	    description {
+	       state: "default" 0.0;
+	       rel1 {
+		  relative: 0.5 0.5;
+		  offset: 0 0;
+	       }
+	       rel2 {
+		  relative: 0.5 0.5;
+		  offset: -1 -1;
+	       }
+	    }
+	    description {
+	       state: "shown" 0.0;
+	       rel1 {
+		  relative: 0.0 0.0;
+		  offset: 0 0;
+	       }
+	       rel2 {
+		  relative: 1.0 1.0;
+		  offset: -1 -1;
+	       }
+	    }
+         }
+	 part {
+	    name: "clock_bg";
+            type: IMAGE;
+	    mouse_events: 0;
+	    description {
+	       state: "default" 0.0;
+	       rel1 {
+		  relative: 0.75 0.0;
+		  offset: +10 +10;
+                  to: "FLHOC";
+	       }
+	       rel2 {
+		  relative: 1.0 0.15;
+		  offset: -10 -10;
+                  to: "FLHOC";
+	       }
+               image {
+                  normal: "selbox_glow.png";
+               }
+	    }
+	 }
+         part {
+            name: "clock_clip";
+            type: RECT;
+	    mouse_events: 0;
+	    description {
+	       state: "default" 0.0;
+	       rel1 {
+		  relative: 0.15 0.15;
+		  offset: 0 0;
+                  to: "clock_bg";
+	       }
+	       rel2 {
+		  relative: 0.85 0.85;
+		  offset: 0 0;
+                  to: "clock_bg";
+	       }
+	    }
+	 }
+         part {
+	    name: "clock";
+            type: TEXT;
+	    mouse_events: 0;
+	    clip_to: "clock_clip";
+            effect: SHADOW;
+	    description {
+	       state: "default" 0.0;
+	       rel1 {
+		  relative: 0.1 0.1;
+		  offset: 0 0;
+                  to: "clock_clip";
+	       }
+	       rel2 {
+		  relative: 0.9 0.9;
+		  offset: 0 0;
+                  to: "clock_clip";
+	       }
+               color: 255 255 255 255;
+               color2: 0 0 0 255;
+               text {
+                  text:        "Hello world!";
+                  font:        "Vera";
+                  size:         20;
+                  fit:          1 1;
+               }
+	    }
+	 }
+      }
+      programs {
+#ifdef DEBUG
+	 program {
+	    name: "debug";
+	    signal: "load";
+            script {
+               part_swallow(PART:"FLHOC", GROUP:"FLHOC");
+            }
+	 }
+#endif
+         program {
+            name: "init_clock";
+            signal: "load";
+            source: "";
+            script {
+               clock_cb(0);
+            }
+         }
+	 program {
+	    name: "show";
+	    signal: "show";
+	    source: "";
+	    action: STATE_SET "shown" 0.0;
+	    transition: BOUNCE 2.0 5.0 5.0;
+	    target: "FLHOC";
+            after: "ready";
+	 }
+         program {
+            name: "ready";
+	    action: SIGNAL_EMIT "main/ready" "forward";
+         }
+      }
+   }
+   group {
+      name: "FLHOC";
+      min: 640 480;
+      max: 1920 1080;
+      parts {
+         part {
+	    name: "clip";
+	    mouse_events:  0;
+	    type:          RECT;
+	    description {
+	       state: "default" 0.0;
+	       rel1 {
+		  relative: 0.0 0.0;
+		  offset: 0 0;
+	       }
+	       rel2 {
+		  relative: 1.0 1.0;
+		  offset: -1 -1;
+	       }
+	       color: 255 255 255 255;
+	    }
+	 }
+         part {
+	    name: "background";
+	    mouse_events:  0;
+	    type: IMAGE;
+            clip_to: "clip";
+	    description {
+	       state: "default" 0.0;
+	       rel1 {
+		  relative: 0.0 0.0;
+		  offset: 0 0;
+	       }
+	       rel2 {
+		  relative: 1.0 1.0;
+		  offset: -1 -1;
+	       }
+	       image {
+		  normal: "wallpaper.png";
+               }
+	    }
+         }
+	 part {
+	    name: "FLHOC/wallpaper";
+            type: IMAGE;
+	    mouse_events: 0;
+	    clip_to: "clip";
+	    description {
+	       state: "default" 0.0;
+	       rel1 {
+		  relative: 0.0 0.0;
+		  offset: 0 0;
+	       }
+	       rel2 {
+		  relative: 1.0 1.0;
+		  offset: -1 -1;
+	       }
+	    }
+	 }
+#define ADD_CATEGORY(NAME,                                              \
+                     START_POS_X, END_POS_X,                            \
+                     SET_START_POS_X, SET_END_POS_X)                    \
+         part {                                                         \
+            name: "FLHOC/category."NAME;                                \
+            type: SWALLOW;                                              \
+            mouse_events: 0;                                            \
+            clip_to: "clip";                                            \
+            description {                                               \
+               state: "default" 0.0;                                    \
+               rel1 {                                                   \
+                  relative: SET_START_POS_X -0.5;                       \
+                  offset: 0 0;                                          \
+               }                                                        \
+               rel2 {                                                   \
+                  relative: SET_END_POS_X 0.0;                          \
+                  offset: -1 -1;                                        \
+               }                                                        \
+            }                                                           \
+            description {                                               \
+               state: "unset" 0.0;                                      \
+               rel1 {                                                   \
+                  relative: START_POS_X 0.05;                           \
+                  offset: 5 0;                                          \
+               }                                                        \
+               rel2 {                                                   \
+                  relative: END_POS_X 0.95;                             \
+                  offset: -5 -1;                                        \
+               }                                                        \
+            }                                                           \
+            description {                                               \
+               state: "set" 0.0;                                        \
+               inherit: "default" 0.0;                                  \
+               rel1 {                                                   \
+                  relative: SET_START_POS_X 0.05;                       \
+		  offset: 5 0;                                          \
+	       }                                                        \
+	       rel2 {                                                   \
+                  relative: SET_END_POS_X 0.95;                         \
+		  offset: -5 -1;                                        \
+	       }                                                        \
+            }                                                           \
+            description {                                               \
+               state: "scroll_left" 0.0;                                \
+               inherit: "default" 0.0;                                  \
+               rel1 {                                                   \
+                  relative: SET_START_POS_X 0.05;                       \
+		  offset: 0 0;                                          \
+	       }                                                        \
+	       rel2 {                                                   \
+                  relative: SET_END_POS_X 0.95;                         \
+		  offset: -1 -1;                                        \
+	       }                                                        \
+            }                                                           \
+         }
+         ADD_CATEGORY("before_4", 0.05, 0.05, 0.05, 0.05);
+         ADD_CATEGORY("before_3", 0.15, 0.15, 0.05, 0.15);
+         ADD_CATEGORY("before_2", 0.25, 0.25, 0.15, 0.25);
+         ADD_CATEGORY("before_1", 0.35, 0.35, 0.25, 0.35);
+         ADD_CATEGORY("before_0", 0.45, 0.45, 0.35, 0.45);
+         ADD_CATEGORY("after_0", 0.65, 0.65, 0.65, 0.75);
+         ADD_CATEGORY("after_1", 0.75, 0.75, 0.75, 0.85);
+         ADD_CATEGORY("after_2", 0.85, 0.85, 0.85, 0.95);
+         ADD_CATEGORY("after_3", 0.95, 0.95, 0.95, 0.95);
+         ADD_CATEGORY("selection", 0.45, 0.65, 0.45, 0.65);
+      }
+
+      programs {
+#ifdef DEBUG
+	 program {
+	    name: "debug";
+	    signal: "load";
+            script {
+               part_swallow(PART:"FLHOC/category.before_4", GROUP:"FLHOC/category/settings");
+               part_swallow(PART:"FLHOC/category.before_3", GROUP:"FLHOC/category/settings");
+               part_swallow(PART:"FLHOC/category.before_2", GROUP:"FLHOC/category/settings");
+               part_swallow(PART:"FLHOC/category.before_1", GROUP:"FLHOC/category/settings");
+               part_swallow(PART:"FLHOC/category.before_0", GROUP:"FLHOC/category/settings");
+               part_swallow(PART:"FLHOC/category.selection", GROUP:"FLHOC/category/homebrew");
+               part_swallow(PART:"FLHOC/category.after_0", GROUP:"FLHOC/category/device");
+               part_swallow(PART:"FLHOC/category.after_1", GROUP:"FLHOC/category/device");
+               part_swallow(PART:"FLHOC/category.after_2", GROUP:"FLHOC/category/device");
+               part_swallow(PART:"FLHOC/category.after_3", GROUP:"FLHOC/category/device");
+            }
+	 }
+#endif
+         program {
+            name: "foobar";
+            signal: "main/ready";
+            source: "*";
+            action: SIGNAL_EMIT "foobar" "";
+         }
+         program {
+            name: "show_xmb";
+            signal: "main/ready";
+            source: "*";
+            action: STATE_SET "set" 0.0;
+            transition: BOUNCE 2.0 2.0 3.0;
+            target: "FLHOC/category.before_4";
+            target: "FLHOC/category.before_3";
+            target: "FLHOC/category.before_2";
+            target: "FLHOC/category.before_1";
+            target: "FLHOC/category.before_0";
+            target: "FLHOC/category.selection";
+            target: "FLHOC/category.after_0";
+            target: "FLHOC/category.after_1";
+            target: "FLHOC/category.after_2";
+            target: "FLHOC/category.after_3";
+            after: "xmb_shown";
+         }
+         program {
+            name: "xmb_shown";
+            action: SIGNAL_EMIT "FLHOC/ready" "";
+         }
+      }
+   }
+
+   group {
+      name: "FLHOC/category";
+      parts {
+	 part {
+	    name: "bg";
+            type: RECT;
+	    mouse_events: 0;
+	    description {
+	       state: "default" 0.0;
+	       rel1 {
+		  relative: 0.0 0.0;
+	       }
+	       rel2 {
+		  relative: 1.0 1.0;
+	       }
+               //color: 255 0 0 255;
+	    }
+         }
+	 part {
+	    name: "icon";
+            type: IMAGE;
+	    mouse_events: 0;
+            clip_to: "bg";
+	    description {
+	       state: "default" 0.0;
+               aspect: 1.0 1.0;
+               aspect_preference: BOTH;
+	       rel1 {
+		  relative: 0.0 0.10;
+		  offset: 0 0;
+	       }
+	       rel2 {
+		  relative: 1.0 0.25;
+		  offset: -1 -1;
+	       }
+	    }
+	    description {
+	       state: "selected" 0.0;
+               inherit: "default" 0.0;
+	       rel1 {
+		  relative: 0.0 0.10;
+		  offset: 0 0;
+	       }
+	       rel2 {
+		  relative: 1.0 0.30;
+		  offset: -1 -1;
+	       }
+	    }
+	 }
+	 part {
+	    name: "FLHOC/category/name";
+            type: TEXT;
+	    mouse_events: 0;
+            clip_to: "bg";
+	    description {
+	       state: "default" 0.0;
+	       rel1 {
+		  relative: 0.0 1.0;
+		  offset: 0 0;
+                  to: "icon";
+	       }
+	       rel2 {
+		  relative: 1.0 1.0;
+		  offset: 0 25;
+                  to: "icon";
+	       }
+               color: 255 255 255 255;
+               color2: 0 0 0 255;
+               text {
+                  text:        "Category";
+                  font:        "Vera";
+                  size:         20;
+                  fit:          1 1;
+               }
+	    }
+	 }
+	 part {
+	    name: "item";
+            type: GROUP;
+            source: "FLHOC/item";
+	    mouse_events: 0;
+            //clip_to: "bg";
+	    description {
+	       state: "default" 0.0;
+               aspect: 1.0 1.0;
+               aspect_preference: BOTH;
+	       rel1 {
+		  relative: 0.0 0.0;
+		  offset: 0 0;
+	       }
+	       rel2 {
+		  relative: 0.0 0.0;
+		  offset: -1 -1;
+	       }
+	    }
+	    description {
+	       state: "selected" 0.0;
+               inherit: "default" 0.0;
+	       rel1 {
+		  relative: 0.0 0.35;
+		  offset: 0 0;
+	       }
+	       rel2 {
+		  relative: 1.0 0.50;
+		  offset: -1 -1;
+	       }
+	    }
+	 } {
+	 program {
+	    name: "show_category";
+	    signal: "ready";
+	    source: "*";
+            action: SIGNAL_EMIT "selected" "FLHOC";
+	 }
+	 program {
+	    name: "category_selected";
+	    signal: "FLHOC/category_selected";
+	    source: "*";
+            action: STATE_SET "selected" 0.0;
+            transition: LINEAR 0.5;
+            target: "icon";
+            target: "item";
+	 }
+      }
+   }
+
+   group {
+      name: "FLHOC/category/settings";
+      inherit: "FLHOC/category";
+      parts {
+	 part {
+	    name: "icon";
+	    description {
+	       state: "default" 0.0;
+	       image {
+		  normal: "settings.png";
+	       }
+	    }
+         }
+	 part {
+	    name: "FLHOC/category/name";
+	    description {
+	       state: "default" 0.0;
+               text {
+                  text:        "Settings";
+               }
+	    }
+	 }
+      }
+   }
+   group {
+      name: "FLHOC/category/homebrew";
+      inherit: "FLHOC/category";
+      parts {
+	 part {
+	    name: "icon";
+	    description {
+	       state: "default" 0.0;
+	       image {
+		  normal: "homebrew.png";
+	       }
+	    }
+         }
+	 part {
+	    name: "FLHOC/category/name";
+	    description {
+	       state: "default" 0.0;
+               text {
+                  text:        "Homebrew";
+               }
+	    }
+	 }
+      }
+#ifdef DEBUG
+      programs {
+         program {
+            signal: "load";
+	    after: "category_selected";
+         }
+      }
+#endif
+   }
+   group {
+      name: "FLHOC/category/device";
+      inherit: "FLHOC/category";
+      parts {
+	 part {
+	    name: "icon";
+	    description {
+	       state: "default" 0.0;
+	       image {
+		  normal: "device.png";
+	       }
+	    }
+         }
+	 part {
+	    name: "FLHOC/category/name";
+	    description {
+	       state: "default" 0.0;
+               text {
+                  text:        "USB Device";
+               }
+	    }
+	 }
+      }
+   }
+   group {
+      name: "FLHOC/item";
+      parts {
+	 part {
+	    name: "bg";
+            type: RECT;
+	    mouse_events: 0;
+	    description {
+	       state: "default" 0.0;
+	       rel1 {
+		  relative: 0.0 0.0;
+                  offset: 0 0;
+	       }
+	       rel2 {
+		  relative: 0.0 1.0;
+                  offset: -1 -1;
+	       }
+	    }
+	    description {
+	       state: "selected" 0.0;
+	       rel1 {
+		  relative: 0.0 0.0;
+                  offset: 0 0;
+	       }
+	       rel2 {
+		  relative: 1.0 1.0;
+                  offset: 720 -1;
+	       }
+	    }
+         }
+	 part {
+	    name: "FLHOC/item/icon";
+            type: IMAGE;
+	    mouse_events: 0;
+            clip_to: "bg";
+	    description {
+	       state: "default" 0.0;
+               aspect: 1.0 1.0;
+               aspect_preference: BOTH;
+	       rel1 {
+		  relative: 0.0 0.0;
+		  offset: 0 0;
+	       }
+	       rel2 {
+		  relative: 1.0 1.0;
+		  offset: 0 0;
+	       }
+	       image {
+		  normal: "homebrew.png";
+	       }
+	    }
+	 }
+	 part {
+	    name: "FLHOC/item/title";
+            type: TEXT;
+	    mouse_events: 0;
+            effect: OUTLINE;
+            clip_to: "bg";
+	    description {
+	       state: "default" 0.0;
+	       rel1 {
+		  relative: 1.0 0.0;
+		  offset: 25 5;
+                  to: "FLHOC/item/icon";
+	       }
+	       rel2 {
+		  relative: 1.0 1.0;
+		  offset: 1920 5;
+                  to: "FLHOC/item/icon";
+	       }
+               color: 255 255 255 255;
+               color2: 0 0 0 255;
+               text {
+                  text:        "Game settings!";
+                  font:        "Vera";
+                  size:         15;
+                  align: 0.0 0.5;
+               }
+	    }
+	 }
+      }
+      programs {
+	 program {
+	    name: "show_items";
+	    signal: "load";
+	    source: "";
+	    action: STATE_SET "selected" 0.0;
+	    transition: LINEAR 1.5;
+	    target: "bg";
+            after: "items_shown";
+	 }
+         program {
+            name: "items_shown";
+            action: SIGNAL_EMIT "items_shown" "FLOC";
+         }
+      }
+   }
+}
