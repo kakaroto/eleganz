@@ -13,6 +13,7 @@ images {
    image: "settings.png" COMP;
    image: "homebrew.png" COMP;
    image: "device.png" COMP;
+   image: "unknown.png" COMP;
 }
 
 collections {
@@ -152,7 +153,7 @@ collections {
 	    name: "debug";
 	    signal: "load";
             script {
-               part_swallow(PART:"FLHOC", GROUP:"FLHOC");
+               part_swallow(PART:"FLHOC", GROUP:"FLHOC/menu");
             }
 	 }
 #endif
@@ -180,7 +181,7 @@ collections {
       }
    }
    group {
-      name: "FLHOC";
+      name: "FLHOC/menu";
       min: 640 480;
       max: 1920 1080;
       parts {
@@ -222,7 +223,7 @@ collections {
 	    }
          }
 	 part {
-	    name: "FLHOC/wallpaper";
+	    name: "FLHOC/menu/wallpaper";
             type: IMAGE;
 	    mouse_events: 0;
 	    clip_to: "clip";
@@ -242,12 +243,13 @@ collections {
                      START_POS_X, END_POS_X,                            \
                      SET_START_POS_X, SET_END_POS_X)                    \
          part {                                                         \
-            name: "FLHOC/category."NAME;                                \
+            name: "FLHOC/menu/category."NAME;                           \
             type: SWALLOW;                                              \
             mouse_events: 0;                                            \
             clip_to: "clip";                                            \
             description {                                               \
                state: "default" 0.0;                                    \
+               visible: 0;                                              \
                rel1 {                                                   \
                   relative: SET_START_POS_X -0.5;                       \
                   offset: 0 0;                                          \
@@ -259,6 +261,7 @@ collections {
             }                                                           \
             description {                                               \
                state: "unset" 0.0;                                      \
+               visible: 0;                                              \
                rel1 {                                                   \
                   relative: START_POS_X 0.05;                           \
                   offset: 5 0;                                          \
@@ -271,6 +274,7 @@ collections {
             description {                                               \
                state: "set" 0.0;                                        \
                inherit: "default" 0.0;                                  \
+               visible: 1;                                              \
                rel1 {                                                   \
                   relative: SET_START_POS_X 0.05;                       \
 		  offset: 5 0;                                          \
@@ -311,73 +315,98 @@ collections {
 	    name: "debug";
 	    signal: "load";
             script {
-               part_swallow(PART:"FLHOC/category.before_4", GROUP:"FLHOC/category/settings");
-               part_swallow(PART:"FLHOC/category.before_3", GROUP:"FLHOC/category/settings");
-               part_swallow(PART:"FLHOC/category.before_2", GROUP:"FLHOC/category/settings");
-               part_swallow(PART:"FLHOC/category.before_1", GROUP:"FLHOC/category/settings");
-               part_swallow(PART:"FLHOC/category.before_0", GROUP:"FLHOC/category/settings");
-               part_swallow(PART:"FLHOC/category.selection", GROUP:"FLHOC/category/homebrew");
-               part_swallow(PART:"FLHOC/category.after_0", GROUP:"FLHOC/category/device");
-               part_swallow(PART:"FLHOC/category.after_1", GROUP:"FLHOC/category/device");
-               part_swallow(PART:"FLHOC/category.after_2", GROUP:"FLHOC/category/device");
-               part_swallow(PART:"FLHOC/category.after_3", GROUP:"FLHOC/category/device");
+               part_swallow(PART:"FLHOC/menu/category.before_4", GROUP:"FLHOC/menu/category/settings");
+               part_swallow(PART:"FLHOC/menu/category.before_3", GROUP:"FLHOC/menu/category/settings");
+               part_swallow(PART:"FLHOC/menu/category.before_2", GROUP:"FLHOC/menu/category/settings");
+               part_swallow(PART:"FLHOC/menu/category.before_1", GROUP:"FLHOC/menu/category/settings");
+               part_swallow(PART:"FLHOC/menu/category.before_0", GROUP:"FLHOC/menu/category/settings");
+               part_swallow(PART:"FLHOC/menu/category.selection", GROUP:"FLHOC/menu/category/homebrew");
+               part_swallow(PART:"FLHOC/menu/category.after_0", GROUP:"FLHOC/menu/category/device");
+               part_swallow(PART:"FLHOC/menu/category.after_1", GROUP:"FLHOC/menu/category/device");
+               part_swallow(PART:"FLHOC/menu/category.after_2", GROUP:"FLHOC/menu/category/device");
+               part_swallow(PART:"FLHOC/menu/category.after_3", GROUP:"FLHOC/menu/category/device");
             }
 	 }
 #endif
-         program {
-            name: "foobar";
-            signal: "main/ready";
-            source: "*";
-            action: SIGNAL_EMIT "foobar" "";
-         }
          program {
             name: "show_xmb";
             signal: "main/ready";
             source: "*";
             action: STATE_SET "set" 0.0;
             transition: BOUNCE 2.0 2.0 3.0;
-            target: "FLHOC/category.before_4";
-            target: "FLHOC/category.before_3";
-            target: "FLHOC/category.before_2";
-            target: "FLHOC/category.before_1";
-            target: "FLHOC/category.before_0";
-            target: "FLHOC/category.selection";
-            target: "FLHOC/category.after_0";
-            target: "FLHOC/category.after_1";
-            target: "FLHOC/category.after_2";
-            target: "FLHOC/category.after_3";
+            target: "FLHOC/menu/category.before_4";
+            target: "FLHOC/menu/category.before_3";
+            target: "FLHOC/menu/category.before_2";
+            target: "FLHOC/menu/category.before_1";
+            target: "FLHOC/menu/category.before_0";
+            target: "FLHOC/menu/category.selection";
+            target: "FLHOC/menu/category.after_0";
+            target: "FLHOC/menu/category.after_1";
+            target: "FLHOC/menu/category.after_2";
+            target: "FLHOC/menu/category.after_3";
             after: "xmb_shown";
          }
          program {
             name: "xmb_shown";
-            action: SIGNAL_EMIT "FLHOC/ready" "";
+            action: SIGNAL_EMIT "FLHOC/menu/ready" "";
          }
       }
    }
 
    group {
-      name: "FLHOC/category";
+      name: "FLHOC/menu/category";
       parts {
 	 part {
-	    name: "bg";
+	    name: "clip";
             type: RECT;
 	    mouse_events: 0;
 	    description {
 	       state: "default" 0.0;
 	       rel1 {
 		  relative: 0.0 0.0;
+                  offset: 0 0;
 	       }
 	       rel2 {
 		  relative: 1.0 1.0;
+                  offset: -1 -1;
 	       }
                //color: 255 0 0 255;
 	    }
+         }
+         part {
+            name: "items";
+            type: GROUP;
+            source: "FLHOC/menu/items";
+            mouse_events: 0;
+            description {
+               state: "default" 0.0;
+               rel1 {
+                  relative: 0.0 0.2;
+                  offset: 0 0;
+               }
+               rel2 {
+                  relative: 1.0 0.2;
+                  offset: -1 -1;
+               }
+            }
+            description {
+               state: "selected" 0.0;
+               inherit: "default" 0.0;
+               rel1 {
+                  relative: 0.0 0.0;
+                  offset: 0 0;
+               }
+               rel2 {
+                  relative: 1.0 1.0;
+                  offset: -1 -1;
+               }
+            }
          }
 	 part {
 	    name: "icon";
             type: IMAGE;
 	    mouse_events: 0;
-            clip_to: "bg";
+            clip_to: "clip";
 	    description {
 	       state: "default" 0.0;
                aspect: 1.0 1.0;
@@ -390,6 +419,9 @@ collections {
 		  relative: 1.0 0.25;
 		  offset: -1 -1;
 	       }
+               image {
+                  normal: "unknown.png";
+               }
 	    }
 	    description {
 	       state: "selected" 0.0;
@@ -405,64 +437,44 @@ collections {
 	    }
 	 }
 	 part {
-	    name: "FLHOC/category/name";
+	    name: "FLHOC/menu/category/name";
             type: TEXT;
 	    mouse_events: 0;
-            clip_to: "bg";
+            clip_to: "clip";
 	    description {
 	       state: "default" 0.0;
 	       rel1 {
-		  relative: 0.0 1.0;
+		  relative: 0.0 0.25;
 		  offset: 0 0;
-                  to: "icon";
 	       }
 	       rel2 {
-		  relative: 1.0 1.0;
-		  offset: 0 25;
-                  to: "icon";
+		  relative: 1.0 0.30;
+		  offset: -1 -1;
 	       }
                color: 255 255 255 255;
                color2: 0 0 0 255;
                text {
-                  text:        "Category";
+                  //text:        "Category";
                   font:        "Vera";
                   size:         20;
                   fit:          1 1;
                }
 	    }
-	 }
-	 part {
-	    name: "item";
-            type: GROUP;
-            source: "FLHOC/item";
-	    mouse_events: 0;
-            //clip_to: "bg";
-	    description {
-	       state: "default" 0.0;
-               aspect: 1.0 1.0;
-               aspect_preference: BOTH;
-	       rel1 {
-		  relative: 0.0 0.0;
-		  offset: 0 0;
-	       }
-	       rel2 {
-		  relative: 0.0 0.0;
-		  offset: -1 -1;
-	       }
-	    }
 	    description {
 	       state: "selected" 0.0;
                inherit: "default" 0.0;
 	       rel1 {
-		  relative: 0.0 0.35;
+		  relative: 0.0 0.30;
 		  offset: 0 0;
 	       }
 	       rel2 {
-		  relative: 1.0 0.50;
+		  relative: 1.0 0.35;
 		  offset: -1 -1;
 	       }
-	    }
-	 } {
+            }
+	 }
+      }
+      programs {
 	 program {
 	    name: "show_category";
 	    signal: "ready";
@@ -471,43 +483,59 @@ collections {
 	 }
 	 program {
 	    name: "category_selected";
-	    signal: "FLHOC/category_selected";
+	    signal: "FLHOC/menu/category_selected";
 	    source: "*";
             action: STATE_SET "selected" 0.0;
             transition: LINEAR 0.5;
             target: "icon";
-            target: "item";
+            target: "FLHOC/menu/category/name";
+            target: "items";
 	 }
       }
    }
-
-   group {
-      name: "FLHOC/category/settings";
-      inherit: "FLHOC/category";
-      parts {
-	 part {
-	    name: "icon";
-	    description {
-	       state: "default" 0.0;
-	       image {
-		  normal: "settings.png";
-	       }
-	    }
-         }
-	 part {
-	    name: "FLHOC/category/name";
-	    description {
-	       state: "default" 0.0;
-               text {
-                  text:        "Settings";
-               }
-	    }
-	 }
-      }
+#define DEFINE_CATEGORY(NAME, IMAGE, TEXT)                              \
+   group {                                                              \
+      name: "FLHOC/menu/category/"NAME;                                 \
+      inherit: "FLHOC/menu/category";                                   \
+      parts {                                                           \
+	 part {                                                         \
+            name: "icon";                                               \
+            description {                                               \
+               state: "default" 0.0;                                    \
+               image {                                                  \
+		  normal: IMAGE;                                        \
+	       }                                                        \
+            }                                                           \
+            description {                                               \
+               state: "selected" 0.0;                                   \
+               image {                                                  \
+		  normal: IMAGE;                                        \
+	       }                                                        \
+            }                                                           \
+         }                                                              \
+	 part {                                                         \
+            name: "FLHOC/menu/category/name";                           \
+            description {                                               \
+               state: "default" 0.0;                                    \
+               text {                                                   \
+                  text: TEXT;                                           \
+               }                                                        \
+            }                                                           \
+            description {                                               \
+               state: "selected" 0.0;                                   \
+               text {                                                   \
+                  text: TEXT;                                           \
+               }                                                        \
+            }                                                           \
+         }                                                              \
+      }                                                                 \
    }
+   DEFINE_CATEGORY("settings", "settings.png", "Settings");
+   //DEFINE_CATEGORY("homebrew", "homebrew.png", "Homebrew");
+   DEFINE_CATEGORY("device", "device.png", "USB Device");
    group {
-      name: "FLHOC/category/homebrew";
-      inherit: "FLHOC/category";
+      name: "FLHOC/menu/category/homebrew";
+      inherit: "FLHOC/menu/category";
       parts {
 	 part {
 	    name: "icon";
@@ -517,11 +545,23 @@ collections {
 		  normal: "homebrew.png";
 	       }
 	    }
+	    description {
+	       state: "selected" 0.0;
+	       image {
+		  normal: "homebrew.png";
+	       }
+	    }
          }
 	 part {
-	    name: "FLHOC/category/name";
+	    name: "FLHOC/menu/category/name";
 	    description {
 	       state: "default" 0.0;
+               text {
+                  text:        "Homebrew";
+               }
+	    }
+	    description {
+	       state: "selected" 0.0;
                text {
                   text:        "Homebrew";
                }
@@ -532,40 +572,124 @@ collections {
       programs {
          program {
             signal: "load";
+            action: STATE_SET "default" 0.0;
+            transition: LINEAR 5.0;
+            target: "icon";
+            after: "load";
+         }
+         program {
+            name: "load";
+            signal: "load2";
 	    after: "category_selected";
          }
       }
 #endif
    }
    group {
-      name: "FLHOC/category/device";
-      inherit: "FLHOC/category";
+      name: "FLHOC/menu/items";
       parts {
-	 part {
-	    name: "icon";
-	    description {
-	       state: "default" 0.0;
-	       image {
-		  normal: "device.png";
-	       }
-	    }
+#define ADD_ITEM(NAME,                                                  \
+                 START_POS_Y, END_POS_Y,                                \
+                 SET_START_POS_Y, SET_END_POS_Y)                        \
+         part {                                                         \
+            name: "FLHOC/menu/item."NAME;                               \
+            type: SWALLOW;                                              \
+            mouse_events: 0;                                            \
+            description {                                               \
+               state: "default" 0.0;                                    \
+               visible: 0;                                              \
+               rel1 {                                                   \
+                  relative: 0.0 SET_START_POS_Y;                        \
+                  offset: 0 0;                                          \
+               }                                                        \
+               rel2 {                                                   \
+                  relative: 1.0 SET_END_POS_Y;                          \
+                  offset: -1 -1;                                        \
+               }                                                        \
+            }                                                           \
+            description {                                               \
+               state: "unset" 0.0;                                      \
+               visible: 0;                                              \
+               rel1 {                                                   \
+                  relative: 0.0 START_POS_Y;                            \
+                  offset: 0 5;                                          \
+               }                                                        \
+               rel2 {                                                   \
+                  relative: 1.0 END_POS_Y;                              \
+                  offset: -1 -5;                                        \
+               }                                                        \
+            }                                                           \
+            description {                                               \
+               state: "set" 0.0;                                        \
+               inherit: "default" 0.0;                                  \
+               visible: 1;                                              \
+               rel1 {                                                   \
+                  relative: 0.0 SET_START_POS_Y;                        \
+		  offset: 0 5;                                          \
+	       }                                                        \
+	       rel2 {                                                   \
+                  relative: 1.0 SET_END_POS_Y;                          \
+		  offset: -1 -5;                                        \
+	       }                                                        \
+            }                                                           \
          }
-	 part {
-	    name: "FLHOC/category/name";
-	    description {
-	       state: "default" 0.0;
-               text {
-                  text:        "USB Device";
-               }
-	    }
-	 }
+         ADD_ITEM("before_2", 0.00, 0.00, 0.00, 0.00);
+         ADD_ITEM("before_1", 0.00, 0.00, 0.00, 0.04);
+         ADD_ITEM("before_0", 0.04, 0.04, 0.04, 0.10);
+         ADD_ITEM("after_0", 0.50, 0.50, 0.50, 0.65);
+         ADD_ITEM("after_1", 0.65, 0.65, 0.65, 0.75);
+         ADD_ITEM("after_2", 0.75, 0.75, 0.75, 0.83);
+         ADD_ITEM("after_3", 0.83, 0.83, 0.83, 0.90);
+         ADD_ITEM("after_4", 0.90, 0.90, 0.90, 0.95);
+         ADD_ITEM("after_5", 0.95, 0.95, 0.95, 0.98);
+         ADD_ITEM("after_6", 1.00, 1.00, 1.00, 1.00);
+         ADD_ITEM("selection", 0.30, 0.50, 0.30, 0.50);
       }
+#ifdef DEBUG
+      programs {
+	 program {
+	    name: "debug";
+	    signal: "load";
+            script {
+               part_swallow(PART:"FLHOC/menu/item.before_2", GROUP:"FLHOC/menu/item");
+               part_swallow(PART:"FLHOC/menu/item.before_1", GROUP:"FLHOC/menu/item");
+               part_swallow(PART:"FLHOC/menu/item.before_0", GROUP:"FLHOC/menu/item");
+               part_swallow(PART:"FLHOC/menu/item.selection", GROUP:"FLHOC/menu/item");
+               part_swallow(PART:"FLHOC/menu/item.after_0", GROUP:"FLHOC/menu/item");
+               part_swallow(PART:"FLHOC/menu/item.after_1", GROUP:"FLHOC/menu/item");
+               part_swallow(PART:"FLHOC/menu/item.after_2", GROUP:"FLHOC/menu/item");
+               part_swallow(PART:"FLHOC/menu/item.after_3", GROUP:"FLHOC/menu/item");
+               part_swallow(PART:"FLHOC/menu/item.after_4", GROUP:"FLHOC/menu/item");
+               part_swallow(PART:"FLHOC/menu/item.after_5", GROUP:"FLHOC/menu/item");
+               part_swallow(PART:"FLHOC/menu/item.after_6", GROUP:"FLHOC/menu/item");
+            }
+	 }
+         program {
+            name: "show_items";
+            signal: "show";
+            action: STATE_SET "set" 0.0;
+            transition: LINEAR 10.0;
+            target: "FLHOC/menu/item.before_2";
+            target: "FLHOC/menu/item.before_1";
+            target: "FLHOC/menu/item.before_0";
+            target: "FLHOC/menu/item.selection";
+            target: "FLHOC/menu/item.after_0";
+            target: "FLHOC/menu/item.after_1";
+            target: "FLHOC/menu/item.after_2";
+            target: "FLHOC/menu/item.after_3";
+            target: "FLHOC/menu/item.after_4";
+            target: "FLHOC/menu/item.after_5";
+            target: "FLHOC/menu/item.after_6";
+         }
+      }
+#endif
    }
+
    group {
-      name: "FLHOC/item";
+      name: "FLHOC/menu/item";
       parts {
 	 part {
-	    name: "bg";
+	    name: "clip";
             type: RECT;
 	    mouse_events: 0;
 	    description {
@@ -578,9 +702,11 @@ collections {
 		  relative: 0.0 1.0;
                   offset: -1 -1;
 	       }
+               //color: 255 0 0 255;
 	    }
 	    description {
 	       state: "selected" 0.0;
+               inherit: "default" 0.0;
 	       rel1 {
 		  relative: 0.0 0.0;
                   offset: 0 0;
@@ -592,10 +718,10 @@ collections {
 	    }
          }
 	 part {
-	    name: "FLHOC/item/icon";
+	    name: "FLHOC/menu/item/icon";
             type: IMAGE;
 	    mouse_events: 0;
-            clip_to: "bg";
+            clip_to: "clip";
 	    description {
 	       state: "default" 0.0;
                aspect: 1.0 1.0;
@@ -614,30 +740,31 @@ collections {
 	    }
 	 }
 	 part {
-	    name: "FLHOC/item/title";
+	    name: "FLHOC/menu/item/title";
             type: TEXT;
 	    mouse_events: 0;
             effect: OUTLINE;
-            clip_to: "bg";
+            clip_to: "clip";
 	    description {
 	       state: "default" 0.0;
 	       rel1 {
 		  relative: 1.0 0.0;
 		  offset: 25 5;
-                  to: "FLHOC/item/icon";
+                  to: "FLHOC/menu/item/icon";
 	       }
 	       rel2 {
 		  relative: 1.0 1.0;
 		  offset: 1920 5;
-                  to: "FLHOC/item/icon";
+                  to: "FLHOC/menu/item/icon";
 	       }
                color: 255 255 255 255;
                color2: 0 0 0 255;
                text {
-                  text:        "Game settings!";
-                  font:        "Vera";
-                  size:         15;
+                  text: "Game settings!";
+                  font: "Vera";
+                  size: 15;
                   align: 0.0 0.5;
+                  fit: 1 1;
                }
 	    }
 	 }
@@ -649,7 +776,7 @@ collections {
 	    source: "";
 	    action: STATE_SET "selected" 0.0;
 	    transition: LINEAR 1.5;
-	    target: "bg";
+	    target: "clip";
             after: "items_shown";
 	 }
          program {

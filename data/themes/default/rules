@@ -1,38 +1,38 @@
 - Main window
   - Group "main"
   - Part "FLHOC" of type SWALLOW for the screen
-- Main screen group
-  - Group "FLHOC"
-  - Signal "FLHOC/ready" for when the XMB is ready for actions
+- Main menu group
+  - Group "FLHOC/menu"
+  - Signal "FLHOC/menu/ready" for when the XMB is ready for actions
   - Custom Wallpaper (for games)
-    - Part "FLHOC/wallpaper" of type IMAGE for the wallpaper/background
-    - Signal handler "FLHOC/wallpaper_set" for when the custom wallpaper is set
-    - Signal handler "FLHOC/wallpaper_unset" for when the custom wallpaper is removed
+    - Part "FLHOC/menu/wallpaper" of type IMAGE for the wallpaper/background
+    - Signal handler "FLHOC/menu/wallpaper_set" for when the custom wallpaper is set
+    - Signal handler "FLHOC/menu/wallpaper_unset" for when the custom wallpaper is removed
   - XMB categories
-    - Part "FLHOC/category.before_%d" of type SWALLOW for previous categories
-    - Part "FLHOC/category.selection" of type SWALLOW for the selected category
-    - Part "FLHOC/category.after_%d" of type SWALLOW for next categories
-    - Signal handler "FLHOC/category_set" for when a category is valid
-    - Signal handler "FLHOC/category_unset" for when a category is invalid
-    - Signal handler "FLHOC/category_next" for when you seek to the next category
-    - Signal handler "FLHOC/category_previous" for when you seek the previous category
-    - Signal handler "FLHOC/category_error_tail" for when you try to seek beyond the end
-    - Signal handler "FLHOC/category_error_head" for when you try to seek before the start
+    - Part "FLHOC/menu/category.before_%d" of type SWALLOW for previous categories
+    - Part "FLHOC/menu/category.selection" of type SWALLOW for the selected category
+    - Part "FLHOC/menu/category.after_%d" of type SWALLOW for next categories
+    - Signal handler "FLHOC/menu/category_set" for when a category is valid
+    - Signal handler "FLHOC/menu/category_unset" for when a category is invalid
+    - Signal handler "FLHOC/menu/category_next" for when you seek to the next category
+    - Signal handler "FLHOC/menu/category_previous" for when you seek the previous category
+    - Signal handler "FLHOC/menu/category_error_tail" for when you try to seek beyond the end
+    - Signal handler "FLHOC/menu/category_error_head" for when you try to seek before the start
     - Individual Categories
-      - Group "FLHOC/category/settings" for the settings
-      - Group "FLHOC/category/homebrew" for the homebrew games
-      - Group "FLHOC/category/device" for the devices
+      - Group "FLHOC/menu/category/settings" for the settings
+      - Group "FLHOC/menu/category/homebrew" for the homebrew games
+      - Group "FLHOC/menu/category/device" for the devices
 
-- "FLHOC/category/*" groups :
-  - Part "FLHOC/category/icon" of type IMAGE for the icon
-  - Part "FLHOC/category/text" of type TEXT for the text
-  - Signal handler "FLHOC/category_selected" when selecting it
-  - Signal handler "FLHOC/category_deselected" when deselecting it
+- "FLHOC/menu/category/*" groups :
+  - Part "FLHOC/menu/category/icon" of type IMAGE for the icon
+  - Part "FLHOC/menu/category/text" of type TEXT for the text
+  - Signal handler "FLHOC/menu/category_selected" when selecting it
+  - Signal handler "FLHOC/menu/category_deselected" when deselecting it
 
 
 At first, the "main" group will be created and the "FLHOC" part will be swallowed by the "FLHOC" group.
-All swallowed parts will be set according to the current status, then the mainloop will run (load/show signals will be sent). Then FLHOC will wait for the "FLHOC/ready" signal from edje before processing input events.
-After the "FLHOC/ready" signal is received, FLHOC will send the proper signals to represent the state (selected, set, unset) to swallowed parts.
+All swallowed parts will be set according to the current status, then the mainloop will run (load/show signals will be sent). Then FLHOC will wait for the "FLHOC/menu/ready" signal from edje before processing input events.
+After the "FLHOC/menu/ready" signal is received, FLHOC will send the proper signals to represent the state (selected, set, unset) to swallowed parts.
 This is to allow you to do an animation with the final status of the xmb at bootup (since swallowed parts that are empty will not appear, you can assume all are 'set').
 A new category/item will be swallowed before sending the "*_set" signal to the corresponding part.
 Any signal with the source set to "forward" will be forwarded to the underlying swallowed objects
