@@ -17,7 +17,9 @@ ERROR_CFLAGS = \
 	-Wno-missing-field-initializers
 
 AM_CFLAGS = \
-	$(ERROR_CFLAGS)
+	$(ERROR_CFLAGS) \
+	-Wno-redundant-decls \
+	-g -O0
 
 bin_PROGRAMS = homebrew_center
 

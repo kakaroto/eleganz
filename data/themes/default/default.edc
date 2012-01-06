@@ -1,5 +1,5 @@
 
-#define DEBUG
+//#define DEBUG
 
 
 fonts {
@@ -20,6 +20,7 @@ images {
 }
 
 collections {
+   /* the main window group */
    group {
       name: "main";
       min: 640 480;
@@ -31,13 +32,14 @@ collections {
             new buf[13];
 
             date(year, month, day, yearday, weekday, hour, minute, second);
-            // timer resolution
-            timer(61.0 - second, "clock_cb", 1);
             snprintf(buf, 10, "%i%i:%i%i", hour/10, hour%10, minute/10, minute%10);
             set_text(PART:"clock", buf);
+            // timer resolution
+            timer(61.0 - second, "clock_cb", 1);
          }
       }
       parts {
+         /* A black background */
          part {
 	    name: "background";
 	    mouse_events:  0;
@@ -55,8 +57,9 @@ collections {
 	       color: 0 0 0 255;
 	    }
          }
+         /* The primary FLHOC window */
          part {
-	    name: "FLHOC";
+	    name: "FLHOC/primary";
 	    mouse_events:  0;
             type: SWALLOW;
 	    description {
@@ -82,6 +85,35 @@ collections {
 	       }
 	    }
          }
+         /* The primary FLHOC window */
+         part {
+	    name: "FLHOC/secondary";
+	    mouse_events:  0;
+            type: SWALLOW;
+	    description {
+	       state: "default" 0.0;
+	       rel1 {
+		  relative: 0.5 0.5;
+		  offset: 0 0;
+	       }
+	       rel2 {
+		  relative: 0.5 0.5;
+		  offset: -1 -1;
+	       }
+	    }
+	    description {
+	       state: "shown" 0.0;
+	       rel1 {
+		  relative: 0.0 0.0;
+		  offset: 0 0;
+	       }
+	       rel2 {
+		  relative: 1.0 1.0;
+		  offset: -1 -1;
+	       }
+	    }
+         }
+         /* The top-right corner clock */
 	 part {
 	    name: "clock_bg";
             type: IMAGE;
@@ -91,12 +123,12 @@ collections {
 	       rel1 {
 		  relative: 0.75 0.0;
 		  offset: +10 +10;
-                  to: "FLHOC";
+                  to: "FLHOC/primary";
 	       }
 	       rel2 {
 		  relative: 1.0 0.15;
 		  offset: -10 -10;
-                  to: "FLHOC";
+                  to: "FLHOC/primary";
 	       }
                image {
                   normal: "selbox_glow.png";
@@ -156,9 +188,13 @@ collections {
 	    name: "debug";
 	    signal: "load";
             script {
-               part_swallow(PART:"FLHOC", GROUP:"FLHOC/menu");
+               part_swallow(PART:"FLHOC/primary", GROUP:"FLHOC/menu");
             }
 	 }
+	 program {
+	    signal: "show";
+            after: "primary_set";
+         }
 #endif
          program {
             name: "init_clock";
@@ -169,20 +205,34 @@ collections {
             }
          }
 	 program {
-	    name: "show";
-	    signal: "show";
-	    source: "";
+	    name: "primary_set";
+	    signal: "FLHOC/primary,set";
 	    action: STATE_SET "shown" 0.0;
 	    transition: ACCELERATE 1.5;
-	    target: "FLHOC";
-            after: "ready";
+	    target: "FLHOC/primary";
+            after: "primary_set_end";
 	 }
-         program {
-            name: "ready";
-	    action: SIGNAL_EMIT "main/ready" "forward";
+	 program {
+	    name: "primary_set_end";
+            action: SIGNAL_EMIT "FLHOC/primary,set,end" "";
          }
+	 program {
+	    name: "secondary_set";
+	    signal: "FLHOC/secondary,set";
+	    action: STATE_SET "set" 0.0;
+	    transition: ACCELERATE 1.5;
+	    target: "FLHOC/secondary";
+            after: "secondary_set_end";
+	 }
+	 program {
+	    name: "secondary_set_end";
+            action: SIGNAL_EMIT "FLHOC/secondary,set,end" "";
+         }
+
+         /* TODO: Add signals for switching from primary to secondary, or for blurring primary */
       }
    }
+   /* The XMB Menu window */
    group {
       name: "FLHOC/menu";
       min: 640 480;
@@ -205,6 +255,7 @@ collections {
 	       //color: 255 255 255 255;
 	    }
 	 }
+         /* TODO: Add clipping and handling fade-in/fade-out of wallpaper,set/unset */
          part {
 	    name: "background";
 	    mouse_events:  0;
@@ -225,6 +276,7 @@ collections {
                }
 	    }
          }
+         /* Customizable wallpaper */
 	 part {
 	    name: "FLHOC/menu/wallpaper";
             type: IMAGE;
@@ -242,9 +294,15 @@ collections {
 	       }
 	    }
 	 }
-#define ADD_CATEGORY(NAME, ALPHA,                                       \
-                     START_POS_X, END_POS_X,                            \
-                     SET_START_POS_X, SET_END_POS_X)                    \
+         /* Creates category with an alpha blended clipping area.
+            the default state is used for before the 'ready' signal,
+            then set/unset/next/previous for the various states.
+         */
+#define ADD_CATEGORY(NAME, PREVIOUS_ALPHA, ALPHA, NEXT_ALPHA,           \
+                     PREVIOUS_START_POS_X, PREVIOUS_END_POS_X,          \
+                     UNSET_START_POS_X, UNSET_END_POS_X,                \
+                     SET_START_POS_X, SET_END_POS_X,                    \
+                     NEXT_START_POS_X, NEXT_END_POS_X)                  \
          part {                                                         \
             name: "category_clip."NAME;                                 \
             type: RECT;                                                 \
@@ -261,6 +319,24 @@ collections {
 		  offset: -1 -1;                                        \
 	       }                                                        \
                color: 255 255 255 ALPHA;                                \
+            }                                                           \
+            description {                                               \
+               state: "set" 0.0;                                        \
+               inherit: "default" 0.0;                                  \
+            }                                                           \
+            description {                                               \
+               state: "unset" 0.0;                                      \
+               inherit: "default" 0.0;                                  \
+            }                                                           \
+            description {                                               \
+               state: "next" 0.0;                                       \
+               inherit: "default" 0.0;                                  \
+               color: 255 255 255 NEXT_ALPHA;                           \
+            }                                                           \
+            description {                                               \
+               state: "previous" 0.0;                                   \
+               inherit: "default" 0.0;                                  \
+               color: 255 255 255 PREVIOUS_ALPHA;                       \
             }                                                           \
          }                                                              \
          part {                                                         \
@@ -282,13 +358,14 @@ collections {
             }                                                           \
             description {                                               \
                state: "unset" 0.0;                                      \
+               inherit: "default" 0.0;                                  \
                visible: 0;                                              \
                rel1 {                                                   \
-                  relative: START_POS_X 0.05;                           \
+                  relative: UNSET_START_POS_X 0.05;                     \
                   offset: 5 0;                                          \
                }                                                        \
                rel2 {                                                   \
-                  relative: END_POS_X 0.95;                             \
+                  relative: UNSET_END_POS_X 0.95;                       \
                   offset: -5 -1;                                        \
                }                                                        \
             }                                                           \
@@ -306,28 +383,76 @@ collections {
 	       }                                                        \
             }                                                           \
             description {                                               \
-               state: "scroll_left" 0.0;                                \
+               state: "previous" 0.0;                                   \
                inherit: "default" 0.0;                                  \
+               visible: 1;                                              \
                rel1 {                                                   \
-                  relative: SET_START_POS_X 0.05;                       \
-		  offset: 0 0;                                          \
+                  relative: PREVIOUS_START_POS_X 0.05;                  \
+		  offset: 5 0;                                          \
 	       }                                                        \
 	       rel2 {                                                   \
-                  relative: SET_END_POS_X 0.95;                         \
-		  offset: -1 -1;                                        \
+                  relative: PREVIOUS_END_POS_X 0.95;                    \
+		  offset: -5 -1;                                        \
+	       }                                                        \
+            }                                                           \
+            description {                                               \
+               state: "next" 0.0;                                       \
+               inherit: "default" 0.0;                                  \
+               visible: 1;                                              \
+               rel1 {                                                   \
+                  relative: NEXT_START_POS_X 0.05;                      \
+		  offset: 5 0;                                          \
+	       }                                                        \
+	       rel2 {                                                   \
+                  relative: NEXT_END_POS_X 0.95;                        \
+		  offset: -5 -1;                                        \
 	       }                                                        \
             }                                                           \
          }
-         ADD_CATEGORY("before_2", 50, 0.05, 0.05, 0.05, 0.05);
-         ADD_CATEGORY("before_1", 100, 0.15, 0.15, 0.05, 0.15);
-         ADD_CATEGORY("before_0", 150, 0.25, 0.25, 0.15, 0.25);
-         ADD_CATEGORY("selection", 255, 0.25, 0.45, 0.25, 0.45);
-         ADD_CATEGORY("after_0", 150, 0.45, 0.45, 0.45, 0.55);
-         ADD_CATEGORY("after_1", 100, 0.55, 0.55, 0.55, 0.65);
-         ADD_CATEGORY("after_2", 75, 0.65, 0.65, 0.65, 0.75);
-         ADD_CATEGORY("after_3", 50, 0.75, 0.75, 0.75, 0.85);
-         ADD_CATEGORY("after_4", 25, 0.85, 0.85, 0.85, 0.95);
-         ADD_CATEGORY("after_5", 0, 0.95, 0.95, 0.95, 0.95);
+         /* Create 2 categories before, and 4 after the selected category.
+            The ones on the side (before_2 and after_5) have no size and are
+            only used for the next/previous animations
+         */
+         ADD_CATEGORY("before_2", 0, 50, 100,
+                      0.05, 0.05,
+                      0.05, 0.05, 0.05, 0.05,
+                      0.05, 0.15);
+         ADD_CATEGORY("before_1", 50, 100, 150,
+                      0.05, 0.05,
+                      0.15, 0.15, 0.05, 0.15,
+                      0.15, 0.25);
+         ADD_CATEGORY("before_0", 100, 150, 255,
+                      0.05, 0.15,
+                      0.25, 0.25, 0.15, 0.25,
+                      0.25, 0.45);
+         ADD_CATEGORY("selection", 150, 255, 150,
+                      0.15, 0.25,
+                      0.35, 0.35, 0.25, 0.45,
+                      0.45, 0.55);
+         ADD_CATEGORY("after_0", 255, 150, 100,
+                      0.25, 0.45,
+                      0.45, 0.45, 0.45, 0.55,
+                      0.55, 0.65);
+         ADD_CATEGORY("after_1", 150, 100, 75,
+                      0.45, 0.55,
+                      0.55, 0.55, 0.55, 0.65,
+                      0.65, 0.75);
+         ADD_CATEGORY("after_2", 100, 75, 50,
+                      0.55, 0.65,
+                      0.65, 0.65, 0.65, 0.75,
+                      0.75, 0.85);
+         ADD_CATEGORY("after_3", 75, 50, 25,
+                      0.65, 0.75,
+                      0.75, 0.75, 0.75, 0.85,
+                      0.85, 0.95);
+         ADD_CATEGORY("after_4", 50, 25, 0,
+                      0.75, 0.85,
+                      0.85, 0.85, 0.85, 0.95,
+                      0.95, 0.95);
+         ADD_CATEGORY("after_5", 25, 0, 0,
+                      0.85, 0.95,
+                      0.95, 0.95, 0.95, 0.95,
+                      0.95, 0.95);
       }
 
       programs {
@@ -336,7 +461,7 @@ collections {
 	    name: "debug";
 	    signal: "load";
             script {
-               part_swallow(PART:"FLHOC/menu/category.before_2", GROUP:"FLHOC/menu/category/settings");
+               part_swallow(PART:"FLHOC/menu/category.before_2", GROUP:"FLHOC/menu/category/device");
                part_swallow(PART:"FLHOC/menu/category.before_1", GROUP:"FLHOC/menu/category/settings");
                part_swallow(PART:"FLHOC/menu/category.before_0", GROUP:"FLHOC/menu/category/settings");
                part_swallow(PART:"FLHOC/menu/category.selection", GROUP:"FLHOC/menu/category/homebrew");
@@ -345,31 +470,124 @@ collections {
                part_swallow(PART:"FLHOC/menu/category.after_2", GROUP:"FLHOC/menu/category/device");
                part_swallow(PART:"FLHOC/menu/category.after_3", GROUP:"FLHOC/menu/category/device");
                part_swallow(PART:"FLHOC/menu/category.after_4", GROUP:"FLHOC/menu/category/device");
-               part_swallow(PART:"FLHOC/menu/category.after_5", GROUP:"FLHOC/menu/category/device");
+               part_swallow(PART:"FLHOC/menu/category.after_5", GROUP:"FLHOC/menu/category/settings");
             }
 	 }
-#endif
          program {
-            name: "show_xmb";
-            signal: "main/ready";
-            source: "*";
+            signal: "FLHOC/primary,set,end";
+            after: "init";
+         }
+#endif
+#define TARGET_ALL_CATEGORIES                                           \
+         target: "FLHOC/menu/category.before_2";                        \
+         target: "category_clip.before_2";                              \
+         target: "FLHOC/menu/category.before_1";                        \
+         target: "category_clip.before_1";                              \
+         target: "FLHOC/menu/category.before_0";                        \
+         target: "category_clip.before_0";                              \
+         target: "FLHOC/menu/category.selection";                       \
+         target: "category_clip.selection";                             \
+         target: "FLHOC/menu/category.after_0";                         \
+         target: "category_clip.after_0";                               \
+         target: "FLHOC/menu/category.after_1";                         \
+         target: "category_clip.after_1";                               \
+         target: "FLHOC/menu/category.after_2";                         \
+         target: "category_clip.after_2";                               \
+         target: "FLHOC/menu/category.after_3";                         \
+         target: "category_clip.after_3";                               \
+         target: "FLHOC/menu/category.after_4";                         \
+         target: "category_clip.after_4";                               \
+         target: "FLHOC/menu/category.after_5";                         \
+         target: "category_clip.after_5";
+         
+         program {
+            name: "init";
+            signal: "FLHOC/menu,init";
             action: STATE_SET "set" 0.0;
             transition: BOUNCE 1.5 3.0 4.0;
-            target: "FLHOC/menu/category.before_2";
-            target: "FLHOC/menu/category.before_1";
-            target: "FLHOC/menu/category.before_0";
-            target: "FLHOC/menu/category.selection";
-            target: "FLHOC/menu/category.after_0";
-            target: "FLHOC/menu/category.after_1";
-            target: "FLHOC/menu/category.after_2";
-            target: "FLHOC/menu/category.after_3";
-            target: "FLHOC/menu/category.after_4";
-            target: "FLHOC/menu/category.after_5";
-            after: "xmb_shown";
+            TARGET_ALL_CATEGORIES;
+            after: "ready";
          }
          program {
-            name: "xmb_shown";
-            action: SIGNAL_EMIT "FLHOC/menu/ready" "";
+            name: "ready";
+            action: SIGNAL_EMIT "FLHOC/menu,ready" "";
+         }
+#define ADD_CATEGORY_SET_UNSET_PROGRAM(NAME)                            \
+         program {                                                      \
+            name: "set,"NAME;                                           \
+            signal: "FLHOC/menu,category_set";                          \
+            source: NAME;                                               \
+            action: STATE_SET "set" 0.0;                                \
+            transition: ACCELERATE 1.0;                                 \
+            target: "FLHOC/menu/category."NAME;                         \
+         }                                                              \
+         program {                                                      \
+            name: "unset,"NAME;                                         \
+            signal: "FLHOC/menu,category_unset";                        \
+            source: NAME;                                               \
+            action: STATE_SET "unset" 0.0;                              \
+            transition: ACCELERATE 1.0;                                 \
+            target: "FLHOC/menu/category."NAME;                         \
+         }                                                              \
+         program {                                                      \
+            name: "set,"NAME",reset";                                   \
+            signal: "FLHOC/menu,category_set,reset";                    \
+            source: NAME;                                               \
+            action: STATE_SET "set" 0.0;                                \
+            transition: LINEAR 0.0;                                     \
+            target: "FLHOC/menu/category."NAME;                         \
+         }                                                              \
+         program {                                                      \
+            name: "unset,"NAME",reset";                                 \
+            signal: "FLHOC/menu,category_unset,reset";                  \
+            source: NAME;                                               \
+            action: STATE_SET "unset" 0.0;                              \
+            transition: LINEAR 0.0;                                     \
+            target: "FLHOC/menu/category."NAME;                         \
+         }
+         ADD_CATEGORY_SET_UNSET_PROGRAM("before_2");
+         ADD_CATEGORY_SET_UNSET_PROGRAM("before_1");
+         ADD_CATEGORY_SET_UNSET_PROGRAM("before_0");
+         ADD_CATEGORY_SET_UNSET_PROGRAM("selection");
+         ADD_CATEGORY_SET_UNSET_PROGRAM("after_0");
+         ADD_CATEGORY_SET_UNSET_PROGRAM("after_1");
+         ADD_CATEGORY_SET_UNSET_PROGRAM("after_2");
+         ADD_CATEGORY_SET_UNSET_PROGRAM("after_3");
+         ADD_CATEGORY_SET_UNSET_PROGRAM("after_4");
+         ADD_CATEGORY_SET_UNSET_PROGRAM("after_5");
+
+         /* Scrolling left means all parts must go to the right */
+         program {
+            name: "scroll_left";
+            signal: "FLHOC/menu,category_previous";
+            action: STATE_SET "next" 0.0;
+            transition: SINUSOIDAL 1.0;
+            TARGET_ALL_CATEGORIES;
+            after: "scroll_left_end";
+         }
+         /* Scrolling right means all parts must go to the left */
+         program {
+            name: "scroll_right";
+            signal: "FLHOC/menu,category_next";
+            action: STATE_SET "previous" 0.0;
+            transition: SINUSOIDAL 1.0;
+            TARGET_ALL_CATEGORIES;
+            after: "scroll_right_end";
+         }
+         program {
+            name: "reset";
+            signal: "FLHOC/menu,category_reset";
+            action: STATE_SET "set" 0.0;
+            transition: LINEAR 0.0;
+            TARGET_ALL_CATEGORIES;
+         }
+         program {
+            name: "scroll_left_end";
+            action: SIGNAL_EMIT "FLHOC/menu,category_previous,end" "";
+         }
+         program {
+            name: "scroll_right_end";
+            action: SIGNAL_EMIT "FLHOC/menu,category_next,end" "";
          }
       }
    }
@@ -394,8 +612,17 @@ collections {
                //color: 255 0 0 255;
 	    }
          }
-#define ADD_ITEM(NAME, ALPHA,                                           \
-                 START_POS_Y, END_POS_Y)                                \
+
+         /* Set the clip and swallow size to 3.75 times the category.
+            The selected one has a size of 0.20 and is positioned at 0.25
+            so to have the item fit the whole screen : 
+            0.20 * 3.75 = 0.75 + 0.25 == 1.00
+         */
+#define ADD_ITEM(NAME, PREVIOUS_ALPHA, ALPHA, NEXT_ALPHA,               \
+                 PREVIOUS_START_POS_Y, PREVIOUS_END_POS_Y,              \
+                 UNSET_START_POS_Y, UNSET_END_POS_Y,                    \
+                 SET_START_POS_Y, SET_END_POS_Y,                        \
+                 NEXT_START_POS_Y, NEXT_END_POS_Y)                      \
          part {                                                         \
             name: "item_clip."NAME;                                     \
             type: RECT;                                                 \
@@ -407,15 +634,32 @@ collections {
 		  offset: 0 0;                                          \
 	       }                                                        \
 	       rel2 {                                                   \
-                  relative: 1.0 1.0;                                    \
-		  offset: 400 -1;                                       \
-                  /*to_x: "whole_screen";*/                             \
+                  relative: 3.75 1.0;                                   \
+		  offset: -1 -1;                                        \
 	       }                                                        \
                color: 255 255 255 ALPHA;                                \
             }                                                           \
+            description {                                               \
+               state: "set" 0.0;                                        \
+               inherit: "default" 0.0;                                  \
+            }                                                           \
+            description {                                               \
+               state: "unset" 0.0;                                      \
+               inherit: "default" 0.0;                                  \
+            }                                                           \
+            description {                                               \
+               state: "next" 0.0;                                       \
+               inherit: "default" 0.0;                                  \
+               color: 255 255 255 NEXT_ALPHA;                           \
+            }                                                           \
+            description {                                               \
+               state: "previous" 0.0;                                   \
+               inherit: "default" 0.0;                                  \
+               color: 255 255 255 PREVIOUS_ALPHA;                       \
+            }                                                           \
          }                                                              \
          part {                                                         \
-            name: "FLHOC/menu/item."NAME;                               \
+            name: "FLHOC/menu/category/item."NAME;                               \
             type: SWALLOW;                                              \
             mouse_events: 0;                                            \
             clip_to: "item_clip."NAME;                                  \
@@ -437,12 +681,12 @@ collections {
                state: "unset" 0.0;                                      \
                visible: 0;                                              \
                rel1 {                                                   \
-                  relative: 0.0 START_POS_Y;                            \
+                  relative: 0.0 UNSET_START_POS_Y;                      \
                   offset: 0 5;                                          \
                   to_x: "item_clip".NAME;                               \
                }                                                        \
                rel2 {                                                   \
-                  relative: 1.0 START_POS_Y;                            \
+                  relative: 1.0 UNSET_END_POS_Y;                        \
                   offset: -1 -5;                                        \
                   to_x: "item_clip".NAME;                               \
                }                                                        \
@@ -452,26 +696,83 @@ collections {
                inherit: "default" 0.0;                                  \
                visible: 1;                                              \
                rel1 {                                                   \
-                  relative: 0.0 START_POS_Y;                            \
+                  relative: 0.0 SET_START_POS_Y;                        \
 		  offset: 0 5;                                          \
                   to_x: "item_clip".NAME;                               \
 	       }                                                        \
 	       rel2 {                                                   \
-                  relative: 1.0 END_POS_Y;                              \
+                  relative: 1.0 SET_END_POS_Y;                          \
+		  offset: -1 -5;                                        \
+                  to_x: "item_clip".NAME;                               \
+	       }                                                        \
+            }                                                           \
+            description {                                               \
+               state: "previous" 0.0;                                   \
+               rel1 {                                                   \
+                  relative: 0.0 PREVIOUS_START_POS_Y;                   \
+		  offset: 0 5;                                          \
+                  to_x: "item_clip".NAME;                               \
+	       }                                                        \
+	       rel2 {                                                   \
+                  relative: 1.0 PREVIOUS_END_POS_Y;                     \
+		  offset: -1 -5;                                        \
+                  to_x: "item_clip".NAME;                               \
+	       }                                                        \
+            }                                                           \
+            description {                                               \
+               state: "next" 0.0;                                       \
+               rel1 {                                                   \
+                  relative: 0.0 NEXT_START_POS_Y;                       \
+		  offset: 0 5;                                          \
+                  to_x: "item_clip".NAME;                               \
+	       }                                                        \
+	       rel2 {                                                   \
+                  relative: 1.0 NEXT_END_POS_Y;                         \
 		  offset: -1 -5;                                        \
                   to_x: "item_clip".NAME;                               \
 	       }                                                        \
             }                                                           \
          }
-         ADD_ITEM("before_2", 0, 0.00, 0.00);
-         ADD_ITEM("before_1", 50, 0.00, 0.04);
-         ADD_ITEM("before_0", 100, 0.04, 0.10);
-         ADD_ITEM("after_0", 150, 0.60, 0.775);
-         ADD_ITEM("after_1", 100, 0.775, 0.90);
-         ADD_ITEM("after_2", 50, 0.90, 0.96);
-         ADD_ITEM("after_3", 25, 0.96, 1.00);
-         ADD_ITEM("after_4", 0, 1.00, 1.00);
-         ADD_ITEM("selection", 255, 0.35, 0.55);
+         ADD_ITEM("before_2", 0, 0, 50,
+                  0.00, 0.00,
+                  0.00, 0.00, 0.00, 0.00, /* 0 */
+                  0.00, 0.04);
+         ADD_ITEM("before_1", 0, 50, 100,
+                  0.00, 0.00,
+                  0.04, 0.04, 0.00, 0.04, /* 4 */
+                  0.04, 0.10);
+         ADD_ITEM("before_0", 50, 100, 255,
+                  0.00, 0.04,
+                  0.10, 0.10, 0.04, 0.10, /* 6 */
+                  0.35, 0.55);
+         ADD_ITEM("selection", 100, 255, 150,
+                  0.04, 0.10,
+                  0.35, 0.35, 0.35, 0.55, /* 20 */
+                  0.60, 0.775);
+         ADD_ITEM("after_0", 255, 150, 100,
+                  0.35, 0.55,
+                  0.55, 0.55, 0.55, 0.69, /* 14 */
+                  0.69, 0.81);
+         ADD_ITEM("after_1", 150, 100, 75,
+                  0.55, 0.69,
+                  0.69, 0.69, 0.69, 0.81, /* 12 */
+                  0.81, 0.90);
+         ADD_ITEM("after_2", 100, 75, 50,
+                  0.69, 0.81,
+                  0.81, 0.81, 0.81, 0.90, /* 9 */
+                  0.90, 0.96);
+         ADD_ITEM("after_3", 75, 50, 25,
+                  0.775, 0.90,
+                  0.90, 0.90, 0.90, 0.96, /* 6 */
+                  0.96, 1.00);
+         ADD_ITEM("after_4", 50, 25, 0,
+                  0.90, 0.96,
+                  0.96, 0.96, 0.96, 1.00, /* 4 */
+                  1.00, 1.00);
+         ADD_ITEM("after_5", 25, 0, 0,
+                  0.96, 1.00,
+                  1.00, 1.00, 1.00, 1.00, /* 0 */
+                  1.00, 1.00);
 
 	 part {
 	    name: "icon";
@@ -508,7 +809,7 @@ collections {
 	    }
 	 }
 	 part {
-	    name: "FLHOC/menu/category/name";
+	    name: "name";
             type: TEXT;
             effect: SHADOW;
 	    mouse_events: 0;
@@ -547,47 +848,134 @@ collections {
 	 }
       }
       programs {
-	 program {
-	    name: "category_selected";
-	    signal: "FLHOC/menu/category_selected";
-	    source: "*";
+#define TARGET_ALL_ITEMS                                                \
+         target: "FLHOC/menu/category/item.before_2";                   \
+         target: "item_clip.before_2";                                  \
+         target: "FLHOC/menu/category/item.before_1";                   \
+         target: "item_clip.before_1";                                  \
+         target: "FLHOC/menu/category/item.before_0";                   \
+         target: "item_clip.before_0";                                  \
+         target: "FLHOC/menu/category/item.selection";                  \
+         target: "item_clip.selection";                                 \
+         target: "FLHOC/menu/category/item.after_0";                    \
+         target: "item_clip.after_0";                                   \
+         target: "FLHOC/menu/category/item.after_1";                    \
+         target: "item_clip.after_1";                                   \
+         target: "FLHOC/menu/category/item.after_2";                    \
+         target: "item_clip.after_2";                                   \
+         target: "FLHOC/menu/category/item.after_3";                    \
+         target: "item_clip.after_3";                                   \
+         target: "FLHOC/menu/category/item.after_4";                    \
+         target: "item_clip.after_4";                                   \
+         target: "FLHOC/menu/category/item.after_5";                    \
+         target: "item_clip.after_5";
+
+         program {
+            name: "category_selected";
+	    signal: "FLHOC/menu/category,selected";
             action: STATE_SET "selected" 0.0;
             transition: LINEAR 0.5;
             target: "icon";
-            target: "FLHOC/menu/category/name";
-            after: "show_items";
-	 }
+            target: "name";
+         }
          program {
             name: "show_items";
+	    signal: "FLHOC/menu/category,selected";
             action: STATE_SET "set" 0.0;
-            transition: LINEAR 2.0;
-            target: "FLHOC/menu/item.before_2";
-            target: "FLHOC/menu/item.before_1";
-            target: "FLHOC/menu/item.before_0";
-            target: "FLHOC/menu/item.selection";
-            target: "FLHOC/menu/item.after_0";
-            target: "FLHOC/menu/item.after_1";
-            target: "FLHOC/menu/item.after_2";
-            target: "FLHOC/menu/item.after_3";
-            target: "FLHOC/menu/item.after_4";
+            transition: LINEAR 0.5;
+            TARGET_ALL_ITEMS;
          }
-#ifdef DEBUG
-	 program {
-	    name: "debug";
-	    signal: "load";
-            script {
-               part_swallow(PART:"FLHOC/menu/item.before_2", GROUP:"FLHOC/menu/item");
-               part_swallow(PART:"FLHOC/menu/item.before_1", GROUP:"FLHOC/menu/item");
-               part_swallow(PART:"FLHOC/menu/item.before_0", GROUP:"FLHOC/menu/item");
-               part_swallow(PART:"FLHOC/menu/item.selection", GROUP:"FLHOC/menu/item/selected");
-               part_swallow(PART:"FLHOC/menu/item.after_0", GROUP:"FLHOC/menu/item");
-               part_swallow(PART:"FLHOC/menu/item.after_1", GROUP:"FLHOC/menu/item");
-               part_swallow(PART:"FLHOC/menu/item.after_2", GROUP:"FLHOC/menu/item");
-               part_swallow(PART:"FLHOC/menu/item.after_3", GROUP:"FLHOC/menu/item");
-               part_swallow(PART:"FLHOC/menu/item.after_4", GROUP:"FLHOC/menu/item");
-            }
-	 }
-#endif
+         program {
+            name: "category_deselected";
+	    signal: "FLHOC/menu/category,deselected";
+            action: STATE_SET "default" 0.0;
+            transition: LINEAR 0.5;
+            target: "icon";
+            target: "name";
+         }
+         program {
+            name: "hide_items";
+	    signal: "FLHOC/menu/category,deselected";
+            action: STATE_SET "default" 0.0;
+            transition: LINEAR 0.5;
+            TARGET_ALL_ITEMS;
+         }
+
+#define ADD_ITEM_SET_UNSET_PROGRAM(NAME)                                \
+         program {                                                      \
+            name: "set,"NAME;                                           \
+            signal: "FLHOC/menu/category,item_set";                     \
+            source: NAME;                                               \
+            action: STATE_SET "set" 0.0;                                \
+            transition: ACCELERATE 1.0;                                 \
+            target: "FLHOC/menu/category/item."NAME;                    \
+         }                                                              \
+         program {                                                      \
+            name: "unset,"NAME;                                         \
+            signal: "FLHOC/menu/category,item_unset";                   \
+            source: NAME;                                               \
+            action: STATE_SET "unset" 0.0;                              \
+            transition: ACCELERATE 1.0;                                 \
+            target: "FLHOC/menu/category/item."NAME;                    \
+         }                                                              \
+         program {                                                      \
+            name: "set,"NAME",reset";                                   \
+            signal: "FLHOC/menu/category,item_set,reset";               \
+            source: NAME;                                               \
+            action: STATE_SET "set" 0.0;                                \
+            transition: LINEAR 0.0;                                     \
+            target: "FLHOC/menu/category/item."NAME;                    \
+         }                                                              \
+         program {                                                      \
+            name: "unset,"NAME",reset";                                 \
+            signal: "FLHOC/menu/category,item_unset,reset";             \
+            source: NAME;                                               \
+            action: STATE_SET "unset" 0.0;                              \
+            transition: LINEAR 0.0;                                     \
+            target: "FLHOC/menu/category/item."NAME;                    \
+         }
+         ADD_ITEM_SET_UNSET_PROGRAM("before_2");
+         ADD_ITEM_SET_UNSET_PROGRAM("before_1");
+         ADD_ITEM_SET_UNSET_PROGRAM("before_0");
+         ADD_ITEM_SET_UNSET_PROGRAM("selection");
+         ADD_ITEM_SET_UNSET_PROGRAM("after_0");
+         ADD_ITEM_SET_UNSET_PROGRAM("after_1");
+         ADD_ITEM_SET_UNSET_PROGRAM("after_2");
+         ADD_ITEM_SET_UNSET_PROGRAM("after_3");
+         ADD_ITEM_SET_UNSET_PROGRAM("after_4");
+         ADD_ITEM_SET_UNSET_PROGRAM("after_5");
+
+         program {
+            name: "scroll_up";
+            signal: "FLHOC/menu/category,item_previous";
+            action: STATE_SET "previous" 0.0;
+            transition: SINUSOIDAL 1.0;
+            TARGET_ALL_ITEMS;
+            after: "scroll_up_end";
+         }
+         program {
+            name: "scroll_down";
+            signal: "FLHOC/menu/category,item_next";
+            action: STATE_SET "next" 0.0;
+            transition: SINUSOIDAL 1.0;
+            TARGET_ALL_ITEMS;
+            after: "scroll_down_end";
+         }
+         program {
+            name: "reset";
+            signal: "FLHOC/menu/category,item_reset";
+            action: STATE_SET "set" 0.0;
+            transition: LINEAR 0.0;
+            TARGET_ALL_ITEMS;
+         }
+         program {
+            name: "scroll_up_end";
+            action: SIGNAL_EMIT "FLHOC/menu/category,item_previous,end" "";
+         }
+         program {
+            name: "scroll_down_end";
+            action: SIGNAL_EMIT "FLHOC/menu/category,item_next,end" "";
+         }
       }
    }
 #define DEFINE_CATEGORY(NAME, IMAGE, TEXT)                              \
@@ -611,7 +999,7 @@ collections {
             }                                                           \
          }                                                              \
 	 part {                                                         \
-            name: "FLHOC/menu/category/name";                           \
+            name: "name";                                               \
             description {                                               \
                state: "default" 0.0;                                    \
                text {                                                   \
@@ -629,7 +1017,7 @@ collections {
    }
    DEFINE_CATEGORY("settings", "settings.png", "Settings");
    //DEFINE_CATEGORY("homebrew", "homebrew.png", "Homebrew");
-   DEFINE_CATEGORY("device", "device.png", "USB Device");
+   DEFINE_CATEGORY("device", "device.png", "USB Packages");
    group {
       name: "FLHOC/menu/category/homebrew";
       inherit: "FLHOC/menu/category";
@@ -650,7 +1038,7 @@ collections {
 	    }
          }
 	 part {
-	    name: "FLHOC/menu/category/name";
+	    name: "name";
 	    description {
 	       state: "default" 0.0;
                text {
@@ -667,17 +1055,41 @@ collections {
       }
 #ifdef DEBUG
       programs {
+	 program {
+	    name: "debug";
+	    signal: "load";
+            script {
+               part_swallow(PART:"FLHOC/menu/category/item.before_2", GROUP:"FLHOC/menu/item/selected");
+               part_swallow(PART:"FLHOC/menu/category/item.before_1", GROUP:"FLHOC/menu/item");
+               part_swallow(PART:"FLHOC/menu/category/item.before_0", GROUP:"FLHOC/menu/item");
+               part_swallow(PART:"FLHOC/menu/category/item.selection", GROUP:"FLHOC/menu/item/selected");
+               part_swallow(PART:"FLHOC/menu/category/item.after_0", GROUP:"FLHOC/menu/item");
+               part_swallow(PART:"FLHOC/menu/category/item.after_1", GROUP:"FLHOC/menu/item");
+               part_swallow(PART:"FLHOC/menu/category/item.after_2", GROUP:"FLHOC/menu/item");
+               part_swallow(PART:"FLHOC/menu/category/item.after_3", GROUP:"FLHOC/menu/item");
+               part_swallow(PART:"FLHOC/menu/category/item.after_4", GROUP:"FLHOC/menu/item");
+               part_swallow(PART:"FLHOC/menu/category/item.after_5", GROUP:"FLHOC/menu/item");
+            }
+	 }
          program {
-            //signal: "load";
-            action: STATE_SET "default" 0.0;
-            transition: LINEAR 3.0;
-            target: "icon";
-            after: "load";
+            signal: "FLHOC/menu,ready";
+	    after: "category_selected";
+	    after: "show_items";
          }
          program {
-            name: "load";
-            signal: "FLHOC/menu/ready";
+            signal: "FLHOC/menu,category_reset";
 	    after: "category_selected";
+	    after: "show_items";
+         }
+         program {
+            signal: "FLHOC/menu,category_previous";
+	    after: "category_deselected";
+	    after: "hide_items";
+         }
+         program {
+            signal: "FLHOC/menu,category_next";
+	    after: "category_deselected";
+	    after: "hide_items";
          }
       }
 #endif
@@ -762,7 +1174,7 @@ collections {
                text {
                   text: "Homebrew Game!!";
                   font: "Vera";
-                  //size_range: 10 35;
+                  size_range: 10 35;
                   size: 20;
                   align: 0.0 0.5;
                   fit: 1 1;
@@ -782,6 +1194,7 @@ collections {
       programs {
 	 program {
 	    name: "selected";
+            signal : "FLHOC/menu/item,selected";
 	    action: STATE_SET "selected" 0.0;
 	    transition: SINUSOIDAL 0.5;
 	    target: "FLHOC/menu/item/icon";
@@ -797,6 +1210,7 @@ collections {
 	 }
 	 program {
 	    name: "deselected";
+            signal : "FLHOC/menu/item,deselected";
 	    action: STATE_SET "default" 0.0;
 	    transition: SINUSOIDAL 0.5;
 	    target: "FLHOC/menu/item/icon";
@@ -854,4 +1268,5 @@ collections {
       }
    }
 #endif
+/* TODO: Add specific settings items and secondary screens */
 }

@@ -1,38 +1,110 @@
 - Main window
   - Group "main"
-  - Part "FLHOC" of type SWALLOW for the screen
+  - Part "FLHOC/primary" of type SWALLOW for the primary screen
+  - Part "FLHOC/secondary" of type SWALLOW for the secondary screens
+  - Signal handler "FLHOC/primary,set" for when setting the primary screen
+  - Signal handler "FLHOC/secondary,set" for when setting the secondary screen
+  - Signal handler "FLHOC/primary,unset" for when unsetting the primary screen
+  - Signal handler "FLHOC/secondary,unset" for when unsetting the secondary screen
+  - Signal "FLHOC/primary,set,end" for when setting the primary screen is done
+  - Signal "FLHOC/secondary,set,end" for when setting the secondary screen is done
+  - Signal "FLHOC/primary,unset,end" for when unsetting the primary screen is done
+  - Signal "FLHOC/secondary,unset,end" for when unsetting the secondary screen is done
 - Main menu group
   - Group "FLHOC/menu"
-  - Signal "FLHOC/menu/ready" for when the XMB is ready for actions
+  - Signal handler "FLHOC/menu,init" to start splash screen
+  - Signal "FLHOC/menu,ready" for when the menu is ready for actions
   - Custom Wallpaper (for games)
     - Part "FLHOC/menu/wallpaper" of type IMAGE for the wallpaper/background
-    - Signal handler "FLHOC/menu/wallpaper_set" for when the custom wallpaper is set
-    - Signal handler "FLHOC/menu/wallpaper_unset" for when the custom wallpaper is removed
-  - XMB categories
-    - Part "FLHOC/menu/category.before_%d" of type SWALLOW for previous categories
+    - Signal handler "FLHOC/menu/wallpaper,set" for when the custom wallpaper is set
+    - Signal handler "FLHOC/menu/wallpaper,unset" for when the custom wallpaper is removed
+  - Menu categories
+    - Parts "FLHOC/menu/category.before_%d" of type SWALLOW for previous categories
     - Part "FLHOC/menu/category.selection" of type SWALLOW for the selected category
-    - Part "FLHOC/menu/category.after_%d" of type SWALLOW for next categories
-    - Signal handler "FLHOC/menu/category_set" for when a category is valid
-    - Signal handler "FLHOC/menu/category_unset" for when a category is invalid
-    - Signal handler "FLHOC/menu/category_next" for when you seek to the next category
-    - Signal handler "FLHOC/menu/category_previous" for when you seek the previous category
-    - Signal handler "FLHOC/menu/category_error_tail" for when you try to seek beyond the end
-    - Signal handler "FLHOC/menu/category_error_head" for when you try to seek before the start
-    - Individual Categories
-      - Group "FLHOC/menu/category/settings" for the settings
-      - Group "FLHOC/menu/category/homebrew" for the homebrew games
-      - Group "FLHOC/menu/category/device" for the devices
+    - Parts "FLHOC/menu/category.after_%d" of type SWALLOW for next categories
+    - Signal handler "FLHOC/menu,category_set" for when a category is added
+      - The source of the signal will be the suffix of the part that was set 
+    - Signal handler "FLHOC/menu,category_unset" for when a category is removed
+      - The source of the signal will be the suffix of the part that was unset 
+    - Signal handler "FLHOC/menu,category_set,reset" for when a category is valid after a reset
+      - The source of the signal will be the suffix of the part that was set 
+    - Signal handler "FLHOC/menu,category_unset,reset" for when a category is invalid after a reset
+      - The source of the signal will be the suffix of the part that was unset
+    - Signal handler "FLHOC/menu,category_next" for when the user scrolls to the next category
+    - Signal handler "FLHOC/menu,category_previous" for when the user scrolls the previous category
+    - Signal handler "FLHOC/menu,category_reset" for resetting the state to all set after a next/previous
+    - Signal handler "FLHOC/menu,category_error_tail" for when the user tries to seek beyond the end
+    - Signal handler "FLHOC/menu,category_error_head" for when the user tries to seek before the start
+    - Signal "FLHOC/menu,category_next,end" for when the animation of a 'next' scroll is finished
+    - Signal "FLHOC/menu,category_previous,end" for when the animation of a 'previous' scroll is finished
 
 - "FLHOC/menu/category/*" groups :
-  - Part "FLHOC/menu/category/icon" of type IMAGE for the icon
-  - Part "FLHOC/menu/category/text" of type TEXT for the text
-  - Signal handler "FLHOC/menu/category_selected" when selecting it
-  - Signal handler "FLHOC/menu/category_deselected" when deselecting it
+  - Signal handler "FLHOC/menu/category,selected" when selecting it
+  - Signal handler "FLHOC/menu/category,deselected" when deselecting it
+  - Signal "FLHOC/menu/category,selected,end" when the animation of 'selected' is finished
+  - Signal "FLHOC/menu/category,deselected,end" when the animation of 'deselected' is finished
+  - Category Items
+    - Parts "FLHOC/menu/category/item.before_%d" of type SWALLOW for previous items
+    - Part "FLHOC/menu/category/item.selection" of type SWALLOW for the selected item
+    - Parts "FLHOC/menu/category/item.after_%d" of type SWALLOW for next items
+    - Signal handler "FLHOC/menu/category,item_set" for when an item is added
+      - The source of the signal will be the suffix of the part that was set 
+    - Signal handler "FLHOC/menu/category,item_unset" for when an item is removed
+      - The source of the signal will be the suffix of the part that was unset 
+    - Signal handler "FLHOC/menu/category,item_set,reset" for when an item is valid after a reset
+      - The source of the signal will be the suffix of the part that was set 
+    - Signal handler "FLHOC/menu/category,item_unset,reset" for when an item is invalid after a reset
+      - The source of the signal will be the suffix of the part that was unset 
+    - Signal handler "FLHOC/menu/category,item_next" for when the user scrolls to the next item
+    - Signal handler "FLHOC/menu/category,item_previous" for when the user scrolls the previous item
+    - Signal handler "FLHOC/menu/category,item_reset" for resetting the state to all set after a next/previous
+    - Signal handler "FLHOC/menu/category,item_error_tail" for when the user tries to seek beyond the end
+    - Signal handler "FLHOC/menu/category,item_error_head" for when the user tries to seek before the start
+    - Signal "FLHOC/menu/category,item_next,end" for when the animation of a 'next' scroll is finished
+    - Signal "FLHOC/menu/category,item_previous,end" for when the animation of a 'previous' scroll is finished
+  - Accepted Individual Categories
+    - Group "FLHOC/menu/category/settings" for the settings
+    - Group "FLHOC/menu/category/homebrew" for the installed homebrew games
+    - Group "FLHOC/menu/category/device" for the devices
 
+- Group "FLHOC/menu/item" for a generic item
+  - Part "FLHOC/menu/item/icon" for the game/item icon
+  - Part "FLHOC/menu/item/title" for the game/item title
+  - Signal handler "FLHOC/menu/item,selected" when selecting it
+  - Signal handler "FLHOC/menu/item,deselected" when deselecting it
 
-At first, the "main" group will be created and the "FLHOC" part will be swallowed by the "FLHOC" group.
-All swallowed parts will be set according to the current status, then the mainloop will run (load/show signals will be sent). Then FLHOC will wait for the "FLHOC/menu/ready" signal from edje before processing input events.
-After the "FLHOC/menu/ready" signal is received, FLHOC will send the proper signals to represent the state (selected, set, unset) to swallowed parts.
-This is to allow you to do an animation with the final status of the xmb at bootup (since swallowed parts that are empty will not appear, you can assume all are 'set').
-A new category/item will be swallowed before sending the "*_set" signal to the corresponding part.
-Any signal with the source set to "forward" will be forwarded to the underlying swallowed objects
+Behavior :
+
+At first, the "main" group will be created and the "FLHOC/primary" part will be swallowed by the "FLHOC/menu" group.
+All swallowed parts from "FLHOC/menu" will be set depending on the available categories at startup .
+Then the signal "FLHOC/primary,set" will be sent to the "main" group so it can show the screen, then it should send
+the signal "FLHOC/primary,set,end" to notify the app that the animation is done and the primary screen is shown.
+Then the signal "FLHOC/menu,init" will be sent to notify the group to start any initialization, then it will wait to receive
+the signal "FLHOC/menu,ready" at which point it will send the signal "FLHOC/menu,category_set,reset" and
+the signal "FLHOC/menu,category_unset,reset" to the group with the source of the emission set to the part name's suffix
+that is set or unset ("before_0" will be sent for part "FLHOC/menu/category.before_0" for example) to reflect that status.
+
+This is to allow you to do an animation or splash screen at bootup. Since non-swallowed parts will appear invisble,
+you can assume that all the parts are 'set', until you receive the "FLHOC/menu_category_set,reset" and
+"FLHOC/menu/category_unset,reset" signals. Note that these two signals (the ',reset' variants) should be instantenuous, so
+the user shouldn't notice that they happened. It will only allow you to have a better animation if later a new category
+is added and the "FLHOC/menu/category_set" signal is sent for it.
+
+The item parts of a category will be swallowed then the "FLHOC/menu/category,selected" signal will be sent to the
+selected category. You can assume that all are items are 'set' at that point. Once the animation is done, you should
+send the "FLHOC/menu/category,selected,end" signal, at which point the "FLHOC/menu/category,item_set,reset"
+and "FLHOC/menu/category,item_unset,reset" signals will be sent for each item.
+
+There you go, the menu is finally appearing and you are ready to handle user events!
+At this point, the user can either scroll the categories or the items, for both, the behavior is the same, you will
+receive the signal "*_next" or "*_previous" to create the scrolling, once you are done, you should send the associated
+",end" signal. FLHOC will then send the unswallow and swallow the parts properly to reflect the scroll then it will
+send the signal "*_reset" to reset the screen as it should be, and send the "*_set,reset" and "*_unset,reset" signals.
+This next,end->swallow->unswallow->reset->set,reset+unset,reset chain of events should happen instantenuously so that the
+user does not perceive it and only sees the actual scrolling animation.
+In the case of categories, the selected one will also receive a "*,category_unselected" signal and the next/previous one
+will receive the "*,category_selected" signal. After the "*,category_selected,end" signal is received, the
+ "*item_set,reset" and "*item_unset,reset" will be called to put the items in a consistent state.
+There will never be a item_set/item_unset or item_set,reset/item_unset,reset signals when the category is not selected.
+
+Any signal with the source set to "forward" will be forwarded to the underlying swallowed objects. This can be useful to synchronize animations between all groups.
