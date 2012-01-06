@@ -54,9 +54,11 @@ static void _menu_scroll_previous_cb (void *data, Evas_Object *obj,
 static void _menu_scroll_next_cb (void *data, Evas_Object *obj,
     const char  *emission, const char  *source);
 static MainWindow *main_window_new (Evas *evas, const char *filename);
+static void main_window_free (MainWindow *main_win);
 static void main_window_set_primary (MainWindow *main, Evas_Object *edje,
     void *primary);
 static Menu *menu_new (MainWindow *main);
+static void menu_free (Menu *menu);
 static Category *category_new (Menu *menu, const char *group);
 static int menu_swallow_category (Menu *menu, Category *category,
     int index, const char *signal_suffix);
@@ -155,6 +157,8 @@ _key_down_cb (void *data, Evas *e, Evas_Object *obj, void *event_info)
   } else if (strcmp (ev->keyname, "Right") == 0) {
     Menu *menu = main_win->primary;
     menu_scroll_next (menu);
+  } else if (strcmp (ev->keyname, "Escape") == 0) {
+    ecore_main_loop_quit();
   }
 }
 
@@ -174,7 +178,10 @@ main_window_new (Evas *evas, const char *filename)
   main_win->edje_file = strdup (filename);
   main_win->evas = evas;
   main_win->edje = edje_object_add (evas);
-  edje_object_file_set (main_win->edje, main_win->edje_file, "main");
+  if (!edje_object_file_set (main_win->edje, main_win->edje_file, "main")) {
+    main_window_free (main_win);
+    return NULL;
+  }
   edje_object_signal_callback_add (main_win->edje, "*", "*",
       _main_signal_cb, main_win);
   evas_object_event_callback_add(main_win->edje, EVAS_CALLBACK_KEY_DOWN,
@@ -184,6 +191,13 @@ main_window_new (Evas *evas, const char *filename)
   evas_object_focus_set (main_win->edje, EINA_TRUE);
 
   return main_win;
+}
+
+static void
+main_window_free (MainWindow *main_win)
+{
+  evas_object_del (main_win->edje);
+  free (main_win);
 }
 
 static void
@@ -201,10 +215,20 @@ menu_new (MainWindow *main_win)
 
   menu->parent = main_win;
   menu->edje = edje_object_add (main_win->evas);
-  edje_object_file_set (menu->edje, main_win->edje_file, "FLHOC/menu");
+  if (!edje_object_file_set (menu->edje, main_win->edje_file, "FLHOC/menu")) {
+    menu_free (menu);
+    return NULL;
+  }
   edje_object_signal_callback_add (menu->edje, "*", "*", _menu_signal_cb, menu);
 
   return menu;
+}
+
+static void
+menu_free (Menu *menu)
+{
+  evas_object_del (menu->edje);
+  free (menu);
 }
 
 static Category *
@@ -271,7 +295,6 @@ menu_set_categories (Menu *menu, const char *signal)
   Eina_List *cur = NULL;
   Category *category;
   int index = 0;
-  Eina_Bool *ret;
 
   if (menu->categories_selection) {
     category = eina_list_data_get (menu->categories_selection);
@@ -357,47 +380,51 @@ _add_main_categories (Menu *menu)
   menu->categories = eina_list_append (menu->categories, category);
   category = category_new (menu, "FLHOC/menu/category/device");
   menu->categories = eina_list_append (menu->categories, category);
+  category = category_new (menu, "FLHOC/menu/category/settings");
+  menu->categories = eina_list_append (menu->categories, category);
+  category = category_new (menu, "FLHOC/menu/category/homebrew");
+  menu->categories = eina_list_append (menu->categories, category);
+  category = category_new (menu, "FLHOC/menu/category/device");
+  menu->categories = eina_list_append (menu->categories, category);
+  category = category_new (menu, "FLHOC/menu/category/device");
+  menu->categories = eina_list_append (menu->categories, category);
+  category = category_new (menu, "FLHOC/menu/category/settings");
+  menu->categories = eina_list_append (menu->categories, category);
+  category = category_new (menu, "FLHOC/menu/category/homebrew");
+  menu->categories = eina_list_append (menu->categories, category);
+  category = category_new (menu, "FLHOC/menu/category/device");
+  menu->categories = eina_list_append (menu->categories, category);
+  category = category_new (menu, "FLHOC/menu/category/device");
+  menu->categories = eina_list_append (menu->categories, category);
+  category = category_new (menu, "FLHOC/menu/category/settings");
+  menu->categories = eina_list_append (menu->categories, category);
+  category = category_new (menu, "FLHOC/menu/category/homebrew");
+  menu->categories = eina_list_append (menu->categories, category);
+  category = category_new (menu, "FLHOC/menu/category/device");
+  menu->categories = eina_list_append (menu->categories, category);
+  category = category_new (menu, "FLHOC/menu/category/device");
+  menu->categories = eina_list_append (menu->categories, category);
 
   menu->categories_selection = eina_list_next (menu->categories);
 
   return EINA_TRUE;
 }
 
-static void
-_add_game (Ecore_Evas *ee, Evas *evas, Evas_Object *edje, const char *name)
+static Eina_Bool
+_ee_signal_exit(void* data, int ev_type, void* ev)
 {
-  Evas_Object *item = NULL;
-  Evas_Object *box = NULL;
-  Evas_Coord w, h;
-
-  item = edje_object_add (evas);
-  if (!edje_object_file_set (item, "data/themes/default/default.edj",
-          "FLHOC/item")) {
-    int err = edje_object_load_error_get (edje);
-    const char *errmsg = edje_load_error_str (err);
-    printf ("could not load 'FLHOC/item' from themes/default.edj: %s\n",
-        errmsg);
-  }
-  box = edje_object_part_object_get (edje, "FLHOC/items");
-  evas_object_geometry_get (box, NULL, NULL, &w, &h);
-  printf ("%dx%d\n", w, h);
-  evas_object_move (item, 0, 0);
-  //evas_object_resize (item, 200, 200);
-  evas_object_show (item);
-  if (!edje_object_part_box_append(edje, "FLHOC/items", item))
-    printf("An error ocurred when appending item to the box.\n");
-
-  edje_object_part_text_set (item, "FLHOC/item/title", name);
+  ecore_main_loop_quit();
+  return 0;
 }
 
 int
 main (int argc, char *argv[])
 {
-  Ecore_Evas *ee;
-  Evas *evas;
+  Ecore_Evas *ee = NULL;
+  Evas *evas = NULL;
   Evas_Coord w, h;
-  MainWindow *main_win;
-  Menu *menu;
+  MainWindow *main_win = NULL;
+  Menu *menu = NULL;
 
   if (!ecore_init ()) {
     printf ("error setting up ecore\n");
@@ -410,7 +437,7 @@ main (int argc, char *argv[])
   }
   if (!edje_init ()) {
     printf ("error setting up edje\n");
-    goto ecore_shutdown;
+    goto ecore_evas_shutdown;
   }
 
   //ee = ecore_evas_new (NULL, 0, 0, 1280, 720, NULL);
@@ -419,8 +446,14 @@ main (int argc, char *argv[])
   ecore_evas_show (ee);
   evas = ecore_evas_get (ee);
   evas_output_size_get (evas, &w, &h);
+  ecore_event_handler_add(ECORE_EVENT_SIGNAL_EXIT, _ee_signal_exit, NULL);
 
   main_win = main_window_new (evas, "data/themes/default/default.edj");
+  if (main_win == NULL) {
+    printf ("error creating main window\n");
+    goto edje_shutdown;
+  }
+
   ecore_evas_object_associate(ee, main_win->edje, ECORE_EVAS_OBJECT_ASSOCIATE_BASE);
 
   evas_object_move (main_win->edje, 0, 0);
@@ -428,6 +461,10 @@ main (int argc, char *argv[])
   evas_object_show (main_win->edje);
 
   menu = menu_new (main_win);
+  if (menu == NULL) {
+    printf ("error creating menu\n");
+    goto edje_shutdown;
+  }
   _add_main_categories (menu);
   menu_set_categories (menu, NULL);
 
@@ -437,8 +474,18 @@ main (int argc, char *argv[])
   main_window_set_primary (main_win, menu->edje, menu);
 
   ecore_main_loop_begin ();
+
  edje_shutdown:
+  if (ee)
+    ecore_evas_free (ee);
+  if (menu)
+    menu_free (menu);
+  if (main_win)
+    main_window_free (main_win);
+
   edje_shutdown ();
+ ecore_evas_shutdown:
+  ecore_evas_shutdown ();
  ecore_shutdown:
   ecore_shutdown ();
 

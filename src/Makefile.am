@@ -23,17 +23,6 @@ AM_CFLAGS = \
 
 bin_PROGRAMS = homebrew_center
 
-homebrew_center_SOURCES =  types.h \
-		tools.c \
-		tools.h \
-		keys.c \
-		keys.h \
-		aes.c \
-		aes.h \
-		sha1.c \
-		sha1.h \
-		homebrew_center.c \
-		pkg.c \
-		paged_file.c
+homebrew_center_SOURCES = homebrew_center.c
 
 homebrew_center_LDADD = @EFL_LIBS@
