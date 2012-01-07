@@ -31,18 +31,22 @@ struct _Menu {
   Eina_List *categories_selection;
 };
 
+typedef void (*CategoryActionCb) (Category *Category);
 struct _Category {
   Menu *parent;
   Evas_Object *edje;
   char *group;
   Eina_List *items;
   Eina_List *items_selection;
+  CategoryActionCb action;
 };
 
+typedef void (*ItemActionCb) (Item *item);
 struct _Item {
   Category *parent;
   Evas_Object *edje;
   char *group;
+  ItemActionCb action;
 };
 
 

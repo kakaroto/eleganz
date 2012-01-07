@@ -6,11 +6,17 @@ fonts {
 
 images {
    image: "wallpaper.png" COMP;
-   image: "selbox_glow.png" COMP;
+   image: "clock_box.png" COMP;
    image: "settings.png" COMP;
    image: "homebrew.png" COMP;
    image: "device.png" COMP;
-   image: "unknown.png" COMP;
+   image: "dummy.png" COMP;
+   image: "package.png" COMP;
+   image: "theme.png" COMP;
+   image: "warning.png" COMP;
+   image: "quit.png" COMP;
+   image: "help.png" COMP;
+   image: "update.png" COMP;
 }
 
 collections {
@@ -125,7 +131,7 @@ collections {
                   to: "FLHOC/primary";
 	       }
                image {
-                  normal: "selbox_glow.png";
+                  normal: "clock_box.png";
                }
 	    }
 	 }
@@ -196,6 +202,18 @@ collections {
 	 program {
 	    name: "primary_set_end";
             action: SIGNAL_EMIT "FLHOC/primary,set,end" "";
+         }
+	 program {
+	    name: "primary_unset";
+	    signal: "FLHOC/primary,unset";
+	    action: STATE_SET "default" 0.0;
+	    transition: ACCELERATE 1.0;
+	    target: "FLHOC/primary";
+            after: "primary_unset_end";
+	 }
+	 program {
+	    name: "primary_unset_end";
+            action: SIGNAL_EMIT "FLHOC/primary,unset,end" "";
          }
 	 program {
 	    name: "secondary_set";
@@ -767,7 +785,7 @@ collections {
 		  offset: -1 -1;
 	       }
                image {
-                  normal: "unknown.png";
+                  normal: "dummy.png";
                }
 	    }
 	    description {
@@ -802,8 +820,7 @@ collections {
                color: 255 255 255 255;
                color2: 0 0 0 255;
                text {
-                  //text:        "Category";
-                  font:        "Edje Vera Bold";
+                  font:        "Edje Vera";
                   size:         20;
                   fit:          1 1;
                }
@@ -819,6 +836,9 @@ collections {
 		  relative: 1.0 0.35;
 		  offset: -1 -1;
 	       }
+               text {
+                  font:        "Edje Vera Bold";
+               }
             }
 	 }
       }
@@ -1004,6 +1024,10 @@ collections {
    DEFINE_CATEGORY("homebrew", "homebrew.png", "Homebrew");
    DEFINE_CATEGORY("device_packages", "device.png", "USB Packages");
    DEFINE_CATEGORY("device_homebrew", "device.png", "USB Homebrew");
+   DEFINE_CATEGORY("theme", "theme.png", "Theme");
+   DEFINE_CATEGORY("quit", "quit.png", "Quit");
+   DEFINE_CATEGORY("update", "update.png", "Update Homebrew Center");
+
 
    group {
       name: "FLHOC/menu/item";
@@ -1044,7 +1068,7 @@ collections {
 		  offset: -1 -1;
 	       }
 	       image {
-		  normal: "unknown.png";
+		  normal: "dummy.png";
 	       }
 	    }
 	    description {

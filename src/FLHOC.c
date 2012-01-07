@@ -11,10 +11,7 @@
 
 #include "FLHOC_menu.h"
 
-static int _add_main_categories (Menu *menu);
-static int _add_main_items (Category *category);
-static void _key_down_cb (void *data, Evas *e, Evas_Object *obj, void *event);
-static void _key_up_cb (void *data, Evas *e, Evas_Object *obj, void *event);
+static int _add_game_items (Category *category);
 
 static void
 _key_down_cb (void *data, Evas *e, Evas_Object *obj, void *event)
@@ -35,6 +32,17 @@ _key_down_cb (void *data, Evas *e, Evas_Object *obj, void *event)
   } else if (strcmp (ev->keyname, "Escape") == 0 ||
       strcmp (ev->keyname, "q") == 0) {
     ecore_main_loop_quit();
+  } else if (strcmp (ev->keyname, "Return") == 0) {
+    Category *category = menu_get_selected_category (menu);
+    Item *item = category_get_selected_item (category);
+
+    if (item) {
+      if (item->action)
+        item->action (item);
+    } else {
+      if (category->action)
+        category->action (category);
+    }
   } else if (strcmp (ev->keyname, "f") == 0) {
     Ecore_Evas *ee = ecore_evas_ecore_evas_get (main_win->evas);
     ecore_evas_fullscreen_set (ee, !ecore_evas_fullscreen_get (ee));
@@ -42,7 +50,7 @@ _key_down_cb (void *data, Evas *e, Evas_Object *obj, void *event)
     Category *category;
 
     category = category_new (menu, "FLHOC/menu/category/device_homebrew");
-    _add_main_items (category);
+    _add_game_items (category);
     menu_append_category (menu, category);
     category = category_new (menu, "FLHOC/menu/category/device_packages");
     menu_append_category (menu, category);
@@ -77,11 +85,21 @@ _key_down_cb (void *data, Evas *e, Evas_Object *obj, void *event)
 }
 
 static void
-_key_up_cb (void *data, Evas *e, Evas_Object *obj, void *event)
+_quit_ready_cb (void *data, Evas_Object *obj,
+    const char  *emission, const char  *source)
 {
-  Evas_Event_Key_Up *ev = event;
+  ecore_main_loop_quit ();
+}
 
-  //printf ("Key Up: '%s' - '%s' - '%s' - '%s'\n", ev->keyname, ev->key, ev->string, ev->compose);
+static void
+_category_action_quit (Category *category)
+{
+  Menu *menu = category->parent;
+  MainWindow *main_win = menu->parent;
+
+  edje_object_signal_callback_add (main_win->edje, "FLHOC/primary,unset,end", "*",
+      _quit_ready_cb, main_win);
+  edje_object_signal_emit (main_win->edje, "FLHOC/primary,unset", "");
 }
 
 static Eina_Bool
@@ -93,7 +111,7 @@ _ee_signal_exit(void* data, int ev_type, void* ev)
 
 
 static int
-_add_main_items (Category *category)
+_add_game_items (Category *category)
 {
   Item *item = NULL;
 
@@ -118,18 +136,43 @@ _add_main_items (Category *category)
   return EINA_TRUE;
 }
 
-static int
+static void
+_populate_themes (Category *themes)
+{
+  /* TODO */
+}
+
+static Eina_Bool
 _add_main_categories (Menu *menu)
 {
   Category *category = NULL;
+  Category *homebrew = NULL;
+  Item *item = NULL;
 
+  category = category_new (menu, "FLHOC/menu/category/quit");
+  category->action = _category_action_quit;
+  menu_append_category (menu, category);
+  category = category_new (menu, "FLHOC/menu/category/update");
+  menu_append_category (menu, category);
+  category = category_new (menu, "FLHOC/menu/category/theme");
+  _populate_themes (category);
+  menu_append_category (menu, category);
   category = category_new (menu, "FLHOC/menu/category/settings");
   menu_append_category (menu, category);
-  category = category_new (menu, "FLHOC/menu/category/homebrew");
-  _add_main_items (category);
-  menu_append_category (menu, category);
+  item = item_new (category, "FLHOC/menu/item");
+  edje_object_part_text_set (item->edje, "FLHOC/menu/item/title",
+      "Press 'A' to add icons and 'D' or 'S' to delete them");
+  category_append_item (category, item);
+  item = item_new (category, "FLHOC/menu/item");
+  edje_object_part_text_set (item->edje, "FLHOC/menu/item/title",
+      "Press 'F' for fullscreen and 'Q' to exit");
+  category_append_item (category, item);
+  category_set_items (category, NULL);
+  homebrew = category_new (menu, "FLHOC/menu/category/homebrew");
+  _add_game_items (homebrew);
+  menu_append_category (menu, homebrew);
 
-  menu->categories_selection = eina_list_data_find_list (menu->categories, category);
+  menu->categories_selection = eina_list_data_find_list (menu->categories, homebrew);
 
   menu_set_categories (menu, NULL);
 
@@ -195,8 +238,6 @@ main (int argc, char *argv[])
   /* Start the process */
   evas_object_event_callback_add(main_win->edje, EVAS_CALLBACK_KEY_DOWN,
       _key_down_cb, main_win);
-  evas_object_event_callback_add(main_win->edje, EVAS_CALLBACK_KEY_UP,
-      _key_up_cb, main_win);
   evas_object_focus_set (main_win->edje, EINA_TRUE);
   main_window_init (main_win, menu);
 

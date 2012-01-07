@@ -1,6 +1,6 @@
 
 EDJE_CC = @edje_cc@
-EDJE_FLAGS = -v -id $(top_srcdir)/data/themes/default -fd $(top_srcdir)/data/themes/default
+EDJE_FLAGS = -v -id $(top_srcdir)/data/themes/default/images -fd $(top_srcdir)/data/themes/default/fonts
 
 EXTRA_DIST = \
 default.edc

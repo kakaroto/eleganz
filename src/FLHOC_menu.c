@@ -358,6 +358,7 @@ menu_scroll_next (Menu *menu)
   Category *new = eina_list_data_get (next);
   Item *item_selection = category_get_selected_item (old);
 
+  _category_reset (old);
   _menu_reset (menu);
   if (next && new) {
     edje_object_signal_emit (old->edje, "FLHOC/menu/category,deselected", "");
@@ -379,6 +380,7 @@ menu_scroll_previous (Menu *menu)
   Category *new = eina_list_data_get (previous);
   Item *item_selection = category_get_selected_item (old);
 
+  _category_reset (old);
   _menu_reset (menu);
   if (previous && new) {
     edje_object_signal_emit (old->edje, "FLHOC/menu/category,deselected", "");
