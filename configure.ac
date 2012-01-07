@@ -3,7 +3,7 @@
 
 AC_PREREQ([2.66])
 AC_INIT([FLHOC], [0.1], [])
-AC_CONFIG_SRCDIR([src/homebrew_center.c])
+AC_CONFIG_SRCDIR([src/FLHOC.c])
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([-Wall])
 

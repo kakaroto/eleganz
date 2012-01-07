@@ -21,8 +21,9 @@ AM_CFLAGS = \
 	-Wno-redundant-decls \
 	-g -O0
 
-bin_PROGRAMS = homebrew_center
+bin_PROGRAMS = FLHOC
 
-homebrew_center_SOURCES = homebrew_center.c
+FLHOC_SOURCES = FLHOC.c \
+	FLHOC_menu.h FLHOC_menu.c
 
-homebrew_center_LDADD = @EFL_LIBS@
+FLHOC_LDADD = @EFL_LIBS@

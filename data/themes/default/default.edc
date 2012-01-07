@@ -1,7 +1,4 @@
 
-//#define DEBUG
-
-
 fonts {
    font: "Vera.ttf"   "Edje Vera";
    font: "VeraBd.ttf" "Edje Vera Bold";
@@ -14,9 +11,6 @@ images {
    image: "homebrew.png" COMP;
    image: "device.png" COMP;
    image: "unknown.png" COMP;
-#ifdef DEBUG
-   image: "eskiss.png" COMP;
-#endif
 }
 
 collections {
@@ -175,7 +169,7 @@ collections {
                color2: 0 0 0 255;
                text {
                   text:        "Hello world!";
-                  font:        "Vera";
+                  font:        "Edje Vera";
                   size:         20;
                   fit:          1 1;
                }
@@ -183,19 +177,6 @@ collections {
 	 }
       }
       programs {
-#ifdef DEBUG
-	 program {
-	    name: "debug";
-	    signal: "load";
-            script {
-               part_swallow(PART:"FLHOC/primary", GROUP:"FLHOC/menu");
-            }
-	 }
-	 program {
-	    signal: "show";
-            after: "primary_set";
-         }
-#endif
          program {
             name: "init_clock";
             signal: "load";
@@ -237,6 +218,12 @@ collections {
       name: "FLHOC/menu";
       min: 640 480;
       max: 1920 1080;
+      data {
+         item: "category_next" "Right";
+         item: "category_previous" "Left";
+         item: "item_next" "Down";
+         item: "item_previous" "Up";
+      }
       parts {
          part {
 	    name: "clip";
@@ -456,28 +443,6 @@ collections {
       }
 
       programs {
-#ifdef DEBUG
-	 program {
-	    name: "debug";
-	    signal: "load";
-            script {
-               part_swallow(PART:"FLHOC/menu/category.before_2", GROUP:"FLHOC/menu/category/device");
-               part_swallow(PART:"FLHOC/menu/category.before_1", GROUP:"FLHOC/menu/category/settings");
-               part_swallow(PART:"FLHOC/menu/category.before_0", GROUP:"FLHOC/menu/category/settings");
-               part_swallow(PART:"FLHOC/menu/category.selection", GROUP:"FLHOC/menu/category/homebrew");
-               part_swallow(PART:"FLHOC/menu/category.after_0", GROUP:"FLHOC/menu/category/device");
-               part_swallow(PART:"FLHOC/menu/category.after_1", GROUP:"FLHOC/menu/category/device");
-               part_swallow(PART:"FLHOC/menu/category.after_2", GROUP:"FLHOC/menu/category/device");
-               part_swallow(PART:"FLHOC/menu/category.after_3", GROUP:"FLHOC/menu/category/device");
-               part_swallow(PART:"FLHOC/menu/category.after_4", GROUP:"FLHOC/menu/category/device");
-               part_swallow(PART:"FLHOC/menu/category.after_5", GROUP:"FLHOC/menu/category/settings");
-            }
-	 }
-         program {
-            signal: "FLHOC/primary,set,end";
-            after: "init";
-         }
-#endif
 #define TARGET_ALL_CATEGORIES                                           \
          target: "FLHOC/menu/category.before_2";                        \
          target: "category_clip.before_2";                              \
@@ -561,7 +526,7 @@ collections {
             name: "scroll_left";
             signal: "FLHOC/menu,category_previous";
             action: STATE_SET "next" 0.0;
-            transition: SINUSOIDAL 1.0;
+            transition: SINUSOIDAL 0.5;
             TARGET_ALL_CATEGORIES;
             after: "scroll_left_end";
          }
@@ -570,7 +535,7 @@ collections {
             name: "scroll_right";
             signal: "FLHOC/menu,category_next";
             action: STATE_SET "previous" 0.0;
-            transition: SINUSOIDAL 1.0;
+            transition: SINUSOIDAL 0.5;
             TARGET_ALL_CATEGORIES;
             after: "scroll_right_end";
          }
@@ -618,11 +583,11 @@ collections {
             so to have the item fit the whole screen : 
             0.20 * 3.75 = 0.75 + 0.25 == 1.00
          */
-#define ADD_ITEM(NAME, PREVIOUS_ALPHA, ALPHA, NEXT_ALPHA,               \
-                 PREVIOUS_START_POS_Y, PREVIOUS_END_POS_Y,              \
+#define ADD_ITEM(NAME, NEXT_ALPHA, ALPHA, PREVIOUS_ALPHA,               \
+                 NEXT_START_POS_Y, NEXT_END_POS_Y,                      \
                  UNSET_START_POS_Y, UNSET_END_POS_Y,                    \
                  SET_START_POS_Y, SET_END_POS_Y,                        \
-                 NEXT_START_POS_Y, NEXT_END_POS_Y)                      \
+                 PREVIOUS_START_POS_Y, PREVIOUS_END_POS_Y)              \
          part {                                                         \
             name: "item_clip."NAME;                                     \
             type: RECT;                                                 \
@@ -748,7 +713,7 @@ collections {
          ADD_ITEM("selection", 100, 255, 150,
                   0.04, 0.10,
                   0.35, 0.35, 0.35, 0.55, /* 20 */
-                  0.60, 0.775);
+                  0.55, 0.69);
          ADD_ITEM("after_0", 255, 150, 100,
                   0.35, 0.55,
                   0.55, 0.55, 0.55, 0.69, /* 14 */
@@ -762,7 +727,7 @@ collections {
                   0.81, 0.81, 0.81, 0.90, /* 9 */
                   0.90, 0.96);
          ADD_ITEM("after_3", 75, 50, 25,
-                  0.775, 0.90,
+                  0.81, 0.90,
                   0.90, 0.90, 0.90, 0.96, /* 6 */
                   0.96, 1.00);
          ADD_ITEM("after_4", 50, 25, 0,
@@ -828,7 +793,7 @@ collections {
                color2: 0 0 0 255;
                text {
                   //text:        "Category";
-                  font:        "Vera";
+                  font:        "Edje Vera Bold";
                   size:         20;
                   fit:          1 1;
                }
@@ -949,7 +914,7 @@ collections {
             name: "scroll_up";
             signal: "FLHOC/menu/category,item_previous";
             action: STATE_SET "previous" 0.0;
-            transition: SINUSOIDAL 1.0;
+            transition: SINUSOIDAL 0.5;
             TARGET_ALL_ITEMS;
             after: "scroll_up_end";
          }
@@ -957,7 +922,7 @@ collections {
             name: "scroll_down";
             signal: "FLHOC/menu/category,item_next";
             action: STATE_SET "next" 0.0;
-            transition: SINUSOIDAL 1.0;
+            transition: SINUSOIDAL 0.5;
             TARGET_ALL_ITEMS;
             after: "scroll_down_end";
          }
@@ -1016,84 +981,9 @@ collections {
       }                                                                 \
    }
    DEFINE_CATEGORY("settings", "settings.png", "Settings");
-   //DEFINE_CATEGORY("homebrew", "homebrew.png", "Homebrew");
-   DEFINE_CATEGORY("device", "device.png", "USB Packages");
-   group {
-      name: "FLHOC/menu/category/homebrew";
-      inherit: "FLHOC/menu/category";
-      parts {
-	 part {
-	    name: "icon";
-	    description {
-	       state: "default" 0.0;
-	       image {
-		  normal: "homebrew.png";
-	       }
-	    }
-	    description {
-	       state: "selected" 0.0;
-	       image {
-		  normal: "homebrew.png";
-	       }
-	    }
-         }
-	 part {
-	    name: "name";
-	    description {
-	       state: "default" 0.0;
-               text {
-                  text:        "Homebrew";
-               }
-	    }
-	    description {
-	       state: "selected" 0.0;
-               text {
-                  text:        "Homebrew";
-               }
-	    }
-	 }
-      }
-#ifdef DEBUG
-      programs {
-	 program {
-	    name: "debug";
-	    signal: "load";
-            script {
-               part_swallow(PART:"FLHOC/menu/category/item.before_2", GROUP:"FLHOC/menu/item/selected");
-               part_swallow(PART:"FLHOC/menu/category/item.before_1", GROUP:"FLHOC/menu/item");
-               part_swallow(PART:"FLHOC/menu/category/item.before_0", GROUP:"FLHOC/menu/item");
-               part_swallow(PART:"FLHOC/menu/category/item.selection", GROUP:"FLHOC/menu/item/selected");
-               part_swallow(PART:"FLHOC/menu/category/item.after_0", GROUP:"FLHOC/menu/item");
-               part_swallow(PART:"FLHOC/menu/category/item.after_1", GROUP:"FLHOC/menu/item");
-               part_swallow(PART:"FLHOC/menu/category/item.after_2", GROUP:"FLHOC/menu/item");
-               part_swallow(PART:"FLHOC/menu/category/item.after_3", GROUP:"FLHOC/menu/item");
-               part_swallow(PART:"FLHOC/menu/category/item.after_4", GROUP:"FLHOC/menu/item");
-               part_swallow(PART:"FLHOC/menu/category/item.after_5", GROUP:"FLHOC/menu/item");
-            }
-	 }
-         program {
-            signal: "FLHOC/menu,ready";
-	    after: "category_selected";
-	    after: "show_items";
-         }
-         program {
-            signal: "FLHOC/menu,category_reset";
-	    after: "category_selected";
-	    after: "show_items";
-         }
-         program {
-            signal: "FLHOC/menu,category_previous";
-	    after: "category_deselected";
-	    after: "hide_items";
-         }
-         program {
-            signal: "FLHOC/menu,category_next";
-	    after: "category_deselected";
-	    after: "hide_items";
-         }
-      }
-#endif
-   }
+   DEFINE_CATEGORY("homebrew", "homebrew.png", "Homebrew");
+   DEFINE_CATEGORY("device_packages", "device.png", "USB Packages");
+   DEFINE_CATEGORY("device_homebrew", "device.png", "USB Homebrew");
 
    group {
       name: "FLHOC/menu/item";
@@ -1173,7 +1063,7 @@ collections {
                color2: 0 0 0 255;
                text {
                   text: "Homebrew Game!!";
-                  font: "Vera";
+                  font: "Edje Vera";
                   size_range: 10 35;
                   size: 20;
                   align: 0.0 0.5;
@@ -1224,49 +1114,5 @@ collections {
 	 }
       }
    }
-#ifdef DEBUG
-   group {
-      name: "FLHOC/menu/item/selected";
-      inherit: "FLHOC/menu/item";
-      parts {
-	 part {
-	    name: "FLHOC/menu/item/title";
-	    description {
-	       state: "default" 0.0;
-               text {
-                  text: "Eskiss";
-               }
-            }
-	    description {
-	       state: "selected" 0.0;
-               text {
-                  text: "Eskiss";
-               }
-            }
-         }
-	 part {
-	    name: "FLHOC/menu/item/icon";
-	    description {
-	       state: "default" 0.0;
-               image {
-                  normal: "eskiss.png";
-               }
-            }
-	    description {
-	       state: "selected" 0.0;
-               image {
-                  normal: "eskiss.png";
-               }
-            }
-         }
-      }
-      programs {
-         program {
-            signal: "load";
-            after: "selected";
-         }
-      }
-   }
-#endif
 /* TODO: Add specific settings items and secondary screens */
 }

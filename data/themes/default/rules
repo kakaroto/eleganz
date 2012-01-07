@@ -65,7 +65,8 @@
   - Accepted Individual Categories
     - Group "FLHOC/menu/category/settings" for the settings
     - Group "FLHOC/menu/category/homebrew" for the installed homebrew games
-    - Group "FLHOC/menu/category/device" for the devices
+    - Group "FLHOC/menu/category/device_homebrew" for the homebrew games on a USB device
+    - Group "FLHOC/menu/category/device_packages" for the homebrew packages on a USB device
 
 - Group "FLHOC/menu/item" for a generic item
   - Part "FLHOC/menu/item/icon" for the game/item icon
