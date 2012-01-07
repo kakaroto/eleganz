@@ -14,6 +14,8 @@
   - Group "FLHOC/menu"
   - Signal handler "FLHOC/menu,init" to start splash screen
   - Signal "FLHOC/menu,ready" for when the menu is ready for actions
+  - Data keys 'category_next', 'category_previous', 'item_next' and 'item_previous
+    set to "Up/Down/Right/Left" to represent how the menu should be navigated
   - Custom Wallpaper (for games)
     - Part "FLHOC/menu/wallpaper" of type IMAGE for the wallpaper/background
     - Signal handler "FLHOC/menu/wallpaper,set" for when the custom wallpaper is set
@@ -37,6 +39,8 @@
     - Signal handler "FLHOC/menu,category_error_head" for when the user tries to seek before the start
     - Signal "FLHOC/menu,category_next,end" for when the animation of a 'next' scroll is finished
     - Signal "FLHOC/menu,category_previous,end" for when the animation of a 'previous' scroll is finished
+    - Signal "FLHOC/menu,category_set,end" for when the set animation is done (not on ",reset")
+    - Signal "FLHOC/menu,category_unset,end" for when the unset animation is done (not on ",reset")
 
 - "FLHOC/menu/category/*" groups :
   - Signal handler "FLHOC/menu/category,selected" when selecting it

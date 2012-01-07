@@ -485,6 +485,7 @@ collections {
             action: STATE_SET "set" 0.0;                                \
             transition: ACCELERATE 1.0;                                 \
             target: "FLHOC/menu/category."NAME;                         \
+            after: "send_set,"NAME",end";                               \
          }                                                              \
          program {                                                      \
             name: "unset,"NAME;                                         \
@@ -493,6 +494,7 @@ collections {
             action: STATE_SET "unset" 0.0;                              \
             transition: ACCELERATE 1.0;                                 \
             target: "FLHOC/menu/category."NAME;                         \
+            after: "send_unset,"NAME",end";                             \
          }                                                              \
          program {                                                      \
             name: "set,"NAME",reset";                                   \
@@ -509,6 +511,14 @@ collections {
             action: STATE_SET "unset" 0.0;                              \
             transition: LINEAR 0.0;                                     \
             target: "FLHOC/menu/category."NAME;                         \
+         }                                                              \
+         program {                                                      \
+            name: "send_set,"NAME",end";                                \
+            action: SIGNAL_EMIT "FLHOC/menu,category_set,end" NAME;     \
+         }                                                              \
+         program {                                                      \
+            name: "send_unset,"NAME",end";                              \
+            action: SIGNAL_EMIT "FLHOC/menu,category_unset,end" NAME;   \
          }
          ADD_CATEGORY_SET_UNSET_PROGRAM("before_2");
          ADD_CATEGORY_SET_UNSET_PROGRAM("before_1");
@@ -874,6 +884,7 @@ collections {
             action: STATE_SET "set" 0.0;                                \
             transition: ACCELERATE 1.0;                                 \
             target: "FLHOC/menu/category/item."NAME;                    \
+            after: "send_set,"NAME",end";                               \
          }                                                              \
          program {                                                      \
             name: "unset,"NAME;                                         \
@@ -882,6 +893,7 @@ collections {
             action: STATE_SET "unset" 0.0;                              \
             transition: ACCELERATE 1.0;                                 \
             target: "FLHOC/menu/category/item."NAME;                    \
+            after: "send_unset,"NAME",end";                             \
          }                                                              \
          program {                                                      \
             name: "set,"NAME",reset";                                   \
@@ -898,6 +910,14 @@ collections {
             action: STATE_SET "unset" 0.0;                              \
             transition: LINEAR 0.0;                                     \
             target: "FLHOC/menu/category/item."NAME;                    \
+         }                                                              \
+         program {                                                      \
+            name: "send_set,"NAME",end";                                \
+            action: SIGNAL_EMIT "FLHOC/menu/category,item_set,end" NAME; \
+         }                                                              \
+         program {                                                      \
+            name: "send_unset,"NAME",end";                              \
+            action: SIGNAL_EMIT "FLHOC/menu/category,item_unset,end" NAME; \
          }
          ADD_ITEM_SET_UNSET_PROGRAM("before_2");
          ADD_ITEM_SET_UNSET_PROGRAM("before_1");

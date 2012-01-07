@@ -23,19 +23,15 @@ _key_down_cb (void *data, Evas *e, Evas_Object *obj, void *event)
   Menu *menu = main_win->menu;
   Evas_Event_Key_Down *ev = event;
 
-  printf ("Key Down: '%s' - '%s' - '%s' - '%s'\n", ev->keyname, ev->key, ev->string, ev->compose);
+  //printf ("Key Down: '%s' - '%s' - '%s' - '%s'\n", ev->keyname, ev->key, ev->string, ev->compose);
   if (strcmp (ev->keyname, menu->category_previous) == 0) {
     menu_scroll_previous (menu);
   } else if (strcmp (ev->keyname, menu->category_next) == 0) {
     menu_scroll_next (menu);
   } else if (strcmp (ev->keyname, menu->item_previous) == 0) {
-    Category *category = eina_list_data_get (menu->categories_selection);
-
-    category_scroll_previous (category);
+    category_scroll_previous (menu_get_selected_category (menu));
   } else if (strcmp (ev->keyname, menu->item_next) == 0) {
-    Category *category = eina_list_data_get (menu->categories_selection);
-
-    category_scroll_next (category);
+    category_scroll_next (menu_get_selected_category (menu));
   } else if (strcmp (ev->keyname, "Escape") == 0 ||
       strcmp (ev->keyname, "q") == 0) {
     ecore_main_loop_quit();
@@ -65,9 +61,18 @@ _key_down_cb (void *data, Evas *e, Evas_Object *obj, void *event)
     Category *category;
 
     category = eina_list_data_get (menu->categories_selection);
+    menu_set_categories (menu, "reset");
     menu_delete_category (menu, category);
 
     menu_set_categories (menu, "");
+  } else if (strcmp (ev->keyname, "u") == 0) {
+    Eina_List *cur;
+    Category *category;
+
+    EINA_LIST_FOREACH (menu->categories, cur, category) {
+      edje_object_part_unswallow (menu->edje, category->edje);
+      evas_object_hide (category->edje);
+    }
   }
 }
 
@@ -76,7 +81,7 @@ _key_up_cb (void *data, Evas *e, Evas_Object *obj, void *event)
 {
   Evas_Event_Key_Up *ev = event;
 
-  printf ("Key Up: '%s' - '%s' - '%s' - '%s'\n", ev->keyname, ev->key, ev->string, ev->compose);
+  //printf ("Key Up: '%s' - '%s' - '%s' - '%s'\n", ev->keyname, ev->key, ev->string, ev->compose);
 }
 
 static Eina_Bool

@@ -17,14 +17,6 @@ static void _init_menu_cb (void *data, Evas_Object *obj,
     const char  *emission, const char  *source);
 static void _menu_ready_cb (void *data, Evas_Object *obj,
     const char  *emission, const char  *source);
-static void _menu_scroll_previous_cb (void *data, Evas_Object *obj,
-    const char  *emission, const char  *source);
-static void _menu_scroll_next_cb (void *data, Evas_Object *obj,
-    const char  *emission, const char  *source);
-static void _category_scroll_previous_cb (void *data, Evas_Object *obj,
-    const char  *emission, const char  *source);
-static void _category_scroll_next_cb (void *data, Evas_Object *obj,
-    const char  *emission, const char  *source);
 
 
 static void _menu_reset (Menu *menu);
@@ -39,28 +31,67 @@ static void
 _main_signal_cb (void *data, Evas_Object *obj,
     const char  *emission, const char  *source)
 {
-  printf ("Main: Signal '%s' coming from part '%s'\n", emission, source);
+  //printf ("Main: Signal '%s' coming from part '%s'\n", emission, source);
 }
 
 static void
 _menu_signal_cb (void *data, Evas_Object *obj,
     const char  *emission, const char  *source)
 {
-  printf ("Menu: Signal '%s' coming from part '%s'\n", emission, source);
+  Menu *menu = data;
+
+  //printf ("Menu: Signal '%s' coming from part '%s'\n", emission, source);
+
+  if (strcmp (emission, "FLHOC/menu,category_previous,end") == 0 ||
+      strcmp (emission, "FLHOC/menu,category_next,end") == 0) {
+    Category *selection = menu_get_selected_category (menu);
+    Item *item_selection = category_get_selected_item (selection);
+
+    if (item_selection)
+      edje_object_signal_emit (item_selection->edje, "FLHOC/menu/item,selected", "");
+
+    _menu_reset (menu);
+  } else if (strcmp (emission, "FLHOC/menu,category_unset,end") == 0) {
+    char part[40] = "FLHOC/menu/category.";
+    Evas_Object *obj;
+
+    strncat (part, source, sizeof(part)-1);
+    obj = edje_object_part_swallow_get (menu->edje, part);
+    if (obj) {
+      edje_object_part_unswallow (menu->edje, obj);
+      evas_object_hide (obj);
+    }
+  }
 }
 
 static void
 _category_signal_cb (void *data, Evas_Object *obj,
     const char  *emission, const char  *source)
 {
-  printf ("Category: Signal '%s' coming from part '%s'!\n", emission, source);
+  Category *category = data;
+
+  //printf ("Category: Signal '%s' coming from part '%s'!\n", emission, source);
+  if (strcmp (emission, "FLHOC/menu/category,item_previous,end") == 0 ||
+      strcmp (emission, "FLHOC/menu/category,item_next,end") == 0) {
+    _category_reset (category);
+  } else if (strcmp (emission, "FLHOC/menu/category,item_unset,end") == 0) {
+    char part[40] = "FLHOC/menu/category/item.";
+    Evas_Object *obj;
+
+    strncat (part, source, sizeof(part)-1);
+    obj = edje_object_part_swallow_get (category->edje, part);
+    if (obj) {
+      edje_object_part_unswallow (category->edje, obj);
+      evas_object_hide (obj);
+    }
+  }
 }
 
 static void
 _item_signal_cb (void *data, Evas_Object *obj,
     const char  *emission, const char  *source)
 {
-  printf ("Item: Signal '%s' coming from part '%s'!\n", emission, source);
+  //printf ("Item: Signal '%s' coming from part '%s'!\n", emission, source);
 }
 
 static void
@@ -96,53 +127,6 @@ _menu_ready_cb (void *data, Evas_Object *obj,
         edje_object_signal_emit (item_selection->edje, "FLHOC/menu/item,selected", "");
   }
 }
-
-static void
-_menu_scroll_next_cb (void *data, Evas_Object *obj,
-    const char  *emission, const char  *source)
-{
-  Menu *menu = data;
-  Category *selection = menu_get_selected_category (menu);
-  Item *item_selection = category_get_selected_item (selection);
-
-  if (item_selection)
-    edje_object_signal_emit (item_selection->edje, "FLHOC/menu/item,selected", "");
-
-  _menu_reset (menu);
-}
-
-static void
-_menu_scroll_previous_cb (void *data, Evas_Object *obj,
-    const char  *emission, const char  *source)
-{
-  Menu *menu = data;
-  Category *selection = menu_get_selected_category (menu);
-  Item *item_selection = category_get_selected_item (selection);
-
-  if (item_selection)
-    edje_object_signal_emit (item_selection->edje, "FLHOC/menu/item,selected", "");
-
-  _menu_reset (menu);
-}
-
-static void
-_category_scroll_next_cb (void *data, Evas_Object *obj,
-    const char  *emission, const char  *source)
-{
-  Category *category = data;
-
-  _category_reset (category);
-}
-
-static void
-_category_scroll_previous_cb (void *data, Evas_Object *obj,
-    const char  *emission, const char  *source)
-{
-  Category *category = data;
-
-  _category_reset (category);
-}
-
 
 Eina_Bool
 theme_file_is_valid (Evas *evas, const char *filename)
@@ -265,10 +249,6 @@ menu_new (MainWindow *main_win)
   menu->item_next = edje_object_data_get (menu->edje, "item_next");
   menu->item_previous = edje_object_data_get (menu->edje, "item_previous");
   edje_object_signal_callback_add (menu->edje, "*", "*", _menu_signal_cb, menu);
-  edje_object_signal_callback_add (menu->edje, "FLHOC/menu,category_previous,end", "*",
-      _menu_scroll_previous_cb, menu);
-  edje_object_signal_callback_add (menu->edje, "FLHOC/menu,category_next,end", "*",
-      _menu_scroll_next_cb, menu);
 
   return menu;
 }
@@ -279,12 +259,6 @@ menu_free (Menu *menu)
   Eina_List *cur = NULL;
   Category *category;
 
-  edje_object_signal_callback_del_full (menu->edje,
-      "FLHOC/menu,category_previous,end", "*",
-      _menu_scroll_previous_cb, menu);
-  edje_object_signal_callback_del_full (menu->edje,
-      "FLHOC/menu,category_next,end", "*",
-      _menu_scroll_next_cb, menu);
   EINA_LIST_FOREACH (menu->categories, cur, category)
       category_free (category);
   evas_object_del (menu->edje);
@@ -298,8 +272,10 @@ menu_set_categories (Menu *menu, const char *signal)
   Category *category;
   int index = 0;
 
-  EINA_LIST_FOREACH (menu->categories, cur, category)
+  EINA_LIST_FOREACH (menu->categories, cur, category) {
       edje_object_part_unswallow (menu->edje, category->edje);
+      evas_object_hide (category->edje);
+  }
 
   if (menu->categories_selection) {
     category = eina_list_data_get (menu->categories_selection);
@@ -337,18 +313,29 @@ menu_append_category (Menu *menu, Category *category)
 Eina_Bool
 menu_delete_category (Menu *menu, Category *category)
 {
-  Eina_List *list = eina_list_data_find (menu->categories, category);
+  Eina_List *list = eina_list_data_find_list (menu->categories, category);
 
   if (list == NULL)
     return EINA_FALSE;
 
   if (menu->categories_selection == list) {
+    Category *new_selection;
+    Item *item_selection;
+
     if (eina_list_prev (list) != NULL)
-      menu_scroll_previous (menu);
+      menu->categories_selection = eina_list_prev (list);
     else if (eina_list_next (list) != NULL)
-      menu_scroll_next (menu);
+      menu->categories_selection = eina_list_next (list);
     else
       return EINA_FALSE; /* Can't remove last element */
+
+    _menu_reset (menu);
+    new_selection = menu_get_selected_category (menu);
+    item_selection = category_get_selected_item (new_selection);
+
+    edje_object_signal_emit (new_selection->edje, "FLHOC/menu/category,selected", "");
+    if (item_selection)
+      edje_object_signal_emit (item_selection->edje, "FLHOC/menu/item,selected", "");
   }
 
   menu->categories = eina_list_remove (menu->categories, category);
@@ -424,6 +411,13 @@ _menu_swallow_category (Menu *menu, Category *category, int index, const char *s
     return EINA_FALSE;
 
   if (category) {
+    Evas_Object *obj = edje_object_part_swallow_get (menu->edje, part);
+
+    if (obj) {
+      edje_object_part_unswallow (menu->edje, obj);
+      evas_object_hide (obj);
+    }
+
     edje_object_part_swallow (menu->edje, part, category->edje);
     if (signal_suffix) {
       snprintf (signal, sizeof(signal),  "FLHOC/menu,category_set%s%s",
@@ -431,12 +425,19 @@ _menu_swallow_category (Menu *menu, Category *category, int index, const char *s
       edje_object_signal_emit (menu->edje, signal, name);
     }
   } else {
-    /* TODO: need to unswallow after animation.. in edje? */
-    // edje_object_part_unswallow (menu->edje, edje);
     if (signal_suffix) {
       snprintf (signal, sizeof(signal),  "FLHOC/menu,category_unset%s%s",
           signal_suffix[0] == 0 ? "" : ",", signal_suffix);
       edje_object_signal_emit (menu->edje, signal, name);
+      if (strcmp (signal_suffix, "reset") == 0) {
+        Evas_Object *obj = edje_object_part_swallow_get (menu->edje, part);
+
+        //printf ("Doing a reset, checking if there's a part there already (%s) : %p\n", name, obj);
+        if (obj) {
+          edje_object_part_unswallow (menu->edje, obj);
+          evas_object_hide (obj);
+        }
+      }
     }
   }
   return EINA_TRUE;
@@ -464,10 +465,6 @@ category_new (Menu *menu, const char *group)
   }
   edje_object_signal_callback_add (category->edje, "*", "*",
       _category_signal_cb, category);
-  edje_object_signal_callback_add (category->edje, "FLHOC/menu/category,item_previous,end", "*",
-      _category_scroll_previous_cb, category);
-  edje_object_signal_callback_add (category->edje, "FLHOC/menu/category,item_next,end", "*",
-      _category_scroll_next_cb, category);
 
   return category;
 }
@@ -478,12 +475,6 @@ category_free (Category *category)
   Eina_List *cur = NULL;
   Item *item;
 
-  edje_object_signal_callback_del_full (category->edje,
-      "FLHOC/menu/category,item_next,end", "*",
-      _category_scroll_next_cb, category);
-  edje_object_signal_callback_del_full (category->edje,
-      "FLHOC/menu/category,item_previous,end", "*",
-      _category_scroll_previous_cb, category);
   EINA_LIST_FOREACH (category->items, cur, item)
       item_free (item);
   evas_object_del (category->edje);
@@ -498,8 +489,10 @@ category_set_items (Category *category, const char *signal)
   Item *item;
   int index = 0;
 
-  EINA_LIST_FOREACH (category->items, cur, item)
+  EINA_LIST_FOREACH (category->items, cur, item) {
       edje_object_part_unswallow (category->edje, item->edje);
+      evas_object_hide (item->edje);
+  }
 
   if (category->items_selection) {
     item = eina_list_data_get (category->items_selection);
@@ -537,18 +530,25 @@ category_append_item (Category *category, Item *item)
 Eina_Bool
 category_delete_item (Category *category, Item *item)
 {
-  Eina_List *list = eina_list_data_find (category->items, item);
+  Eina_List *list = eina_list_data_find_list (category->items, item);
 
   if (list == NULL)
     return EINA_FALSE;
 
   if (category->items_selection == list) {
+    Item *new_selection;
+
     if (eina_list_prev (list) != NULL)
-      category_scroll_previous (category);
+      category->items_selection = eina_list_prev (list);
     else if (eina_list_next (list) != NULL)
-      category_scroll_next (category);
+      category->items_selection = eina_list_next (list);
     else
       return EINA_FALSE; /* Can't remove last element */
+
+    _category_reset (category);
+    new_selection = category_get_selected_item (category);
+
+    edje_object_signal_emit (new_selection->edje, "FLHOC/menu/item,selected", "");
   }
 
   category->items = eina_list_remove (category->items, item);
@@ -624,9 +624,15 @@ _category_swallow_item (Category *category, Item *item,
       edje_object_signal_emit (category->edje, signal, name);
     }
   } else {
-    /* TODO: need to unswallow after animation.. in edje? */
-    // edje_object_part_unswallow (category->edje, edje);
     if (signal_suffix) {
+      if (strcmp (signal_suffix, "reset") == 0) {
+        Evas_Object *obj = edje_object_part_swallow_get (category->edje, part);
+
+        if (obj) {
+          edje_object_part_unswallow (category->edje, obj);
+          evas_object_hide (obj);
+        }
+      }
       snprintf (signal, sizeof(signal),  "FLHOC/menu/category,item_unset%s%s",
           signal_suffix[0] == 0 ? "" : ",", signal_suffix);
       edje_object_signal_emit (category->edje, signal, name);
