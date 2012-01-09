@@ -179,6 +179,8 @@ _add_main_categories (Menu *menu)
   return EINA_TRUE;
 }
 
+#define THEME "dark"
+
 int
 main (int argc, char *argv[])
 {
@@ -210,12 +212,12 @@ main (int argc, char *argv[])
   evas_output_size_get (evas, &w, &h);
   ecore_event_handler_add(ECORE_EVENT_SIGNAL_EXIT, _ee_signal_exit, NULL);
 
-  if (!theme_file_is_valid (evas, "data/themes/default/default.edj")) {
+  if (!theme_file_is_valid (evas, "data/themes/"THEME"/"THEME".edj")) {
     printf ("Invalid theme file\n");
     goto edje_shutdown;
   }
 
-  main_win = main_window_new (evas, "data/themes/default/default.edj");
+  main_win = main_window_new (evas, "data/themes/"THEME"/"THEME".edj");
   if (main_win == NULL) {
     printf ("error creating main window\n");
     goto edje_shutdown;
