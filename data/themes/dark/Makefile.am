@@ -3,7 +3,13 @@ EDJE_CC = @edje_cc@
 EDJE_FLAGS = -v -id $(top_srcdir)/data/themes/dark/images -fd $(top_srcdir)/data/themes/dark/fonts
 
 EXTRA_DIST = \
-dark.edc
+dark.edc \
+edc/main.edc \
+edc/menu.edc \
+edc/categories.edc \
+edc/items.edc \
+images/*.png \
+fonts/*.ttf
 
 filesdir = $(datadir)/themes/dark
 files_DATA = dark.edj

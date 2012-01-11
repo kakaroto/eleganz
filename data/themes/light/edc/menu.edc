@@ -1,0 +1,355 @@
+
+/* The XMB Menu window */
+group {
+   name: "FLHOC/menu";
+   min: 640 480;
+   max: 1920 1080;
+   data {
+      item: "category_next" "Right";
+      item: "category_previous" "Left";
+      item: "item_next" "Down";
+      item: "item_previous" "Up";
+      item: "select" "";
+   }
+   parts {
+      part {
+         name: "clip";
+         mouse_events:  0;
+         type:          RECT;
+         description {
+            state: "default" 0.0;
+            rel1 {
+               relative: 0.0 0.0;
+               offset: 0 0;
+            }
+            rel2 {
+               relative: 1.0 1.0;
+               offset: -1 -1;
+            }
+            //color: 255 255 255 255;
+         }
+      }
+      /* TODO: Add clipping and handling fade-in/fade-out of wallpaper,set/unset */
+      part {
+         name: "background";
+         mouse_events:  0;
+         type: IMAGE;
+         clip_to: "clip";
+         description {
+            state: "default" 0.0;
+            rel1 {
+               relative: 0.0 -0.1;
+               offset: 0 0;
+            }
+            rel2 {
+               relative: 1.1 1.0;
+               offset: -1 -1;
+            }
+            image {
+               normal: "wallpaper.png";
+            }
+         }
+      }
+      /* Customizable wallpaper */
+      part {
+         name: "FLHOC/menu/wallpaper";
+         type: IMAGE;
+         mouse_events: 0;
+         clip_to: "clip";
+         description {
+            state: "default" 0.0;
+            rel1 {
+               relative: 0.0 0.0;
+               offset: 0 0;
+            }
+            rel2 {
+               relative: 1.0 1.0;
+               offset: -1 -1;
+            }
+         }
+      }
+      /* Creates category with an alpha blended clipping area.
+         the default state is used for before the 'ready' signal,
+         then set/unset/next/previous for the various states.
+      */
+#define ADD_CATEGORY(NAME, PREVIOUS_ALPHA, ALPHA, NEXT_ALPHA,           \
+                     PREVIOUS_START_POS_X, PREVIOUS_END_POS_X,          \
+                     UNSET_START_POS_X, UNSET_END_POS_X,                \
+                     SET_START_POS_X, SET_END_POS_X,                    \
+                     NEXT_START_POS_X, NEXT_END_POS_X)                  \
+      part {                                                            \
+         name: "category_clip."NAME;                                    \
+         type: RECT;                                                    \
+         mouse_events: 0;                                               \
+         clip_to: "clip";                                               \
+         description {                                                  \
+            state: "default" 0.0;                                       \
+            rel1 {                                                      \
+               relative: 0.0 0.0;                                       \
+               offset: 0 0;                                             \
+            }                                                           \
+            rel2 {                                                      \
+               relative: 1.0 1.0;                                       \
+               offset: -1 -1;                                           \
+            }                                                           \
+            color: 255 255 255 ALPHA;                                   \
+         }                                                              \
+         description {                                                  \
+            state: "set" 0.0;                                           \
+            inherit: "default" 0.0;                                     \
+         }                                                              \
+         description {                                                  \
+            state: "unset" 0.0;                                         \
+            inherit: "default" 0.0;                                     \
+         }                                                              \
+         description {                                                  \
+            state: "next" 0.0;                                          \
+            inherit: "default" 0.0;                                     \
+            color: 255 255 255 NEXT_ALPHA;                              \
+         }                                                              \
+         description {                                                  \
+            state: "previous" 0.0;                                      \
+            inherit: "default" 0.0;                                     \
+            color: 255 255 255 PREVIOUS_ALPHA;                          \
+         }                                                              \
+      }                                                                 \
+      part {                                                            \
+         name: "FLHOC/menu/category."NAME;                              \
+         type: SWALLOW;                                                 \
+         mouse_events: 0;                                               \
+         clip_to: "category_clip."NAME;                                 \
+         description {                                                  \
+            state: "default" 0.0;                                       \
+            visible: 0;                                                 \
+            rel1 {                                                      \
+               relative: SET_START_POS_X -0.5;                          \
+               offset: 0 0;                                             \
+            }                                                           \
+            rel2 {                                                      \
+               relative: SET_END_POS_X 0.0;                             \
+               offset: -1 -1;                                           \
+            }                                                           \
+         }                                                              \
+         description {                                                  \
+            state: "unset" 0.0;                                         \
+            inherit: "default" 0.0;                                     \
+            visible: 0;                                                 \
+            rel1 {                                                      \
+               relative: UNSET_START_POS_X 0.05;                        \
+               offset: 5 0;                                             \
+            }                                                           \
+            rel2 {                                                      \
+               relative: UNSET_END_POS_X 0.95;                          \
+               offset: -5 -1;                                           \
+            }                                                           \
+         }                                                              \
+         description {                                                  \
+            state: "set" 0.0;                                           \
+            inherit: "default" 0.0;                                     \
+            visible: 1;                                                 \
+            rel1 {                                                      \
+               relative: SET_START_POS_X 0.05;                          \
+               offset: 5 0;                                             \
+            }                                                           \
+            rel2 {                                                      \
+               relative: SET_END_POS_X 0.95;                            \
+               offset: -5 -1;                                           \
+            }                                                           \
+         }                                                              \
+         description {                                                  \
+            state: "previous" 0.0;                                      \
+            inherit: "default" 0.0;                                     \
+            visible: 1;                                                 \
+            rel1 {                                                      \
+               relative: PREVIOUS_START_POS_X 0.05;                     \
+               offset: 5 0;                                             \
+            }                                                           \
+            rel2 {                                                      \
+               relative: PREVIOUS_END_POS_X 0.95;                       \
+               offset: -5 -1;                                           \
+            }                                                           \
+         }                                                              \
+         description {                                                  \
+            state: "next" 0.0;                                          \
+            inherit: "default" 0.0;                                     \
+            visible: 1;                                                 \
+            rel1 {                                                      \
+               relative: NEXT_START_POS_X 0.05;                         \
+               offset: 5 0;                                             \
+            }                                                           \
+            rel2 {                                                      \
+               relative: NEXT_END_POS_X 0.95;                           \
+               offset: -5 -1;                                           \
+            }                                                           \
+         }                                                              \
+      }
+      /* Create 2 categories before, and 4 after the selected category.
+         The ones on the side (before_2 and after_5) have no size and are
+         only used for the next/previous animations
+      */
+      ADD_CATEGORY("before_2", 0, 50, 100,
+                   0.05, 0.05,
+                   0.05, 0.05, 0.05, 0.05,
+                   0.05, 0.15);
+      ADD_CATEGORY("before_1", 50, 100, 150,
+                   0.05, 0.05,
+                   0.15, 0.15, 0.05, 0.15,
+                   0.15, 0.25);
+      ADD_CATEGORY("before_0", 100, 150, 255,
+                   0.05, 0.15,
+                   0.25, 0.25, 0.15, 0.25,
+                   0.25, 0.45);
+      ADD_CATEGORY("selection", 150, 255, 150,
+                   0.15, 0.25,
+                   0.35, 0.35, 0.25, 0.45,
+                   0.45, 0.55);
+      ADD_CATEGORY("after_0", 255, 150, 100,
+                   0.25, 0.45,
+                   0.45, 0.45, 0.45, 0.55,
+                   0.55, 0.65);
+      ADD_CATEGORY("after_1", 150, 100, 75,
+                   0.45, 0.55,
+                   0.55, 0.55, 0.55, 0.65,
+                   0.65, 0.75);
+      ADD_CATEGORY("after_2", 100, 75, 50,
+                   0.55, 0.65,
+                   0.65, 0.65, 0.65, 0.75,
+                   0.75, 0.85);
+      ADD_CATEGORY("after_3", 75, 50, 25,
+                   0.65, 0.75,
+                   0.75, 0.75, 0.75, 0.85,
+                   0.85, 0.95);
+      ADD_CATEGORY("after_4", 50, 25, 0,
+                   0.75, 0.85,
+                   0.85, 0.85, 0.85, 0.95,
+                   0.95, 0.95);
+      ADD_CATEGORY("after_5", 25, 0, 0,
+                   0.85, 0.95,
+                   0.95, 0.95, 0.95, 0.95,
+                   0.95, 0.95);
+   }
+
+   programs {
+#define TARGET_ALL_CATEGORIES                                           \
+      target: "FLHOC/menu/category.before_2";                           \
+      target: "category_clip.before_2";                                 \
+      target: "FLHOC/menu/category.before_1";                           \
+      target: "category_clip.before_1";                                 \
+      target: "FLHOC/menu/category.before_0";                           \
+      target: "category_clip.before_0";                                 \
+      target: "FLHOC/menu/category.selection";                          \
+      target: "category_clip.selection";                                \
+      target: "FLHOC/menu/category.after_0";                            \
+      target: "category_clip.after_0";                                  \
+      target: "FLHOC/menu/category.after_1";                            \
+      target: "category_clip.after_1";                                  \
+      target: "FLHOC/menu/category.after_2";                            \
+      target: "category_clip.after_2";                                  \
+      target: "FLHOC/menu/category.after_3";                            \
+      target: "category_clip.after_3";                                  \
+      target: "FLHOC/menu/category.after_4";                            \
+      target: "category_clip.after_4";                                  \
+      target: "FLHOC/menu/category.after_5";                            \
+      target: "category_clip.after_5";
+         
+      program {
+         name: "init";
+         signal: "FLHOC/menu,init";
+         action: STATE_SET "set" 0.0;
+         transition: BOUNCE 1.5 3.0 4.0;
+         TARGET_ALL_CATEGORIES;
+         after: "ready";
+      }
+      program {
+         name: "ready";
+         action: SIGNAL_EMIT "FLHOC/menu,ready" "";
+      }
+#define ADD_CATEGORY_SET_UNSET_PROGRAM(NAME)                            \
+      program {                                                         \
+         name: "set,"NAME;                                              \
+         signal: "FLHOC/menu,category_set";                             \
+         source: NAME;                                                  \
+         action: STATE_SET "set" 0.0;                                   \
+         transition: ACCELERATE 1.0;                                    \
+         target: "FLHOC/menu/category."NAME;                            \
+         after: "send_set,"NAME",end";                                  \
+      }                                                                 \
+      program {                                                         \
+         name: "unset,"NAME;                                            \
+         signal: "FLHOC/menu,category_unset";                           \
+         source: NAME;                                                  \
+         action: STATE_SET "unset" 0.0;                                 \
+         transition: ACCELERATE 1.0;                                    \
+         target: "FLHOC/menu/category."NAME;                            \
+         after: "send_unset,"NAME",end";                                \
+      }                                                                 \
+      program {                                                         \
+         name: "set,"NAME",reset";                                      \
+         signal: "FLHOC/menu,category_set,reset";                       \
+         source: NAME;                                                  \
+         action: STATE_SET "set" 0.0;                                   \
+         transition: LINEAR 0.0;                                        \
+         target: "FLHOC/menu/category."NAME;                            \
+      }                                                                 \
+      program {                                                         \
+         name: "unset,"NAME",reset";                                    \
+         signal: "FLHOC/menu,category_unset,reset";                     \
+         source: NAME;                                                  \
+         action: STATE_SET "unset" 0.0;                                 \
+         transition: LINEAR 0.0;                                        \
+         target: "FLHOC/menu/category."NAME;                            \
+      }                                                                 \
+      program {                                                         \
+         name: "send_set,"NAME",end";                                   \
+         action: SIGNAL_EMIT "FLHOC/menu,category_set,end" NAME;        \
+      }                                                                 \
+      program {                                                         \
+         name: "send_unset,"NAME",end";                                 \
+         action: SIGNAL_EMIT "FLHOC/menu,category_unset,end" NAME;      \
+      }
+      ADD_CATEGORY_SET_UNSET_PROGRAM("before_2");
+      ADD_CATEGORY_SET_UNSET_PROGRAM("before_1");
+      ADD_CATEGORY_SET_UNSET_PROGRAM("before_0");
+      ADD_CATEGORY_SET_UNSET_PROGRAM("selection");
+      ADD_CATEGORY_SET_UNSET_PROGRAM("after_0");
+      ADD_CATEGORY_SET_UNSET_PROGRAM("after_1");
+      ADD_CATEGORY_SET_UNSET_PROGRAM("after_2");
+      ADD_CATEGORY_SET_UNSET_PROGRAM("after_3");
+      ADD_CATEGORY_SET_UNSET_PROGRAM("after_4");
+      ADD_CATEGORY_SET_UNSET_PROGRAM("after_5");
+
+      /* Scrolling left means all parts must go to the right */
+      program {
+         name: "scroll_left";
+         signal: "FLHOC/menu,category_previous";
+         action: STATE_SET "next" 0.0;
+         transition: SINUSOIDAL 0.5;
+         TARGET_ALL_CATEGORIES;
+         after: "scroll_left_end";
+      }
+      /* Scrolling right means all parts must go to the left */
+      program {
+         name: "scroll_right";
+         signal: "FLHOC/menu,category_next";
+         action: STATE_SET "previous" 0.0;
+         transition: SINUSOIDAL 0.5;
+         TARGET_ALL_CATEGORIES;
+         after: "scroll_right_end";
+      }
+      program {
+         name: "reset";
+         signal: "FLHOC/menu,category_reset";
+         action: STATE_SET "set" 0.0;
+         transition: LINEAR 0.0;
+         TARGET_ALL_CATEGORIES;
+      }
+      program {
+         name: "scroll_left_end";
+         action: SIGNAL_EMIT "FLHOC/menu,category_previous,end" "";
+      }
+      program {
+         name: "scroll_right_end";
+         action: SIGNAL_EMIT "FLHOC/menu,category_next,end" "";
+      }
+   }
+}

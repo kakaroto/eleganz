@@ -47,8 +47,11 @@ _menu_signal_cb (void *data, Evas_Object *obj,
     Category *selection = menu_get_selected_category (menu);
     Item *item_selection = category_get_selected_item (selection);
 
-    if (item_selection)
+    if (item_selection) {
       edje_object_signal_emit (item_selection->edje, "FLHOC/menu/item,selected", "");
+      if (item_selection->selection)
+        item_selection->selection (item_selection, EINA_TRUE);
+    }
 
     _menu_reset (menu);
   } else if (strcmp (emission, "FLHOC/menu,category_unset,end") == 0) {
@@ -123,8 +126,13 @@ _menu_ready_cb (void *data, Evas_Object *obj,
 
   if (selection) {
     edje_object_signal_emit (selection->edje, "FLHOC/menu/category,selected", "");
-    if (item_selection)
+    if (selection->selection)
+      selection->selection (selection, EINA_TRUE);
+    if (item_selection) {
         edje_object_signal_emit (item_selection->edje, "FLHOC/menu/item,selected", "");
+        if (item_selection->selection)
+          item_selection->selection (item_selection, EINA_TRUE);
+    }
   }
 }
 
@@ -137,6 +145,7 @@ theme_file_is_valid (Evas *evas, const char *filename)
   unsigned int i;
 
   const char *valid_categories[] = {
+    "FLHOC/menu/category/quit",
     "FLHOC/menu/category/settings",
     "FLHOC/menu/category/homebrew",
     "FLHOC/menu/category/device_homebrew",
@@ -148,7 +157,17 @@ theme_file_is_valid (Evas *evas, const char *filename)
       eina_list_search_unsorted (groups,
           (Eina_Compare_Cb) strcmp, "FLHOC/menu") == NULL ||
       eina_list_search_unsorted (groups,
-          (Eina_Compare_Cb) strcmp, "FLHOC/menu/item") == NULL)
+          (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/game") == NULL ||
+      eina_list_search_unsorted (groups,
+          (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/theme") == NULL ||
+      eina_list_search_unsorted (groups,
+          (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/about") == NULL ||
+      eina_list_search_unsorted (groups,
+          (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/help") == NULL ||
+      eina_list_search_unsorted (groups,
+          (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/install_theme") == NULL ||
+      eina_list_search_unsorted (groups,
+          (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/wallpaper") == NULL)
     goto end;
 
   for (i = 0; i < sizeof(valid_categories) / sizeof(char *); i++) {
@@ -180,10 +199,19 @@ theme_file_is_valid (Evas *evas, const char *filename)
     if (!edje_object_part_exists (edje, "FLHOC/menu/category/item.selection"))
       goto end;
   }
-  if (!edje_object_file_set (edje, filename, "FLHOC/menu/item"))
+  if (!edje_object_file_set (edje, filename, "FLHOC/menu/item/game"))
     goto end;
-  if (!edje_object_part_exists (edje, "FLHOC/menu/item/icon") ||
-      !edje_object_part_exists (edje, "FLHOC/menu/item/title"))
+  if (!edje_object_part_exists (edje, "FLHOC/menu/item/game.icon") ||
+      !edje_object_part_exists (edje, "FLHOC/menu/item/game.title") ||
+      !edje_object_part_exists (edje, "FLHOC/menu/item/game.picture"))
+    goto end;
+  if (!edje_object_file_set (edje, filename, "FLHOC/menu/item/theme"))
+    goto end;
+  if (!edje_object_part_exists (edje, "FLHOC/menu/item/theme.name") ||
+      !edje_object_part_exists (edje, "FLHOC/menu/item/theme.author") ||
+      !edje_object_part_exists (edje, "FLHOC/menu/item/theme.version") ||
+      !edje_object_part_exists (edje, "FLHOC/menu/item/theme.description") ||
+      !edje_object_part_exists (edje, "FLHOC/menu/item/theme.preview"))
     goto end;
 
   is_valid = EINA_TRUE;
@@ -192,15 +220,41 @@ theme_file_is_valid (Evas *evas, const char *filename)
   return is_valid;
 }
 
+Theme *
+theme_new (Evas *evas, const char *filename)
+{
+  Theme *theme = calloc (1, sizeof (Theme));
+
+  theme->edje_file = strdup (filename);
+  theme->evas = evas;
+
+  theme->name = edje_file_data_get (filename, "name");
+  theme->author = edje_file_data_get (filename, "author");
+  theme->version = edje_file_data_get (filename, "version");
+  theme->description = edje_file_data_get (filename, "description");
+  theme->compatible = edje_file_data_get (filename, "compatible");
+
+  return theme;
+}
+
+void
+theme_free (Theme *theme)
+{
+  if (theme->edje_file)
+    free (theme->edje_file);
+  if (theme->main_win)
+    main_window_free (theme->main_win);
+  free (theme);
+}
+
 MainWindow *
-main_window_new (Evas *evas, const char *filename)
+main_window_new (Theme *theme)
 {
   MainWindow *main_win = calloc (1, sizeof (MainWindow));
 
-  main_win->edje_file = strdup (filename);
-  main_win->evas = evas;
-  main_win->edje = edje_object_add (evas);
-  if (!edje_object_file_set (main_win->edje, main_win->edje_file, "main")) {
+  main_win->theme = theme;
+  main_win->edje = edje_object_add (theme->evas);
+  if (!edje_object_file_set (main_win->edje, theme->edje_file, "main")) {
     main_window_free (main_win);
     return NULL;
   }
@@ -213,24 +267,19 @@ main_window_new (Evas *evas, const char *filename)
 void
 main_window_free (MainWindow *main_win)
 {
+  if (main_win->menu)
+    menu_free (main_win->menu);
   evas_object_del (main_win->edje);
   free (main_win);
 }
 
 void
-main_window_set_menu (MainWindow *main_win, Menu *menu)
-{
-  main_win->menu = menu;
-  edje_object_part_swallow (main_win->edje, "FLHOC/primary", menu->edje);
-  edje_object_signal_emit (main_win->edje, "FLHOC/primary,set", "");
-}
-
-void
-main_window_init (MainWindow *main_win, Menu *menu)
+main_window_init (MainWindow *main_win)
 {
   edje_object_signal_callback_add (main_win->edje, "FLHOC/primary,set,end", "*",
       _init_menu_cb, main_win);
-  main_window_set_menu (main_win, menu);
+  edje_object_part_swallow (main_win->edje, "FLHOC/primary", main_win->menu->edje);
+  edje_object_signal_emit (main_win->edje, "FLHOC/primary,set", "");
 }
 
 Menu *
@@ -238,9 +287,9 @@ menu_new (MainWindow *main_win)
 {
   Menu *menu = calloc (1, sizeof(Menu));
 
-  menu->parent = main_win;
-  menu->edje = edje_object_add (main_win->evas);
-  if (!edje_object_file_set (menu->edje, main_win->edje_file, "FLHOC/menu")) {
+  menu->main_win = main_win;
+  menu->edje = edje_object_add (main_win->theme->evas);
+  if (!edje_object_file_set (menu->edje, main_win->theme->edje_file, "FLHOC/menu")) {
     menu_free (menu);
     return NULL;
   }
@@ -334,8 +383,13 @@ menu_delete_category (Menu *menu, Category *category)
     item_selection = category_get_selected_item (new_selection);
 
     edje_object_signal_emit (new_selection->edje, "FLHOC/menu/category,selected", "");
-    if (item_selection)
+    if (new_selection->selection)
+      new_selection->selection (new_selection, EINA_TRUE);
+    if (item_selection) {
       edje_object_signal_emit (item_selection->edje, "FLHOC/menu/item,selected", "");
+      if (item_selection->selection)
+        item_selection->selection (item_selection, EINA_TRUE);
+    }
   }
 
   menu->categories = eina_list_remove (menu->categories, category);
@@ -356,15 +410,24 @@ menu_scroll_next (Menu *menu)
   Category *old = eina_list_data_get (menu->categories_selection);
   Eina_List *next = eina_list_next (menu->categories_selection);
   Category *new = eina_list_data_get (next);
-  Item *item_selection = category_get_selected_item (old);
 
   _category_reset (old);
   _menu_reset (menu);
   if (next && new) {
+    Item *item_selection = category_get_selected_item (old);
+
     edje_object_signal_emit (old->edje, "FLHOC/menu/category,deselected", "");
+    if (old->selection)
+      old->selection (old, EINA_FALSE);
     edje_object_signal_emit (new->edje, "FLHOC/menu/category,selected", "");
-    if (item_selection)
+    if (new->selection)
+      new->selection (new, EINA_TRUE);
+
+    if (item_selection) {
       edje_object_signal_emit (item_selection->edje, "FLHOC/menu/item,deselected", "");
+      if (item_selection->selection)
+        item_selection->selection (item_selection, EINA_FALSE);
+    }
 
     menu->categories_selection = next;
 
@@ -384,9 +447,17 @@ menu_scroll_previous (Menu *menu)
   _menu_reset (menu);
   if (previous && new) {
     edje_object_signal_emit (old->edje, "FLHOC/menu/category,deselected", "");
+    if (old->selection)
+      old->selection (old, EINA_FALSE);
     edje_object_signal_emit (new->edje, "FLHOC/menu/category,selected", "");
-    if (item_selection)
+    if (new->selection)
+      new->selection (new, EINA_TRUE);
+
+    if (item_selection) {
       edje_object_signal_emit (item_selection->edje, "FLHOC/menu/item,deselected", "");
+      if (item_selection->selection)
+        item_selection->selection (item_selection, EINA_FALSE);
+    }
 
     menu->categories_selection = previous;
 
@@ -452,16 +523,39 @@ _menu_reset (Menu *menu)
   menu_set_categories (menu, "reset");
 }
 
+static const char *
+category_type_to_group (CategoryType type)
+{
+  switch(type)
+    {
+      case CATEGORY_TYPE_QUIT:
+        return "FLHOC/menu/category/quit";
+      case CATEGORY_TYPE_SETTINGS:
+        return "FLHOC/menu/category/settings";
+      case CATEGORY_TYPE_THEME:
+        return "FLHOC/menu/category/theme";
+      case CATEGORY_TYPE_HOMEBREW:
+        return "FLHOC/menu/category/homebrew";
+      case CATEGORY_TYPE_DEVICE_HOMEBREW:
+        return "FLHOC/menu/category/device_homebrew";
+      case CATEGORY_TYPE_DEVICE_PACKAGES:
+        return "FLHOC/menu/category/device_packages";
+      default:
+        return "";
+    }
+}
+
 Category *
-category_new (Menu *menu, const char *group)
+category_new (Menu *menu, CategoryType type)
 {
   Category *category = calloc (1, sizeof(Category));
-  MainWindow *main_win = menu->parent;
+  MainWindow *main_win = menu->main_win;
 
-  category->parent = menu;
-  category->group = strdup (group);
-  category->edje = edje_object_add (main_win->evas);
-  if (!edje_object_file_set (category->edje, main_win->edje_file, group)) {
+  category->menu = menu;
+  category->type = type;
+  category->edje = edje_object_add (main_win->theme->evas);
+  if (!edje_object_file_set (category->edje, main_win->theme->edje_file,
+          category_type_to_group (type))) {
     category_free (category);
     return NULL;
   }
@@ -480,7 +574,6 @@ category_free (Category *category)
   EINA_LIST_FOREACH (category->items, cur, item)
       item_free (item);
   evas_object_del (category->edje);
-  free (category->group);
   free (category);
 }
 
@@ -551,6 +644,7 @@ category_delete_item (Category *category, Item *item)
     new_selection = category_get_selected_item (category);
 
     edje_object_signal_emit (new_selection->edje, "FLHOC/menu/item,selected", "");
+    new_selection->selection (new_selection, EINA_TRUE);
   }
 
   category->items = eina_list_remove (category->items, item);
@@ -575,7 +669,11 @@ category_scroll_next (Category *category)
   _category_reset (category);
   if (next && new) {
     edje_object_signal_emit (old->edje, "FLHOC/menu/item,deselected", "");
+    if (old->selection)
+      old->selection (old, EINA_FALSE);
     edje_object_signal_emit (new->edje, "FLHOC/menu/item,selected", "");
+    if (new->selection)
+      new->selection (new, EINA_TRUE);
     category->items_selection = next;
 
     edje_object_signal_emit (category->edje, "FLHOC/menu/category,item_next", "");
@@ -592,7 +690,11 @@ category_scroll_previous (Category *category)
   _category_reset (category);
   if (previous && new) {
     edje_object_signal_emit (old->edje, "FLHOC/menu/item,deselected", "");
+    if (old->selection)
+      old->selection (old, EINA_FALSE);
     edje_object_signal_emit (new->edje, "FLHOC/menu/item,selected", "");
+    if (new->selection)
+      new->selection (new, EINA_TRUE);
     category->items_selection = previous;
 
     edje_object_signal_emit (category->edje, "FLHOC/menu/category,item_previous", "");
@@ -650,19 +752,40 @@ _category_reset (Category *category)
   category_set_items (category, "reset");
 }
 
-
+static const char *
+item_type_to_group (ItemType type)
+{
+  switch(type)
+    {
+      case ITEM_TYPE_GAME:
+        return "FLHOC/menu/item/game";
+      case ITEM_TYPE_THEME:
+        return "FLHOC/menu/item/theme";
+      case ITEM_TYPE_ABOUT:
+        return "FLHOC/menu/item/about";
+      case ITEM_TYPE_HELP:
+        return "FLHOC/menu/item/help";
+      case ITEM_TYPE_INSTALL_THEME:
+        return "FLHOC/menu/item/install_theme";
+      case ITEM_TYPE_WALLPAPER:
+        return "FLHOC/menu/item/wallpaper";
+      default:
+        return "";
+    }
+}
 
 Item *
-item_new (Category *category, const char *group)
+item_new (Category *category, ItemType type)
 {
   Item *item = calloc (1, sizeof(Item));
-  Menu *menu = category->parent;
-  MainWindow *main_win = menu->parent;
+  Menu *menu = category->menu;
+  MainWindow *main_win = menu->main_win;
 
-  item->parent = category;
-  item->group = strdup (group);
-  item->edje = edje_object_add (main_win->evas);
-  if (!edje_object_file_set (item->edje, main_win->edje_file, group)) {
+  item->category = category;
+  item->type = type;
+  item->edje = edje_object_add (main_win->theme->evas);
+  if (!edje_object_file_set (item->edje, main_win->theme->edje_file,
+          item_type_to_group (type))) {
     item_free (item);
     return NULL;
   }
@@ -676,6 +799,5 @@ void
 item_free (Item *item)
 {
   evas_object_del (item->edje);
-  free (item->group);
   free (item);
 }

@@ -3,7 +3,14 @@ EDJE_CC = @edje_cc@
 EDJE_FLAGS = -v -id $(top_srcdir)/data/themes/light/images -fd $(top_srcdir)/data/themes/light/fonts
 
 EXTRA_DIST = \
-light.edc
+light.edc \
+edc/main.edc \
+edc/menu.edc \
+edc/categories.edc \
+edc/items.edc \
+images/*.png \
+fonts/*.ttf
+
 
 filesdir = $(datadir)/themes/light
 files_DATA = light.edj

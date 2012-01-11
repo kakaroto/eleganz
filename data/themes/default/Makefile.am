@@ -3,7 +3,13 @@ EDJE_CC = @edje_cc@
 EDJE_FLAGS = -v -id $(top_srcdir)/data/themes/default/images -fd $(top_srcdir)/data/themes/default/fonts
 
 EXTRA_DIST = \
-default.edc
+default.edc \
+edc/main.edc \
+edc/menu.edc \
+edc/categories.edc \
+edc/items.edc \
+images/*.png \
+fonts/*.ttf
 
 filesdir = $(datadir)/themes/default
 files_DATA = default.edj

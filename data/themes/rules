@@ -1,3 +1,9 @@
+- Data "name" for the name of the theme
+- Data "author" for the author of the theme
+- Data "version" for the version of the theme
+- Data "description" for the description of the theme
+- Data "compatible" for the FLHOC version compatibility
+
 - Main window
   - Group "main"
   - Part "FLHOC/primary" of type SWALLOW for the primary screen
@@ -12,9 +18,11 @@
   - Signal "FLHOC/secondary,unset,end" for when unsetting the secondary screen is done
 - Main menu group
   - Group "FLHOC/menu"
+  - Data 'category_next' for key event to go to next category
+  - Data 'category_previous' for key event to go to next category
+  - Data 'select' for key event to enter category (OPTIONAL)
   - Signal handler "FLHOC/menu,init" to start splash screen
   - Signal "FLHOC/menu,ready" for when the menu is ready for actions
-  - Data keys 'category_next', 'category_previous', 'item_next' and 'item_previous
     set to "Up/Down/Right/Left" to represent how the menu should be navigated
   - Custom Wallpaper (for games)
     - Part "FLHOC/menu/wallpaper" of type IMAGE for the wallpaper/background
@@ -43,6 +51,9 @@
     - Signal "FLHOC/menu,category_unset,end" for when the unset animation is done (not on ",reset")
 
 - "FLHOC/menu/category/*" groups :
+  - Data 'item_next' for key event to go to next category
+  - Data 'item_previous' for key event to go to next category
+  - Data 'select' for key event to select the item
   - Signal handler "FLHOC/menu/category,selected" when selecting it
   - Signal handler "FLHOC/menu/category,deselected" when deselecting it
   - Signal "FLHOC/menu/category,selected,end" when the animation of 'selected' is finished
@@ -67,16 +78,31 @@
     - Signal "FLHOC/menu/category,item_next,end" for when the animation of a 'next' scroll is finished
     - Signal "FLHOC/menu/category,item_previous,end" for when the animation of a 'previous' scroll is finished
   - Accepted Individual Categories
+    - Group "FLHOC/menu/category/quit" for the settings
     - Group "FLHOC/menu/category/settings" for the settings
+    - Group "FLHOC/menu/category/theme" for the settings
     - Group "FLHOC/menu/category/homebrew" for the installed homebrew games
     - Group "FLHOC/menu/category/device_homebrew" for the homebrew games on a USB device
     - Group "FLHOC/menu/category/device_packages" for the homebrew packages on a USB device
 
-- Group "FLHOC/menu/item" for a generic item
-  - Part "FLHOC/menu/item/icon" for the game/item icon
-  - Part "FLHOC/menu/item/title" for the game/item title
+- "FLHOC/menu/item/*" groups :
   - Signal handler "FLHOC/menu/item,selected" when selecting it
   - Signal handler "FLHOC/menu/item,deselected" when deselecting it
+  - Individual items
+    - Group "FLHOC/menu/item/game" for a game item
+      - Part "FLHOC/menu/item/game/icon" for the game icon
+      - Part "FLHOC/menu/item/game/title" for the game title
+      - Part "FLHOC/menu/item/game/preview" for the game preview image
+    - Group "FLHOC/menu/item/theme" for a theme item
+      - Part "FLHOC/menu/item/theme/name" for the theme name
+      - Part "FLHOC/menu/item/theme/author" for the theme author
+      - Part "FLHOC/menu/item/theme/version" for the theme version
+      - Part "FLHOC/menu/item/theme/description" for the theme description
+      - Part "FLHOC/menu/item/theme/preview" for the theme preview screen
+    - Group "FLHOC/menu/item/about"
+    - Group "FLHOC/menu/item/help"
+    - Group "FLHOC/menu/item/install_theme"
+    - Group "FLHOC/menu/item/wallpaper"
 
 Behavior :
 
@@ -113,3 +139,7 @@ will receive the "*,category_selected" signal. After the "*,category_selected,en
 There will never be a item_set/item_unset or item_set,reset/item_unset,reset signals when the category is not selected.
 
 Any signal with the source set to "forward" will be forwarded to the underlying swallowed objects. This can be useful to synchronize animations between all groups.
+
+Data keys:
+The data keys for events are a string for comma separated keys that would generate the specified
+action.
