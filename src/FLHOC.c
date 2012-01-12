@@ -341,6 +341,11 @@ _add_main_categories (FLHOC *flhoc, Menu *menu)
   homebrew = category_new (menu, CATEGORY_TYPE_HOMEBREW);
   _add_game_items (homebrew);
   menu_append_category (menu, homebrew);
+  category = category_new (menu, CATEGORY_TYPE_DEVICE_HOMEBREW);
+  _add_game_items (category);
+  menu_append_category (menu, category);
+  category = category_new (menu, CATEGORY_TYPE_DEVICE_PACKAGES);
+  menu_append_category (menu, category);
 
   menu->categories_selection = eina_list_data_find_list (menu->categories, homebrew);
 
