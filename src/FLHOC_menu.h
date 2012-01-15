@@ -23,12 +23,14 @@ struct _Theme {
   const char *description;
   const char *compatible;
   MainWindow *main_win;
+  void *priv;
 };
 
 struct _MainWindow {
   Theme *theme;
   Evas_Object *edje;
   Menu *menu;
+  void *priv;
 };
 
 struct _Menu {
@@ -40,6 +42,7 @@ struct _Menu {
   const char *item_previous;
   Eina_List *categories;
   Eina_List *categories_selection;
+  void *priv;
 };
 
 typedef enum {

@@ -26,7 +26,7 @@ group {
          description {
             state: "default" 0.0;
             aspect: 1.0 1.0;
-            aspect_preference: BOTH;
+            aspect_preference: SOURCE;
             color: 255 255 255 255;
             rel1 {
                relative: 0.0 0.0;
@@ -246,7 +246,7 @@ group {
          description {
             state: "default" 0.0;
             aspect: 1.0 1.0;
-            aspect_preference: BOTH;
+            aspect_preference: SOURCE;
             color: 255 255 255 255;
             rel1 {
                relative: 0.0 0.0;
@@ -472,7 +472,7 @@ group {
          description {
             state: "default" 0.0;
             aspect: 1.0 1.0;
-            aspect_preference: BOTH;
+            aspect_preference: SOURCE;
             color: 255 255 255 255;
             rel1 {
                relative: 0.0 0.0;

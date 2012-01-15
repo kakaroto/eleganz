@@ -13,20 +13,65 @@
 
 #include "FLHOC_menu.h"
 
+#ifdef __lv2ppu__
+#define DEV_HDD0 "/dev_hdd0/"
+#define DEV_USB_FMT "/dev_usb%03d/"
+#define THEMES_DIRECTORY "/dev_hdd0/game/FLHOC0000/USRDIR/data/themes/"
+#define HOMEBREW_DIRECTORY "/dev_hdd0/game/FLHOC0000/USRDIR/HOMEBREW/"
+#define USB_HOMEBREW_DIRECTORY_FMT "/dev_usb%03d/PS3/HOMEBREW/"
+#define USB_PACKAGES_DIRECTORY_FMT "/dev_usb%03d/PS3/PACKAGES/"
+#define USB_THEMES_DIRECTORY_FMT "/dev_usb%03d/PS3/THEMES/"
+#else
+#define DEV_HDD0 "./dev_hdd0/"
+#define DEV_USB_FMT "./dev_usb%03d/"
+#define THEMES_DIRECTORY "data/themes/"
+#define HOMEBREW_DIRECTORY "./dev_hdd0/game/FLHOC0000/USRDIR/HOMEBREW/"
+#define USB_HOMEBREW_DIRECTORY_FMT "./dev_usb%03d/PS3/HOMEBREW/"
+#define USB_PACKAGES_DIRECTORY_FMT "./dev_usb%03d/PS3/PACKAGES/"
+#define USB_THEMES_DIRECTORY_FMT "./dev_usb%03d/PS3/THEMES/"
+#endif
+
+#define MAX_USB_DEVICES 10
+
+typedef struct {
+  char *path;
+  char *name;
+  char *icon;
+  char *picture;
+} Game;
+
+typedef struct {
+  char *directory;
+  Eina_List *games;
+} HomebrewGames;
+
+typedef struct {
+  Category *homebrew;
+  Category *usb_homebrew[MAX_USB_DEVICES];
+  Category *usb_packages[MAX_USB_DEVICES];
+} ThemePriv;
+
 typedef struct {
   Ecore_Evas *ee;
   Evas *evas;
   Eina_List *themes;
   Theme *current_theme;
   Theme *preview_theme;
+  HomebrewGames *homebrew;
+  HomebrewGames *usb_homebrew[MAX_USB_DEVICES];
+  Ecore_Timer *device_check_timer;
 } FLHOC;
 
 static int _add_game_items (Category *category);
+static void _populate_games (FLHOC *flhoc);
+static void _populate_themes (FLHOC *flhoc, Theme *current_theme);
+static Eina_Bool _add_main_categories (Menu *menu);
 
 static void
 _key_down_cb (void *data, Evas *e, Evas_Object *obj, void *event)
 {
-  MainWindow *main_win = data;
+  FLHOC *flhoc = data;
+  MainWindow *main_win = flhoc->current_theme->main_win;
   Menu *menu = main_win->menu;
   Evas_Event_Key_Down *ev = event;
 
@@ -42,7 +87,8 @@ _key_down_cb (void *data, Evas *e, Evas_Object *obj, void *event)
   } else if (strcmp (ev->keyname, "Escape") == 0 ||
       strcmp (ev->keyname, "q") == 0) {
     ecore_main_loop_quit();
-  } else if (strcmp (ev->keyname, "Return") == 0) {
+  } else if (strcmp (ev->keyname, "Return") == 0 ||
+      strcmp (ev->keyname, "Cross") == 0) {
     Category *category = menu_get_selected_category (menu);
     Item *item = category_get_selected_item (category);
 
@@ -113,10 +159,17 @@ _category_action_quit (Category *category)
 }
 
 static Eina_Bool
-_ee_signal_exit(void* data, int ev_type, void* ev)
+_ee_signal_exit (void* data, int ev_type, void* ev)
 {
   ecore_main_loop_quit();
   return 0;
+}
+
+
+static void
+_ee_delete_request (Ecore_Evas *ee)
+{
+  ecore_main_loop_quit();
 }
 
 
@@ -199,31 +252,96 @@ _get_dirlist (const char *path, Eina_Bool dirs, Eina_Bool files, Eina_Bool recur
   return list;
 }
 
-static Eina_Bool _add_main_categories (FLHOC *flhoc, Menu *menu);
+static Eina_Bool
+load_theme (FLHOC *flhoc, Theme *theme)
+{
+  theme->main_win = main_window_new (theme);
+  if (theme->main_win == NULL)
+    return EINA_FALSE;
+
+  evas_object_data_set (theme->main_win->edje, "FLHOC", flhoc);
+  evas_object_data_set (theme->main_win->edje, "MainWindow", theme->main_win);
+
+  theme->main_win->menu = menu_new (theme->main_win);
+  if (theme->main_win->menu == NULL)
+    return EINA_FALSE;
+
+  return _add_main_categories (theme->main_win->menu);
+}
+
+static Eina_Bool
+reload_theme (FLHOC *flhoc, Theme *theme)
+{
+  if (theme->main_win) {
+    main_window_free (theme->main_win);
+    theme->main_win = NULL;
+  }
+
+  return load_theme (flhoc, theme);
+}
+
+static void
+set_current_theme (FLHOC *flhoc, Theme *theme)
+{
+  Evas_Coord w, h;
+
+  if (load_theme (flhoc, theme) == EINA_TRUE) {
+    evas_output_size_get (flhoc->evas, &w, &h);
+    evas_object_move (theme->main_win->edje, 0, 0);
+    evas_object_resize (theme->main_win->edje, w, h);
+    evas_object_show (theme->main_win->edje);
+
+    ecore_evas_object_associate(flhoc->ee, theme->main_win->edje,
+        ECORE_EVAS_OBJECT_ASSOCIATE_BASE);
+
+    if (flhoc->current_theme) {
+      evas_object_hide (flhoc->current_theme->main_win->edje);
+      evas_object_event_callback_del(flhoc->current_theme->main_win->edje,
+          EVAS_CALLBACK_KEY_DOWN, _key_down_cb);
+      if (flhoc->current_theme->main_win) {
+        main_window_free (flhoc->current_theme->main_win);
+        flhoc->current_theme->main_win = NULL;
+      }
+    }
+
+    /* Start the process */
+    flhoc->current_theme = theme;
+    _populate_themes (flhoc, theme);
+    evas_object_event_callback_add(theme->main_win->edje,
+        EVAS_CALLBACK_KEY_DOWN, _key_down_cb, flhoc);
+    evas_object_focus_set (theme->main_win->edje, EINA_TRUE);
+    main_window_init (theme->main_win);
+  }
+}
 
 static void
 _theme_selection (Item *item, Eina_Bool selected)
 {
   Theme *theme = item->priv;
+  FLHOC *flhoc = NULL;
   Evas_Object *obj;
 
   printf ("Theme '%s' %sselected\n", theme->name, selected?"":"de");
 
+  flhoc = evas_object_data_get (item->category->menu->main_win->edje, "FLHOC");
   obj = edje_object_part_swallow_get (item->edje, "FLHOC/menu/item/theme.preview");
   if (obj) {
-    MainWindow *main_win = evas_object_data_get (obj, "MainWindow");
-
     edje_object_part_unswallow (item->edje, obj);
-    main_window_free (main_win);
+    evas_object_hide (obj);
+    theme_free (flhoc->preview_theme);
+    flhoc->preview_theme = NULL;
   }
   if (selected) {
-    MainWindow *main_win = main_window_new (theme);
-    main_win->menu = menu_new (main_win);
-    _add_main_categories (NULL, main_win->menu);
+    flhoc->preview_theme = theme_new (flhoc->evas, theme->edje_file);
+    if (load_theme (flhoc, flhoc->preview_theme) == EINA_FALSE) {
+      theme_free (flhoc->preview_theme);
+      flhoc->preview_theme = NULL;
+    }
+  }
+  if (flhoc->preview_theme) {
     edje_object_part_swallow (item->edje,
-        "FLHOC/menu/item/theme.preview", main_win->edje);
-    evas_object_data_set (main_win->edje, "MainWindow", main_win);
-    main_window_init (main_win);
+        "FLHOC/menu/item/theme.preview", flhoc->preview_theme->main_win->edje);
+    main_window_init (flhoc->preview_theme->main_win);
   }
 }
 
@@ -231,83 +349,63 @@ static void
 _theme_selected (Item *item)
 {
   FLHOC *flhoc;
-  Category *category = item->category;
-  Menu *menu = category->menu;
-  MainWindow *main_win = menu->main_win;
-  Theme *old_theme = NULL;
   Theme *new_theme = item->priv;
-  Evas_Coord w, h;
 
-
-  flhoc = evas_object_data_get (main_win->edje, "FLHOC");
-  old_theme = flhoc->current_theme;
-  flhoc->current_theme = new_theme;
-  if (flhoc->current_theme == NULL) {
-    flhoc->current_theme = old_theme;
-    return;
+  flhoc = evas_object_data_get (item->category->menu->main_win->edje, "FLHOC");
+  if (new_theme != NULL && new_theme != flhoc->current_theme) {
+    _theme_selection (item, EINA_FALSE);
+    if (flhoc->preview_theme)
+      theme_free (flhoc->preview_theme);
+    flhoc->preview_theme = NULL;
+    reload_theme (flhoc, new_theme);
+    set_current_theme (flhoc, new_theme);
   }
-
-  _theme_selection (item, EINA_FALSE);
-  new_theme->main_win = main_window_new (new_theme);
-
-  evas_object_data_set (new_theme->main_win->edje, "FLHOC", flhoc);
-
-  evas_output_size_get (flhoc->evas, &w, &h);
-  evas_object_move (new_theme->main_win->edje, 0, 0);
-  evas_object_resize (new_theme->main_win->edje, w, h);
-  evas_object_show (new_theme->main_win->edje);
-
-  ecore_evas_object_associate(flhoc->ee, new_theme->main_win->edje,
-      ECORE_EVAS_OBJECT_ASSOCIATE_BASE);
-  new_theme->main_win->menu = menu_new (new_theme->main_win);
-  _add_main_categories (flhoc, new_theme->main_win->menu);
-
-  evas_object_event_callback_add (new_theme->main_win->edje,
-      EVAS_CALLBACK_KEY_DOWN, _key_down_cb, new_theme->main_win);
-  evas_object_focus_set (new_theme->main_win->edje, EINA_TRUE);
-  main_window_init (new_theme->main_win);
-
-  main_window_free (old_theme->main_win);
-  old_theme->main_win = NULL;
 }
 
 static void
-_populate_themes (FLHOC *flhoc, Category *themes)
+_populate_themes (FLHOC *flhoc, Theme *current_theme)
 {
-  Eina_List *l;
+  Eina_List *l, *l2;
   Theme *theme;
   Item *this_theme = NULL;
+  Category *category;
+  Item *item;
 
-  if (!flhoc)
-    return;
+  EINA_LIST_FOREACH (current_theme->main_win->menu->categories, l, category) {
+    if (category->type == CATEGORY_TYPE_THEME) {
+      EINA_LIST_FREE (category->items, item)
+          item_free (item);
+      EINA_LIST_FOREACH (flhoc->themes, l2, theme) {
+        item = item_new (category, ITEM_TYPE_THEME);
+        edje_object_part_text_set (item->edje,
+            "FLHOC/menu/item/theme.name", theme->name);
+        edje_object_part_text_set (item->edje,
+            "FLHOC/menu/item/theme.version", theme->version);
+        edje_object_part_text_set (item->edje,
+            "FLHOC/menu/item/theme.author", theme->author);
+        edje_object_part_text_set (item->edje,
+            "FLHOC/menu/item/theme.description", theme->description);
+        item->selection = _theme_selection;
+        item->action = _theme_selected;
+        item->priv = theme;
+        category_append_item (category, item);
+        if (flhoc->current_theme == theme)
+          this_theme = item;
+      }
 
-  EINA_LIST_FOREACH (flhoc->themes, l, theme) {
-    Item *item = item_new (themes, ITEM_TYPE_THEME);
-    edje_object_part_text_set (item->edje,
-        "FLHOC/menu/item/theme.name", theme->name);
-    edje_object_part_text_set (item->edje,
-        "FLHOC/menu/item/theme.version", theme->version);
-    edje_object_part_text_set (item->edje,
-        "FLHOC/menu/item/theme.author", theme->author);
-    edje_object_part_text_set (item->edje,
-        "FLHOC/menu/item/theme.description", theme->description);
-    item->selection = _theme_selection;
-    item->action = _theme_selected;
-    item->priv = theme;
-    category_append_item (themes, item);
-    if (flhoc->current_theme == theme)
-      this_theme = item;
+      if (this_theme) {
+        category->items_selection =
+            eina_list_data_find_list (category->items, this_theme);
+      }
+
+      category_set_items (category, NULL);
+      break;
+    }
   }
-
-  if (this_theme)
-    themes->items_selection = eina_list_data_find_list (themes->items, this_theme);
-
-  category_set_items (themes, NULL);
-
 }
 
 static Eina_Bool
-_add_main_categories (FLHOC *flhoc, Menu *menu)
+_add_main_categories (Menu *menu)
 {
   Category *category = NULL;
   Category *homebrew = NULL;
@@ -336,7 +434,6 @@ _add_main_categories (FLHOC *flhoc, Menu *menu)
   category_append_item (category, item);
   category_set_items (category, NULL);
   category = category_new (menu, CATEGORY_TYPE_THEME);
-  _populate_themes (flhoc, category);
   menu_append_category (menu, category);
   homebrew = category_new (menu, CATEGORY_TYPE_HOMEBREW);
   _add_game_items (homebrew);
@@ -354,15 +451,99 @@ _add_main_categories (FLHOC *flhoc, Menu *menu)
   return EINA_TRUE;
 }
 
+static HomebrewGames *
+_games_new (const char *path)
+{
+  HomebrewGames *hb = calloc (1, sizeof(HomebrewGames));
+  Eina_List *dirlist;
+  Eina_List *l;
+  char *game_dir;
+
+  dirlist = _get_dirlist (path, EINA_TRUE, EINA_FALSE, EINA_FALSE);
+  if (dirlist == NULL) {
+    free (hb);
+    return NULL;
+  }
+  EINA_LIST_FOREACH (dirlist, l, game_dir) {
+    Game *game = calloc (1, sizeof(Game));
+
+    game->path = eina_file_path_sanitize (game_dir);
+    game->name = strdup (game->path);
+    printf ("Game dir : '%s' == '%s'\n", game_dir, game->path);
+    hb->games = eina_list_append (hb->games, game);
+  }
+  EINA_LIST_FREE (dirlist, game_dir)
+      free (game_dir);
+  hb->directory = strdup (path);
+
+  return hb;
+}
+
+static void
+_populate_games (FLHOC *flhoc)
+{
+  int i;
+  char buffer[1024];
+
+  flhoc->homebrew = _games_new (HOMEBREW_DIRECTORY);
+  for (i = 0; i < MAX_USB_DEVICES; i++) {
+    snprintf (buffer, sizeof(buffer), USB_HOMEBREW_DIRECTORY_FMT, i);
+    flhoc->usb_homebrew[i] = _games_new (buffer);
+  }
+}
+
+static void
+_flhoc_init (FLHOC *flhoc)
+{
+  Eina_List *theme_files;
+  Eina_List *l;
+  Theme *theme = NULL;
+  char *theme_filename;
+
+  memset (flhoc, 0, sizeof(FLHOC));
+  flhoc->ee = ecore_evas_new (NULL, 0, 0, 1280, 720, NULL);
+  flhoc->evas = ecore_evas_get (flhoc->ee);
+  ecore_evas_show (flhoc->ee);
+  ecore_event_handler_add(ECORE_EVENT_SIGNAL_EXIT, _ee_signal_exit, NULL);
+  ecore_evas_callback_delete_request_set(flhoc->ee, _ee_delete_request);
+
+  theme_files = _get_dirlist (THEMES_DIRECTORY, EINA_FALSE, EINA_TRUE, EINA_TRUE);
+  EINA_LIST_FOREACH (theme_files, l, theme_filename) {
+    if (eina_str_has_extension (theme_filename, ".edj") &&
+        theme_file_is_valid (flhoc->evas, theme_filename)) {
+      theme = theme_new (flhoc->evas, theme_filename);
+      if (load_theme (flhoc, theme) == EINA_TRUE) {
+        main_window_free (theme->main_win);
+        theme->main_win = NULL;
+        flhoc->themes = eina_list_append (flhoc->themes, theme);
+      } else {
+        /* Error loading the theme */
+        theme_free (theme);
+      }
+    }
+  }
+  EINA_LIST_FREE (theme_files, theme_filename)
+      free (theme_filename);
+
+  _populate_games (flhoc);
+}
+
+static void
+_flhoc_deinit (FLHOC *flhoc)
+{
+  Theme *theme = NULL;
+
+  EINA_LIST_FREE (flhoc->themes, theme)
+    theme_free (theme);
+
+  if (flhoc->ee)
+    ecore_evas_free (flhoc->ee);
+}
+
 int
 main (int argc, char *argv[])
 {
   FLHOC flhoc;
-  Evas_Coord w, h;
-  Eina_List *theme_files;
-  Eina_List *l;
-  char *theme_filename;
-  Theme *theme = NULL;
 
   if (!ecore_init ()) {
     printf ("error setting up ecore\n");
@@ -378,69 +559,20 @@ main (int argc, char *argv[])
     goto ecore_evas_shutdown;
   }
 
-  //ee = ecore_evas_new (NULL, 0, 0, 1280, 720, NULL);
-  //ecore_evas_fullscreen_set (ee, EINA_TRUE);
-  memset (&flhoc, 0, sizeof(FLHOC));
-  flhoc.ee = ecore_evas_new (NULL, 0, 0, 640, 480, NULL);
-  flhoc.evas = ecore_evas_get (flhoc.ee);
-  ecore_evas_show (flhoc.ee);
-  evas_output_size_get (flhoc.evas, &w, &h);
-  ecore_event_handler_add(ECORE_EVENT_SIGNAL_EXIT, _ee_signal_exit, NULL);
+  _flhoc_init (&flhoc);
 
-  theme_files = _get_dirlist ("data/themes", EINA_FALSE, EINA_TRUE, EINA_TRUE);
-  EINA_LIST_FOREACH (theme_files, l, theme_filename) {
-    if (eina_str_has_extension (theme_filename, ".edj") &&
-        theme_file_is_valid (flhoc.evas, theme_filename)) {
-      theme = theme_new (flhoc.evas, theme_filename);
-
-      flhoc.themes = eina_list_append (flhoc.themes, theme);
-      if (flhoc.current_theme == NULL)
-        flhoc.current_theme = theme;
-    }
-  }
-
-  if (flhoc.current_theme == NULL) {
+  if (flhoc.themes == NULL) {
     printf ("No valid themes found\n");
     goto edje_shutdown;
   }
 
-  theme = flhoc.current_theme;
-  theme->main_win = main_window_new (theme);
-  if (theme->main_win == NULL) {
-    printf ("error creating main window\n");
-    goto edje_shutdown;
-  }
-
-  evas_object_data_set (theme->main_win->edje, "FLHOC", &flhoc);
-  ecore_evas_object_associate(flhoc.ee, theme->main_win->edje,
-      ECORE_EVAS_OBJECT_ASSOCIATE_BASE);
-
-  evas_object_move (theme->main_win->edje, 0, 0);
-  evas_object_resize (theme->main_win->edje, w, h);
-  evas_object_show (theme->main_win->edje);
-
-  theme->main_win->menu = menu_new (theme->main_win);
-  if (theme->main_win->menu == NULL) {
-    printf ("error creating menu\n");
-    goto edje_shutdown;
-  }
-
-  _add_main_categories (&flhoc, theme->main_win->menu);
-
-  /* Start the process */
-  evas_object_event_callback_add(theme->main_win->edje,
-      EVAS_CALLBACK_KEY_DOWN, _key_down_cb, theme->main_win);
-  evas_object_focus_set (theme->main_win->edje, EINA_TRUE);
-  main_window_init (theme->main_win);
+  set_current_theme (&flhoc, flhoc.themes->data);
 
   ecore_main_loop_begin ();
 
  edje_shutdown:
-  EINA_LIST_FOREACH (flhoc.themes, l, theme)
-    theme_free (theme);
+  _flhoc_deinit (&flhoc);
 
-  if (flhoc.ee)
-    ecore_evas_free (flhoc.ee);
   edje_shutdown ();
  ecore_evas_shutdown:
   ecore_evas_shutdown ();
