@@ -19,37 +19,13 @@ group {
          }
       }
       part {
-         name: "FLHOC/menu/item/game.picture";
-         type: IMAGE;
-         mouse_events: 0;
-         clip_to: "clip";
-         description {
-            state: "default" 0.0;
-            aspect: 1.0 1.0;
-            aspect_preference: SOURCE;
-            color: 255 255 255 255;
-            rel1 {
-               relative: 0.0 0.0;
-               offset: 0 0;
-            }
-            rel2 {
-               relative: 0.0 0.0;
-               offset: -1 -1;
-            }
-            image {
-               normal: "dummy.png";
-            }
-         }
-      }
-      part {
          name: "FLHOC/menu/item/game.icon";
          type: IMAGE;
          mouse_events: 0;
          clip_to: "clip";
          description {
             state: "default" 0.0;
-            aspect: 1.0 1.0;
-            aspect_preference: BOTH;
+            aspect_preference: SOURCE;
             color: 255 255 255 255;
             rel1 {
                relative: 0.0 0.0;
@@ -58,9 +34,6 @@ group {
             rel2 {
                relative: 0.25 1.0;
                offset: -1 -1;
-            }
-            image {
-               normal: "dummy.png";
             }
          }
          description {
@@ -98,7 +71,6 @@ group {
             color: 255 255 255 255;
             color2: 0 0 0 255;
             text {
-               text: "Homebrew Game!!";
                font: "Edje Vera";
                size_range: 10 35;
                size: 20;

@@ -202,8 +202,7 @@ theme_file_is_valid (Evas *evas, const char *filename)
   if (!edje_object_file_set (edje, filename, "FLHOC/menu/item/game"))
     goto end;
   if (!edje_object_part_exists (edje, "FLHOC/menu/item/game.icon") ||
-      !edje_object_part_exists (edje, "FLHOC/menu/item/game.title") ||
-      !edje_object_part_exists (edje, "FLHOC/menu/item/game.picture"))
+      !edje_object_part_exists (edje, "FLHOC/menu/item/game.title"))
     goto end;
   if (!edje_object_file_set (edje, filename, "FLHOC/menu/item/theme"))
     goto end;

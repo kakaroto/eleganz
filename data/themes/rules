@@ -7,7 +7,8 @@
 - Main window
   - Group "main"
   - Part "FLHOC/primary" of type SWALLOW for the primary screen
-  - Part "FLHOC/secondary" of type SWALLOW for the secondary screens
+  - Part "FLHOC/secondary_below" of type SWALLOW for the secondary screens (behind primary)
+  - Part "FLHOC/secondary_above" of type SWALLOW for the secondary screens (above primary)
   - Signal handler "FLHOC/primary,set" for when setting the primary screen
   - Signal handler "FLHOC/secondary,set" for when setting the secondary screen
   - Signal handler "FLHOC/primary,unset" for when unsetting the primary screen
@@ -92,7 +93,7 @@
     - Group "FLHOC/menu/item/game" for a game item
       - Part "FLHOC/menu/item/game/icon" for the game icon
       - Part "FLHOC/menu/item/game/title" for the game title
-      - Part "FLHOC/menu/item/game/preview" for the game preview image
+      - Data "" to specify 
     - Group "FLHOC/menu/item/theme" for a theme item
       - Part "FLHOC/menu/item/theme/name" for the theme name
       - Part "FLHOC/menu/item/theme/author" for the theme author
@@ -103,6 +104,14 @@
     - Group "FLHOC/menu/item/help"
     - Group "FLHOC/menu/item/install_theme"
     - Group "FLHOC/menu/item/wallpaper"
+
+- Secondary windows
+  - Signal handler "FLHOC/secondary,init" to show the screen
+  - Signal "FLHOC/secondary,ready" for when the screen is shown
+  - Group "FLHOC/secondary/game"
+    - Part "FLHOC/secondary/game/picture" for the game background picture
+    - Part "FLHOC/secondary/game/icon" for the game icon
+    - Part "FLHOC/secondary/game/title" for the game title
 
 Behavior :
 
