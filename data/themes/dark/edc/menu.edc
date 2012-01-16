@@ -29,45 +29,6 @@ group {
             //color: 255 255 255 255;
          }
       }
-      /* TODO: Add clipping and handling fade-in/fade-out of wallpaper,set/unset */
-      part {
-         name: "background";
-         mouse_events:  0;
-         type: IMAGE;
-         clip_to: "clip";
-         description {
-            state: "default" 0.0;
-            rel1 {
-               relative: 0.0 -0.1;
-               offset: 0 0;
-            }
-            rel2 {
-               relative: 1.1 1.0;
-               offset: -1 -1;
-            }
-            image {
-               normal: "wallpaper.png";
-            }
-         }
-      }
-      /* Customizable wallpaper */
-      part {
-         name: "FLHOC/menu/wallpaper";
-         type: IMAGE;
-         mouse_events: 0;
-         clip_to: "clip";
-         description {
-            state: "default" 0.0;
-            rel1 {
-               relative: 0.0 0.0;
-               offset: 0 0;
-            }
-            rel2 {
-               relative: 1.0 1.0;
-               offset: -1 -1;
-            }
-         }
-      }
       /* Creates category with an alpha blended clipping area.
          the default state is used for before the 'ready' signal,
          then set/unset/next/previous for the various states.

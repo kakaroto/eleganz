@@ -19,7 +19,7 @@ group {
    parts {
       /* A black background */
       part {
-         name: "background";
+         name: "black";
          mouse_events:  0;
          type:          RECT;
          description {
@@ -35,11 +35,91 @@ group {
             color: 0 0 0 255;
          }
       }
+      part {
+         name: "clip";
+         mouse_events:  0;
+         type: RECT;
+         description {
+            state: "default" 0.0;
+            rel1 {
+               relative: 0.0 0.0;
+               offset: 0 0;
+            }
+            rel2 {
+               relative: 1.0 1.0;
+               offset: -1 -1;
+            }
+         }
+      }
+      part {
+         name: "background";
+         mouse_events:  0;
+         type: IMAGE;
+         clip_to: "clip";
+         description {
+            state: "default" 0.0;
+            rel1 {
+               relative: 0.0 0.0;
+               offset: 0 0;
+               to: "FLHOC/primary";
+            }
+            rel2 {
+               relative: 1.0 1.0;
+               offset: -1 -1;
+               to: "FLHOC/primary";
+            }
+            image {
+               normal: "wallpaper.png";
+            }
+         }
+      }
+      /* TODO: Add clipping and handling fade-in/fade-out of wallpaper,set/unset */
+      /* Customizable wallpaper */
+      part {
+         name: "FLHOC/wallpaper";
+         type: IMAGE;
+         mouse_events: 0;
+         clip_to: "clip";
+         description {
+            state: "default" 0.0;
+            rel1 {
+               relative: 0.0 0.0;
+               offset: 0 0;
+               to: "FLHOC/primary";
+            }
+            rel2 {
+               relative: 1.0 1.0;
+               offset: -1 -1;
+               to: "FLHOC/primary";
+            }
+         }
+      }
+      /* Secondary window below */
+      part {
+         name: "FLHOC/secondary_below";
+         mouse_events:  0;
+         type: SWALLOW;
+         clip_to: "clip";
+         description {
+            state: "default" 0.0;
+            rel1 {
+               relative: 0.0 0.0;
+               offset: 0 0;
+               to: "FLHOC/primary";
+            }
+            rel2 {
+               relative: 1.0 1.0;
+               offset: -1 -1;
+               to: "FLHOC/primary";
+            }
+         }
+      }
       /* The primary FLHOC window */
       part {
          name: "FLHOC/primary";
          mouse_events:  0;
          type: SWALLOW;
+         clip_to: "clip";
          description {
             state: "default" 0.0;
             rel1 {
@@ -63,31 +143,23 @@ group {
             }
          }
       }
-      /* The primary FLHOC window */
+      /* Secondary window above */
       part {
-         name: "FLHOC/secondary";
+         name: "FLHOC/secondary_above";
          mouse_events:  0;
          type: SWALLOW;
+         clip_to: "clip";
          description {
             state: "default" 0.0;
             rel1 {
-               relative: 0.5 0.5;
-               offset: 0 0;
-            }
-            rel2 {
-               relative: 0.5 0.5;
-               offset: -1 -1;
-            }
-         }
-         description {
-            state: "shown" 0.0;
-            rel1 {
                relative: 0.0 0.0;
                offset: 0 0;
+               to: "FLHOC/primary";
             }
             rel2 {
                relative: 1.0 1.0;
                offset: -1 -1;
+               to: "FLHOC/primary";
             }
          }
       }
@@ -169,43 +241,36 @@ group {
             clock_cb(0);
          }
       }
-      program {
-         name: "primary_set";
-         signal: "FLHOC/primary,set";
-         action: STATE_SET "shown" 0.0;
-         transition: ACCELERATE 1.5;
-         target: "FLHOC/primary";
-         after: "primary_set_end";
-      }
-      program {
-         name: "primary_set_end";
-         action: SIGNAL_EMIT "FLHOC/primary,set,end" "";
-      }
-      program {
-         name: "primary_unset";
-         signal: "FLHOC/primary,unset";
-         action: STATE_SET "default" 0.0;
-         transition: ACCELERATE 1.0;
-         target: "FLHOC/primary";
-         after: "primary_unset_end";
-      }
-      program {
-         name: "primary_unset_end";
-         action: SIGNAL_EMIT "FLHOC/primary,unset,end" "";
-      }
-      program {
-         name: "secondary_set";
-         signal: "FLHOC/secondary,set";
-         action: STATE_SET "set" 0.0;
-         transition: ACCELERATE 1.5;
-         target: "FLHOC/secondary";
-         after: "secondary_set_end";
-      }
-      program {
-         name: "secondary_set_end";
-         action: SIGNAL_EMIT "FLHOC/secondary,set,end" "";
+#define SET_UNSET_SCREEN(NAME, PART, SOURCE, SET_TIME, UNSET_TIME)      \
+      program {                                                         \
+         name: NAME"_"SOURCE"_set";                                     \
+         signal: "FLHOC/"NAME",set";                                    \
+         source: SOURCE;                                                \
+         action: STATE_SET "shown" 0.0;                                 \
+         transition: ACCELERATE SET_TIME;                               \
+         target: "FLHOC/"PART;                                          \
+         after: NAME""SOURCE"_set_end";                                 \
+      }                                                                 \
+      program {                                                         \
+         name: NAME""SOURCE"_set_end";                                  \
+         action: SIGNAL_EMIT "FLHOC/"NAME",set,end" SOURCE;             \
+      }                                                                 \
+      program {                                                         \
+         name: NAME""SOURCE"_unset";                                    \
+         signal: "FLHOC/"NAME",unset";                                  \
+         source: SOURCE;                                                \
+         action: STATE_SET "default" 0.0;                               \
+         transition: ACCELERATE UNSET_TIME;                             \
+         target: "FLHOC/"PART;                                          \
+         after: NAME""SOURCE"_unset_end";                               \
+      }                                                                 \
+      program {                                                         \
+         name: NAME""SOURCE"_unset_end";                                \
+         action: SIGNAL_EMIT "FLHOC/"NAME",unset,end" SOURCE;           \
       }
 
-      /* TODO: Add signals for switching from primary to secondary, or for blurring primary */
+      SET_UNSET_SCREEN("primary", "primary", "", 1.5, 1.0);
+      SET_UNSET_SCREEN("secondary", "secondary_above", "above", 0.0, 0.0);
+      SET_UNSET_SCREEN("secondary", "secondary_below", "below", 0.0, 0.0);
    }
 }

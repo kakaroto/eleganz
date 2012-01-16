@@ -22,6 +22,8 @@
 #define USB_HOMEBREW_DIRECTORY_FMT "/dev_usb%03d/PS3/HOMEBREW/"
 #define USB_PACKAGES_DIRECTORY_FMT "/dev_usb%03d/PS3/PACKAGES/"
 #define USB_THEMES_DIRECTORY_FMT "/dev_usb%03d/PS3/THEMES/"
+#define FLHOC_WIDTH 1280
+#define FLHOC_HEIGHT 720
 #else
 #define DEV_HDD0 "./dev_hdd0/"
 #define DEV_USB_FMT "./dev_usb%03d/"
@@ -30,6 +32,8 @@
 #define USB_HOMEBREW_DIRECTORY_FMT "dev_usb%03d/PS3/HOMEBREW/"
 #define USB_PACKAGES_DIRECTORY_FMT "dev_usb%03d/PS3/PACKAGES/"
 #define USB_THEMES_DIRECTORY_FMT "dev_usb%03d/PS3/THEMES/"
+#define FLHOC_WIDTH 640
+#define FLHOC_HEIGHT 480
 #endif
 
 #define MAX_USB_DEVICES 10
@@ -227,20 +231,53 @@ _theme_selected (Item *item)
 }
 
 static void
+_game_secondary_unset_cb (void *data, Evas_Object *obj,
+    const char  *emission, const char  *source)
+{
+  Secondary *secondary = data;
+
+  edje_object_signal_callback_del_full (secondary->main_win->edje,
+      "FLHOC/secondary,unset,end", "*", _game_secondary_unset_cb, secondary);
+  secondary_free (secondary);
+}
+
+static void
 _game_selection (Item *item, Eina_Bool selected)
 {
   Game *game = item->priv;
+  MainWindow *main_win = item->category->menu->main_win;
+  Secondary *secondary = NULL;
 
   printf ("Game '%s' is %sselected\n", game->title, selected?"":"de");
-  /*
-  FLHOC *flhoc = NULL;
-  Evas_Object *obj;
 
-  if (game->picture) {
-    img = (Evas_Object *) edje_object_part_object_get (item->edje, "FLHOC/menu/item/game.picture");
-    evas_object_image_file_set (img, game->picture, NULL);
+  if (main_win->secondary) {
+    secondary = main_win->secondary;
+    edje_object_part_unswallow (main_win->edje, secondary->edje);
+    edje_object_signal_callback_add (main_win->edje, "FLHOC/secondary,unset,end", "*",
+      _game_secondary_unset_cb, secondary);
+    edje_object_signal_emit (main_win->edje, "FLHOC/secondary,unset", secondary->secondary);
+    main_win->secondary = NULL;
   }
-  */
+  if (selected) {
+    secondary = secondary_new (main_win, "FLHOC/secondary/game");
+    if (edje_object_part_exists (secondary->edje, "FLHOC/secondary/game/title"))
+      edje_object_part_text_set (secondary->edje,
+          "FLHOC/secondary/game/title", game->title);
+    if (game->icon &&
+        edje_object_part_exists (secondary->edje, "FLHOC/secondary/game/icon")) {
+      Evas_Object *img = (Evas_Object *) edje_object_part_object_get (
+          secondary->edje, "FLHOC/secondary/game/icon");
+      evas_object_image_file_set (img, game->icon, NULL);
+    }
+    if (game->picture &&
+        edje_object_part_exists (secondary->edje, "FLHOC/secondary/game/picture")) {
+      Evas_Object *img = (Evas_Object *) edje_object_part_object_get (
+          secondary->edje, "FLHOC/secondary/game/picture");
+      evas_object_image_file_set (img, game->picture, NULL);
+    }
+
+    main_window_set_secondary (main_win, secondary);
+  }
 }
 
 static void
@@ -651,14 +688,87 @@ _games_new (const char *path)
 static void
 _populate_games (FLHOC *flhoc)
 {
-  int i;
   char buffer[1024];
+  int i;
 
   flhoc->homebrew = _games_new (HOMEBREW_DIRECTORY);
   for (i = 0; i < MAX_USB_DEVICES; i++) {
     snprintf (buffer, sizeof(buffer), USB_HOMEBREW_DIRECTORY_FMT, i);
     flhoc->usb_homebrew[i] = _games_new (buffer);
   }
+}
+
+static void
+_games_free (HomebrewGames *games)
+{
+  Game *game = NULL;
+
+  if (games == NULL)
+    return;
+
+  EINA_LIST_FREE (games->games, game) {
+    free (game->path);
+    free (game->name);
+    free (game->title);
+    free (game->icon);
+    free (game->picture);
+    free (game);
+  }
+  free (games->directory);
+}
+
+static Eina_Bool
+_device_check_cb (void *data)
+{
+  FLHOC *flhoc = data;
+  Menu *menu = flhoc->current_theme->main_win->menu;
+  char buffer[1024];
+  Eina_Bool changed = EINA_FALSE;
+  int i;
+
+  for (i = 0; i < MAX_USB_DEVICES; i++) {
+    snprintf (buffer, sizeof(buffer), USB_HOMEBREW_DIRECTORY_FMT, i);
+    if (flhoc->usb_homebrew[i] == NULL) {
+      flhoc->usb_homebrew[i] = _games_new (buffer);
+      if (flhoc->usb_homebrew[i]) {
+        Category *category = category_new (menu, CATEGORY_TYPE_DEVICE_HOMEBREW);
+
+        printf ("USB device %d was inserted\n", i);
+        _add_game_items (flhoc->usb_homebrew[i], category);
+        menu_append_category (menu, category);
+        changed = EINA_TRUE;
+      }
+    } else {
+      Eina_Iterator *dir_iter = NULL;
+
+      dir_iter = eina_file_stat_ls (buffer);
+      if (dir_iter) {
+        eina_iterator_free (dir_iter);
+      } else {
+        Eina_List *l;
+        Category *category = NULL, *c;
+
+        printf ("USB device %d was removed\n", i);
+        EINA_LIST_FOREACH (menu->categories, l, c) {
+          if (c->priv == flhoc->usb_homebrew[i]) {
+            category = c;
+            break;
+          }
+        }
+        if (category) {
+          menu_delete_category (menu, category);
+          _games_free (flhoc->usb_homebrew[i]);
+          flhoc->usb_homebrew[i] = NULL;
+          changed = EINA_TRUE;
+        }
+      }
+    }
+  }
+
+  if (changed)
+    menu_set_categories (menu, "");
+
+  return ECORE_CALLBACK_RENEW;
 }
 
 static void
@@ -670,7 +780,7 @@ _flhoc_init (FLHOC *flhoc)
   char *theme_filename;
 
   memset (flhoc, 0, sizeof(FLHOC));
-  flhoc->ee = ecore_evas_new (NULL, 0, 0, 1280, 720, NULL);
+  flhoc->ee = ecore_evas_new (NULL, 0, 0, FLHOC_WIDTH, FLHOC_HEIGHT, NULL);
   flhoc->evas = ecore_evas_get (flhoc->ee);
   ecore_evas_show (flhoc->ee);
   ecore_event_handler_add(ECORE_EVENT_SIGNAL_EXIT, _ee_signal_exit, NULL);
@@ -695,15 +805,24 @@ _flhoc_init (FLHOC *flhoc)
       free (theme_filename);
 
   _populate_games (flhoc);
+
+  flhoc->device_check_timer = ecore_timer_add (1.0, _device_check_cb, flhoc);
 }
 
 static void
 _flhoc_deinit (FLHOC *flhoc)
 {
   Theme *theme = NULL;
+  int i;
 
   EINA_LIST_FREE (flhoc->themes, theme)
     theme_free (theme);
+
+  _games_free (flhoc->homebrew);
+  for (i = 0; i < MAX_USB_DEVICES; i++)
+    _games_free (flhoc->usb_homebrew[i]);
+
+  ecore_timer_del (flhoc->device_check_timer);
 
   if (flhoc->ee)
     ecore_evas_free (flhoc->ee);

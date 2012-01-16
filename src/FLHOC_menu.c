@@ -13,9 +13,15 @@ static void _category_signal_cb (void *data, Evas_Object *obj,
     const char  *emission, const char  *source);
 static void _item_signal_cb (void *data, Evas_Object *obj,
     const char  *emission, const char  *source);
+static void _secondary_signal_cb (void *data, Evas_Object *obj,
+    const char  *emission, const char  *source);
 static void _init_menu_cb (void *data, Evas_Object *obj,
     const char  *emission, const char  *source);
+static void _init_secondary_cb (void *data, Evas_Object *obj,
+    const char  *emission, const char  *source);
 static void _menu_ready_cb (void *data, Evas_Object *obj,
+    const char  *emission, const char  *source);
+static void _secondary_ready_cb (void *data, Evas_Object *obj,
     const char  *emission, const char  *source);
 
 
@@ -98,6 +104,13 @@ _item_signal_cb (void *data, Evas_Object *obj,
 }
 
 static void
+_secondary_signal_cb (void *data, Evas_Object *obj,
+    const char  *emission, const char  *source)
+{
+  //printf ("Secondary: Signal '%s' coming from part '%s'\n", emission, source);
+}
+
+static void
 _init_menu_cb (void *data, Evas_Object *obj,
     const char  *emission, const char  *source)
 {
@@ -109,6 +122,20 @@ _init_menu_cb (void *data, Evas_Object *obj,
   edje_object_signal_callback_add (menu->edje, "FLHOC/menu,ready", "*",
       _menu_ready_cb, main_win);
   edje_object_signal_emit (menu->edje, "FLHOC/menu,init", "");
+}
+
+static void
+_init_secondary_cb (void *data, Evas_Object *obj,
+    const char  *emission, const char  *source)
+{
+  MainWindow *main_win = data;
+  Secondary *secondary = main_win->secondary;
+
+  edje_object_signal_callback_del_full (main_win->edje, "FLHOC/secondary,set,end", "*",
+      _init_secondary_cb, main_win);
+  edje_object_signal_callback_add (secondary->edje, "FLHOC/secondary,ready", "*",
+      _secondary_ready_cb, main_win);
+  edje_object_signal_emit (secondary->edje, "FLHOC/secondary,init", "");
 }
 
 static void
@@ -134,6 +161,12 @@ _menu_ready_cb (void *data, Evas_Object *obj,
           item_selection->selection (item_selection, EINA_TRUE);
     }
   }
+}
+
+static void
+_secondary_ready_cb (void *data, Evas_Object *obj,
+    const char  *emission, const char  *source)
+{
 }
 
 Eina_Bool
@@ -180,13 +213,14 @@ theme_file_is_valid (Evas *evas, const char *filename)
   if (!edje_object_file_set (edje, filename, "main"))
     goto end;
   if (!edje_object_part_exists (edje, "FLHOC/primary") ||
-      !edje_object_part_exists (edje, "FLHOC/secondary"))
+      !edje_object_part_exists (edje, "FLHOC/secondary_above") ||
+      !edje_object_part_exists (edje, "FLHOC/secondary_below") ||
+      !edje_object_part_exists (edje, "FLHOC/wallpaper"))
     goto end;
 
   if (!edje_object_file_set (edje, filename, "FLHOC/menu"))
     goto end;
-  if (!edje_object_part_exists (edje, "FLHOC/menu/wallpaper") ||
-      !edje_object_part_exists (edje, "FLHOC/menu/category.selection") ||
+  if (!edje_object_part_exists (edje, "FLHOC/menu/category.selection") ||
       edje_object_data_get (edje, "category_next") == NULL ||
       edje_object_data_get (edje, "category_previous") == NULL ||
       edje_object_data_get (edje, "item_next") == NULL ||
@@ -279,6 +313,20 @@ main_window_init (MainWindow *main_win)
       _init_menu_cb, main_win);
   edje_object_part_swallow (main_win->edje, "FLHOC/primary", main_win->menu->edje);
   edje_object_signal_emit (main_win->edje, "FLHOC/primary,set", "");
+}
+
+void
+main_window_set_secondary (MainWindow *main_win, Secondary *secondary)
+{
+  char part[100];
+
+  snprintf (part, sizeof(part), "FLHOC/secondary_%s", secondary->secondary);
+
+  main_win->secondary = secondary;
+  edje_object_signal_callback_add (main_win->edje, "FLHOC/secondary,set,end", "*",
+      _init_secondary_cb, main_win);
+  edje_object_part_swallow (main_win->edje, part, main_win->secondary->edje);
+  edje_object_signal_emit (main_win->edje, "FLHOC/secondary,set", secondary->secondary);
 }
 
 Menu *
@@ -799,4 +847,34 @@ item_free (Item *item)
 {
   evas_object_del (item->edje);
   free (item);
+}
+
+
+Secondary *
+secondary_new (MainWindow *main_win, const char *group_name)
+{
+  Secondary *secondary = calloc (1, sizeof(Secondary));
+
+  secondary->main_win = main_win;
+  secondary->group = strdup (group_name);
+  secondary->edje = edje_object_add (main_win->theme->evas);
+  if (!edje_object_file_set (secondary->edje, main_win->theme->edje_file,
+          group_name)) {
+    secondary_free (secondary);
+    return NULL;
+  }
+  secondary->secondary = edje_object_data_get (secondary->edje, "secondary");
+
+  edje_object_signal_callback_add (secondary->edje, "*", "*",
+      _secondary_signal_cb, secondary);
+
+  return secondary;
+}
+
+void
+secondary_free (Secondary *secondary)
+{
+  evas_object_del (secondary->edje);
+  free (secondary->group);
+  free (secondary);
 }

@@ -33,5 +33,5 @@ collections {
 #include "edc/menu.edc"
 #include "edc/categories.edc"
 #include "edc/items.edc"
-/* TODO: Add specific settings items and secondary screens */
+#include "edc/secondary.edc"
 }

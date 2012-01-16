@@ -4,10 +4,7 @@ EDJE_FLAGS = -v -id $(top_srcdir)/data/themes/dark/images -fd $(top_srcdir)/data
 
 EXTRA_DIST = \
 dark.edc \
-edc/main.edc \
-edc/menu.edc \
-edc/categories.edc \
-edc/items.edc \
+edc/*.edc \
 images/*.png \
 fonts/*.ttf
 

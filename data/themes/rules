@@ -11,12 +11,16 @@
   - Part "FLHOC/secondary_above" of type SWALLOW for the secondary screens (above primary)
   - Signal handler "FLHOC/primary,set" for when setting the primary screen
   - Signal handler "FLHOC/secondary,set" for when setting the secondary screen
+    - Signal source will be set to "above" or "below"
   - Signal handler "FLHOC/primary,unset" for when unsetting the primary screen
   - Signal handler "FLHOC/secondary,unset" for when unsetting the secondary screen
+    - Signal source will be set to "above" or "below"
   - Signal "FLHOC/primary,set,end" for when setting the primary screen is done
   - Signal "FLHOC/secondary,set,end" for when setting the secondary screen is done
+    - Signal source must be set to "above" or "below"
   - Signal "FLHOC/primary,unset,end" for when unsetting the primary screen is done
   - Signal "FLHOC/secondary,unset,end" for when unsetting the secondary screen is done
+    - Signal source must be set to "above" or "below"
 - Main menu group
   - Group "FLHOC/menu"
   - Data 'category_next' for key event to go to next category
@@ -108,10 +112,11 @@
 - Secondary windows
   - Signal handler "FLHOC/secondary,init" to show the screen
   - Signal "FLHOC/secondary,ready" for when the screen is shown
+  - Data "secondary" set to "above" or "below" to determine which screen to swallow
   - Group "FLHOC/secondary/game"
     - Part "FLHOC/secondary/game/picture" for the game background picture
-    - Part "FLHOC/secondary/game/icon" for the game icon
-    - Part "FLHOC/secondary/game/title" for the game title
+    - Part "FLHOC/secondary/game/icon" for the game icon (optional)
+    - Part "FLHOC/secondary/game/title" for the game title (optional)
 
 Behavior :
 
