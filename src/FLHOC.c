@@ -1,6 +1,10 @@
-// 2011 Ninjas
-// Licensed under the terms of the GNU GPL, version 2
-// http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
+/*
+ * Copyright (C) Youness Alaoui (KaKaRoTo)
+ *
+ * This software is distributed under the terms of the GNU General Public
+ * License ("GPL") version 3, as published by the Free Software Foundation.
+ *
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,6 +12,7 @@
 #include <sys/stat.h>
 
 #include <Ecore.h>
+#include <Ecore_File.h>
 #include <Ecore_Evas.h>
 #include <Edje.h>
 
@@ -47,6 +52,11 @@ typedef struct {
 } Game;
 
 typedef struct {
+  char *path;
+  char *name;
+} Package;
+
+typedef struct {
   Ecore_Evas *ee;
   Evas *evas;
   Eina_List *themes;
@@ -64,7 +74,6 @@ static void _populate_games (FLHOC *flhoc);
 static void _populate_themes (FLHOC *flhoc, Theme *current_theme, Eina_Bool only_usb);
 static Eina_Bool _add_main_categories (FLHOC *flhoc, Menu *menu);
 static Eina_Bool load_theme (FLHOC *flhoc, Theme *theme);
-static Eina_Bool reload_theme (FLHOC *flhoc, Theme *theme);
 static void set_current_theme (FLHOC *flhoc, Theme *theme);
 
 /* Generic callbacks */
@@ -176,11 +185,51 @@ _theme_selected (Item *item)
 
   flhoc = evas_object_data_get (item->category->menu->main_win->edje, "FLHOC");
   if (new_theme != NULL && new_theme != flhoc->current_theme) {
+    if (!new_theme->installed) {
+      Eina_List *l;
+      char *old_path = strdup (new_theme->edje_file);
+      Theme *old_theme = new_theme;
+      Eina_Bool installed = EINA_FALSE;
+
+      new_theme = NULL;
+      EINA_LIST_FOREACH (flhoc->themes, l, new_theme) {
+        printf ("old theme : %s -- new theme : %s\n", old_theme->name, new_theme->name);
+        if (strcmp (new_theme->name, old_theme->name) == 0)
+          break;
+      }
+      printf ("new theme is : %p\n", new_theme);
+      if (new_theme) {
+        installed = ecore_file_cp (old_theme->edje_file, new_theme->edje_file);
+      } else {
+        Eina_Array *ea;
+        char path[1024];
+
+        ea = eina_file_split (old_path);
+        snprintf (path, sizeof(path), THEMES_DIRECTORY "%s",
+            (char *) eina_array_pop (ea));
+        eina_array_free (ea);
+        free (old_path);
+
+        if (ecore_file_cp (old_theme->edje_file, path)) {
+          new_theme = theme_new (old_theme->evas, path);
+          new_theme->installed = EINA_TRUE;
+          flhoc->themes = eina_list_append (flhoc->themes, new_theme);
+          installed = EINA_TRUE;
+        }
+      }
+
+      if (installed) {
+        printf ("New theme installed successfully to %s\n", new_theme->edje_file);
+      } else {
+        printf ("Unable to install new theme\n");
+        return;
+      }
+    }
     _theme_selection (item, EINA_FALSE);
     if (flhoc->preview_theme)
       theme_free (flhoc->preview_theme);
     flhoc->preview_theme = NULL;
-    reload_theme (flhoc, new_theme);
+
     set_current_theme (flhoc, new_theme);
   }
 }
@@ -240,7 +289,17 @@ _game_selected (Item *item)
 {
   Game *game = item->priv;
 
+  /* TODO: do it! */
   printf ("Game '%s' is launched!!!\n", game->title);
+}
+
+static void
+_package_selected (Item *item)
+{
+  Package *package = item->priv;
+
+  /* TODO: do it! */
+  printf ("Package '%s' is to be installed!!!\n", package->name);
 }
 
 /* Utility functions */
@@ -331,21 +390,19 @@ load_theme (FLHOC *flhoc, Theme *theme)
   return _add_main_categories (flhoc, theme->main_win->menu);
 }
 
-static Eina_Bool
-reload_theme (FLHOC *flhoc, Theme *theme)
-{
-  if (theme->main_win) {
-    main_window_free (theme->main_win);
-    theme->main_win = NULL;
-  }
-
-  return load_theme (flhoc, theme);
-}
-
 static void
 set_current_theme (FLHOC *flhoc, Theme *theme)
 {
   Evas_Coord w, h;
+
+  if (theme->main_win) {
+    /* Prevent our main window from closing */
+    if (theme == flhoc->current_theme)
+      ecore_evas_object_dissociate(flhoc->ee, theme->main_win->edje);
+
+    main_window_free (theme->main_win);
+    theme->main_win = NULL;
+  }
 
   if (load_theme (flhoc, theme) == EINA_TRUE) {
     evas_output_size_get (flhoc->evas, &w, &h);
@@ -356,11 +413,11 @@ set_current_theme (FLHOC *flhoc, Theme *theme)
     ecore_evas_object_associate(flhoc->ee, theme->main_win->edje,
         ECORE_EVAS_OBJECT_ASSOCIATE_BASE);
 
-    if (flhoc->current_theme) {
-      evas_object_hide (flhoc->current_theme->main_win->edje);
+    if (flhoc->current_theme && flhoc->current_theme->main_win) {
       evas_object_event_callback_del(flhoc->current_theme->main_win->edje,
           EVAS_CALLBACK_KEY_DOWN, _key_down_cb);
-      if (flhoc->current_theme->main_win) {
+      if (flhoc->current_theme != theme) {
+        evas_object_hide (flhoc->current_theme->main_win->edje);
         main_window_free (flhoc->current_theme->main_win);
         flhoc->current_theme->main_win = NULL;
       }
@@ -377,11 +434,11 @@ set_current_theme (FLHOC *flhoc, Theme *theme)
 }
 
 static Item *
-_add_theme (FLHOC *flhoc, Category *category, Theme *theme)
+_add_theme (FLHOC *flhoc, Category *category, Theme *theme, ItemType type)
 {
   Item *item;
 
-  item = item_new (category, ITEM_TYPE_THEME);
+  item = item_new (category, type);
   edje_object_part_text_set (item->edje,
       "FLHOC/menu/item/theme.name", theme->name);
   edje_object_part_text_set (item->edje,
@@ -402,12 +459,13 @@ static void
 _populate_themes (FLHOC *flhoc, Theme *current_theme, Eina_Bool only_usb)
 {
   Eina_List *l, *l2;
+  Menu *menu = current_theme->main_win->menu;
   Theme *theme;
   Category *category;
   Item *item;
   int i;
 
-  EINA_LIST_FOREACH (current_theme->main_win->menu->categories, l, category) {
+  EINA_LIST_FOREACH (menu->categories, l, category) {
     if (category->type == CATEGORY_TYPE_THEME) {
       Eina_List *l;
       Eina_List *l_next;
@@ -420,7 +478,7 @@ _populate_themes (FLHOC *flhoc, Theme *current_theme, Eina_Bool only_usb)
       }
       if (!only_usb) {
         EINA_LIST_FOREACH (flhoc->themes, l2, theme) {
-          item = _add_theme (flhoc, category, theme);
+          item = _add_theme (flhoc, category, theme, ITEM_TYPE_THEME);
           if (flhoc->current_theme == theme)
             category->items_selection =
                 eina_list_data_find_list (category->items, item);
@@ -428,10 +486,13 @@ _populate_themes (FLHOC *flhoc, Theme *current_theme, Eina_Bool only_usb)
       }
       for (i = 0; i < MAX_USB_DEVICES; i++) {
         EINA_LIST_FOREACH (flhoc->usb_themes[i], l2, theme)
-            _add_theme (flhoc, category, theme);
+            _add_theme (flhoc, category, theme, ITEM_TYPE_USB_THEME);
       }
 
-      category_set_items (category, only_usb? "" : NULL);
+      if (menu_get_selected_category (menu) == category)
+        category_set_items (category, "");
+      else
+        category_set_items (category, NULL);
       break;
     }
   }
@@ -548,6 +609,29 @@ _add_game_items (Eina_List *games, Category *category)
   return EINA_TRUE;
 }
 
+static int
+_add_package_items (Eina_List *packages, Category *category)
+{
+  Eina_List *l;
+  Package *package;
+  Item *item = NULL;
+
+  EINA_LIST_FOREACH (packages, l, package) {
+    item = item_new (category, ITEM_TYPE_PACKAGE);
+    edje_object_part_text_set (item->edje, "FLHOC/menu/item/package.name",
+        package->name);
+    item->action = _package_selected;
+    item->priv = package;
+    category_append_item (category, item);
+  }
+
+  category->priv = packages;
+
+  category_set_items (category, NULL);
+
+  return EINA_TRUE;
+}
+
 static Eina_Bool
 _add_main_categories (FLHOC *flhoc, Menu *menu)
 {
@@ -582,6 +666,11 @@ _add_main_categories (FLHOC *flhoc, Menu *menu)
       _add_game_items (flhoc->usb_homebrew[i], category);
       menu_append_category (menu, category);
     }
+    if (flhoc->usb_packages[i]) {
+      category = category_new (menu, CATEGORY_TYPE_DEVICE_PACKAGES);
+      _add_package_items (flhoc->usb_packages[i], category);
+      menu_append_category (menu, category);
+    }
   }
 
   menu->categories_selection = eina_list_data_find_list (menu->categories, homebrew);
@@ -600,9 +689,6 @@ _games_new (const char *path)
   char *game_dir;
 
   dirlist = _get_dirlist (path, EINA_TRUE, EINA_FALSE, EINA_FALSE);
-  if (dirlist == NULL) {
-    return NULL;
-  }
   EINA_LIST_FOREACH (dirlist, l, game_dir) {
     Game *game = NULL;
     Eina_Array *ea;
@@ -639,19 +725,6 @@ _games_new (const char *path)
       free (game_dir);
 
   return games;
-}
-
-static void
-_populate_games (FLHOC *flhoc)
-{
-  char buffer[1024];
-  int i;
-
-  flhoc->homebrew = _games_new (HOMEBREW_DIRECTORY);
-  for (i = 0; i < MAX_USB_DEVICES; i++) {
-    snprintf (buffer, sizeof(buffer), USB_HOMEBREW_DIRECTORY_FMT, i);
-    flhoc->usb_homebrew[i] = _games_new (buffer);
-  }
 }
 
 static void
@@ -716,7 +789,37 @@ _usb_themes_free (Eina_List *themes)
   }
 }
 
-/*
+
+static Eina_List *
+_packages_new (const char *path)
+{
+  Eina_List *dirlist;
+  Eina_List *l;
+  Eina_List *packages = NULL;
+  char *pkg_filename;
+
+  dirlist = _get_dirlist (path, EINA_FALSE, EINA_TRUE, EINA_FALSE);
+  EINA_LIST_FOREACH (dirlist, l, pkg_filename) {
+    if (eina_str_has_extension (pkg_filename, ".pkg")) {
+      Package *package = NULL;
+      Eina_Array *ea;
+
+      package = calloc (1, sizeof(Package));
+      package->path = strdup (pkg_filename);
+
+      ea = eina_file_split (pkg_filename);
+      package->name = strdup (eina_array_pop (ea));
+      eina_array_free (ea);
+
+      packages = eina_list_append (packages, package);
+    }
+  }
+  EINA_LIST_FREE (dirlist, pkg_filename)
+      free (pkg_filename);
+
+  return packages;
+}
+
 static void
 _packages_free (Eina_List *packages)
 {
@@ -726,85 +829,166 @@ _packages_free (Eina_List *packages)
     return;
 
   EINA_LIST_FREE (packages, package) {
-    free (game->path);
-    free (game->name);
-    free (game->title);
-    free (game->icon);
-    free (game->picture);
-    free (game);
+    free (package->path);
+    free (package->name);
+    free (package);
   }
 }
-*/
+
+static Eina_Bool
+_device_check_homebrew (FLHOC *flhoc, Menu *menu, Eina_List **list, char *path)
+{
+  if (*list == NULL) {
+    *list = _games_new (path);
+    if (*list) {
+      Category *category = category_new (menu, CATEGORY_TYPE_DEVICE_HOMEBREW);
+
+      printf ("USB device was inserted: %s\n", path);
+      _add_game_items (*list, category);
+      menu_append_category (menu, category);
+      return EINA_TRUE;
+    }
+  } else {
+    Eina_Iterator *dir_iter = NULL;
+
+    dir_iter = eina_file_stat_ls (path);
+    if (dir_iter) {
+      eina_iterator_free (dir_iter);
+    } else {
+      Eina_List *l;
+      Category *category = NULL, *c;
+
+      printf ("USB device was removed: %s\n", path);
+      EINA_LIST_FOREACH (menu->categories, l, c) {
+        if (c->priv == *list) {
+          category = c;
+          break;
+        }
+      }
+      if (category) {
+        menu_delete_category (menu, category);
+        _games_free (*list);
+        *list = NULL;
+        return EINA_TRUE;
+      }
+    }
+  }
+
+  return EINA_FALSE;
+}
+
+
+static Eina_Bool
+_device_check_packages (FLHOC *flhoc, Menu *menu, Eina_List **list,
+    char *path1, char *path2)
+{
+  if (*list == NULL) {
+    Eina_List *list1 = _packages_new (path1);
+    Eina_List *list2 = _packages_new (path2);
+
+    *list = eina_list_merge (list1, list2);
+    if (*list) {
+      Category *category = category_new (menu, CATEGORY_TYPE_DEVICE_PACKAGES);
+
+      printf ("USB device was inserted: %s\n", path1);
+      _add_package_items (*list, category);
+      menu_append_category (menu, category);
+      return EINA_TRUE;
+    }
+  } else {
+    Eina_Iterator *dir_iter = NULL;
+
+    dir_iter = eina_file_stat_ls (path1);
+    if (dir_iter) {
+      eina_iterator_free (dir_iter);
+    } else {
+      Eina_List *l;
+      Category *category = NULL, *c;
+
+      printf ("USB device was removed: %s\n", path1);
+      EINA_LIST_FOREACH (menu->categories, l, c) {
+        if (c->priv == *list) {
+          category = c;
+          break;
+        }
+      }
+      if (category) {
+        menu_delete_category (menu, category);
+        _packages_free (*list);
+        *list = NULL;
+        return EINA_TRUE;
+      }
+    }
+  }
+
+  return EINA_FALSE;
+}
+
+static void
+_device_check_themes (FLHOC *flhoc, Menu *menu, Eina_List **list, char *path)
+{
+  if (*list == NULL) {
+    *list = _usb_themes_new (flhoc, path);
+    if (*list) {
+      _populate_themes (flhoc, flhoc->current_theme, EINA_TRUE);
+      printf ("USB device was inserted: %s\n", path);
+    }
+  } else {
+    Eina_Iterator *dir_iter = NULL;
+
+    dir_iter = eina_file_stat_ls (path);
+    if (dir_iter) {
+      eina_iterator_free (dir_iter);
+    } else {
+      printf ("USB device was removed : %s\n", path);
+      _usb_themes_free (*list);
+      *list = NULL;
+      _populate_themes (flhoc, flhoc->current_theme, EINA_TRUE);
+    }
+  }
+}
+
 static Eina_Bool
 _device_check_cb (void *data)
 {
   FLHOC *flhoc = data;
   Menu *menu = flhoc->current_theme->main_win->menu;
-  char buffer[1024];
+  char dev_path[1024], path[1024];
   Eina_Bool changed = EINA_FALSE;
   int i;
 
   for (i = 0; i < MAX_USB_DEVICES; i++) {
-    snprintf (buffer, sizeof(buffer), USB_HOMEBREW_DIRECTORY_FMT, i);
-    if (flhoc->usb_homebrew[i] == NULL) {
-      flhoc->usb_homebrew[i] = _games_new (buffer);
-      if (flhoc->usb_homebrew[i]) {
-        Category *category = category_new (menu, CATEGORY_TYPE_DEVICE_HOMEBREW);
+    snprintf (path, sizeof(path), USB_HOMEBREW_DIRECTORY_FMT, i);
+    changed |=  _device_check_homebrew (flhoc, menu, &(flhoc->usb_homebrew[i]),
+        path);
 
-        printf ("Homebrew: USB device %d was inserted\n", i);
-        _add_game_items (flhoc->usb_homebrew[i], category);
-        menu_append_category (menu, category);
-        changed = EINA_TRUE;
-      }
-    } else {
-      Eina_Iterator *dir_iter = NULL;
+    snprintf (dev_path, sizeof(dev_path), DEV_USB_FMT, i);
+    snprintf (path, sizeof(path), USB_PACKAGES_DIRECTORY_FMT, i);
+    changed |= _device_check_packages (flhoc, menu, &(flhoc->usb_packages[i]),
+        dev_path, path);
 
-      dir_iter = eina_file_stat_ls (buffer);
-      if (dir_iter) {
-        eina_iterator_free (dir_iter);
-      } else {
-        Eina_List *l;
-        Category *category = NULL, *c;
+    snprintf (path, sizeof(path), USB_THEMES_DIRECTORY_FMT, i);
+    _device_check_themes (flhoc, menu, &(flhoc->usb_themes[i]), path);
 
-        printf ("Homebrew: USB device %d was removed\n", i);
-        EINA_LIST_FOREACH (menu->categories, l, c) {
-          if (c->priv == flhoc->usb_homebrew[i]) {
-            category = c;
-            break;
-          }
-        }
-        if (category) {
-          menu_delete_category (menu, category);
-          _games_free (flhoc->usb_homebrew[i]);
-          flhoc->usb_homebrew[i] = NULL;
-          changed = EINA_TRUE;
-        }
-      }
-    }
-    snprintf (buffer, sizeof(buffer), USB_THEMES_DIRECTORY_FMT, i);
-    if (flhoc->usb_themes[i] == NULL) {
-      flhoc->usb_themes[i] = _usb_themes_new (flhoc, buffer);
-      if (flhoc->usb_themes[i])
-        _populate_themes (flhoc, flhoc->current_theme, EINA_TRUE);
-    } else {
-      Eina_Iterator *dir_iter = NULL;
-
-      dir_iter = eina_file_stat_ls (buffer);
-      if (dir_iter) {
-        eina_iterator_free (dir_iter);
-      } else {
-        printf ("Themes: USB device %d was removed\n", i);
-        _usb_themes_free (flhoc->usb_themes[i]);
-        flhoc->usb_themes[i] = NULL;
-        _populate_themes (flhoc, flhoc->current_theme, EINA_TRUE);
-      }
-    }
   }
 
   if (changed)
     menu_set_categories (menu, "");
 
   return ECORE_CALLBACK_RENEW;
+}
+
+static void
+_populate_games (FLHOC *flhoc)
+{
+  char buffer[1024];
+  int i;
+
+  flhoc->homebrew = _games_new (HOMEBREW_DIRECTORY);
+  for (i = 0; i < MAX_USB_DEVICES; i++) {
+    snprintf (buffer, sizeof(buffer), USB_HOMEBREW_DIRECTORY_FMT, i);
+    flhoc->usb_homebrew[i] = _games_new (buffer);
+  }
 }
 
 static void

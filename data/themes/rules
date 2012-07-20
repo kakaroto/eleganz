@@ -97,16 +97,18 @@
     - Group "FLHOC/menu/item/game" for a game item
       - Part "FLHOC/menu/item/game/icon" for the game icon
       - Part "FLHOC/menu/item/game/title" for the game title
-      - Data "" to specify 
+    - Group "FLHOC/menu/item/package" for a game item
+      - Part "FLHOC/menu/item/game/name" for the game package name
     - Group "FLHOC/menu/item/theme" for a theme item
       - Part "FLHOC/menu/item/theme/name" for the theme name
       - Part "FLHOC/menu/item/theme/author" for the theme author
       - Part "FLHOC/menu/item/theme/version" for the theme version
       - Part "FLHOC/menu/item/theme/description" for the theme description
       - Part "FLHOC/menu/item/theme/preview" for the theme preview screen
+    - Group "FLHOC/menu/item/usb_theme" for a theme item from usb
+      - same parts as "FLHOC/menu/item/theme"
     - Group "FLHOC/menu/item/about"
     - Group "FLHOC/menu/item/help"
-    - Group "FLHOC/menu/item/install_theme"
     - Group "FLHOC/menu/item/wallpaper"
 
 - Secondary windows
@@ -117,6 +119,9 @@
     - Part "FLHOC/secondary/game/picture" for the game background picture
     - Part "FLHOC/secondary/game/icon" for the game icon (optional)
     - Part "FLHOC/secondary/game/title" for the game title (optional)
+  - Group "FLHOC/secondary/dialogbox"
+    - Part "FLHOC/secondary/dialogbox/message"
+  - Group "exquisite/theme" for exquisite theme (messages and progress bar)
 
 Behavior :
 
@@ -151,9 +156,3 @@ In the case of categories, the selected one will also receive a "*,category_unse
 will receive the "*,category_selected" signal. After the "*,category_selected,end" signal is received, the
  "*item_set,reset" and "*item_unset,reset" will be called to put the items in a consistent state.
 There will never be a item_set/item_unset or item_set,reset/item_unset,reset signals when the category is not selected.
-
-Any signal with the source set to "forward" will be forwarded to the underlying swallowed objects. This can be useful to synchronize animations between all groups.
-
-Data keys:
-The data keys for events are a string for comma separated keys that would generate the specified
-action.

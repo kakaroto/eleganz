@@ -1,6 +1,10 @@
-// 2011 Ninjas
-// Licensed under the terms of the GNU GPL, version 2
-// http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
+/*
+ * Copyright (C) Youness Alaoui (KaKaRoTo)
+ *
+ * This software is distributed under the terms of the GNU General Public
+ * License ("GPL") version 3, as published by the Free Software Foundation.
+ *
+ */
 
 #ifndef __FLHOC_MENU_H__
 #define __FLHOC_MENU_H__
@@ -80,10 +84,11 @@ struct _Category {
 
 typedef enum {
   ITEM_TYPE_GAME,
+  ITEM_TYPE_PACKAGE,
   ITEM_TYPE_THEME,
+  ITEM_TYPE_USB_THEME,
   ITEM_TYPE_ABOUT,
   ITEM_TYPE_HELP,
-  ITEM_TYPE_INSTALL_THEME,
   ITEM_TYPE_WALLPAPER,
 } ItemType;
 

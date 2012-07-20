@@ -124,6 +124,134 @@ group {
 }
 
 group {
+   name: "FLHOC/menu/item/package";
+   parts {
+      part {
+         name: "clip";
+         type: RECT;
+         mouse_events: 0;
+         description {
+            state: "default" 0.0;
+            rel1 {
+               relative: 0.0 0.0;
+               offset: 0 0;
+            }
+            rel2 {
+               relative: 1.0 1.0;
+               offset: -1 -1;
+            }
+            //color: 255 0 0 255;
+         }
+      }
+      part {
+         name: "icon";
+         type: IMAGE;
+         mouse_events: 0;
+         clip_to: "clip";
+         description {
+            state: "default" 0.0;
+            aspect_preference: SOURCE;
+            color: 255 255 255 255;
+            rel1 {
+               relative: 0.0 0.0;
+               offset: 0 0;
+            }
+            rel2 {
+               relative: 0.25 1.0;
+               offset: -1 -1;
+            }
+            image {
+               normal: "package.png";
+            }
+         }
+         description {
+            state: "selected" 0.0;
+            inherit: "default" 0.0;
+            color: 255 255 255 128;
+            rel1 {
+               relative: 0.0 0.0;
+               offset: -5 -5;
+            }
+            rel2 {
+               relative: 0.25 1.0;
+               offset: 4 4;
+            }
+         }
+      }
+      part {
+         name: "FLHOC/menu/item/package.name";
+         type: TEXT;
+         effect: SHADOW;
+         mouse_events: 0;
+         clip_to: "clip";
+         description {
+            state: "default" 0.0;
+            rel1 {
+               relative: 1.0 0.0;
+               offset: 25 0;
+               to: "icon";
+            }
+            rel2 {
+               relative: 1.0 1.0;
+               offset: -1 -1;
+               to: "clip";
+            }
+            color: 255 255 255 255;
+            color2: 0 0 0 255;
+            text {
+               font: "Edje Vera";
+               size_range: 10 35;
+               size: 20;
+               align: 0.0 0.5;
+               fit: 1 1;
+            }
+         }
+         description {
+            state: "selected" 0.0;
+            inherit: "default" 0.0;
+            rel1 {
+               relative: 0.30 0.0;
+               to: "";
+               offset: 25 0;
+            }
+         }
+      }
+   }
+   programs {
+      program {
+         name: "selected";
+         signal : "FLHOC/menu/item,selected";
+         action: STATE_SET "selected" 0.0;
+         transition: SINUSOIDAL 0.5;
+         target: "icon";
+         target: "FLHOC/menu/item/package.name";
+         after: "pulse";
+      }
+      program {
+         name: "pulse";
+         action: STATE_SET "default" 0.0;
+         transition: SINUSOIDAL 0.5;
+         target: "icon";
+         after: "selected";
+      }
+      program {
+         name: "deselected";
+         signal : "FLHOC/menu/item,deselected";
+         action: STATE_SET "default" 0.0;
+         transition: SINUSOIDAL 0.5;
+         target: "icon";
+         target: "FLHOC/menu/item/package.name";
+         after: "stop_pulse";
+      }
+      program {
+         name: "stop_pulse";
+         action: ACTION_STOP;
+         target: "pulse";
+      }
+   }
+}
+
+group {
    name: "FLHOC/menu/item/theme";
    images {
       image: "theme_preview_frame.png" COMP;
@@ -417,6 +545,22 @@ group {
 }
 
 group {
+   name: "FLHOC/menu/item/usb_theme";
+   inherit: "FLHOC/menu/item/theme";
+   parts {
+      part {
+         name: "icon";
+         description {
+            state: "default" 0.0;
+            image {
+               normal: "usb_theme.png";
+            }
+         }
+      }
+   }
+}
+
+group {
    name: "generic_item";
    parts {
       part {
@@ -588,5 +732,4 @@ group {
 
 DEFINE_ITEM("about", "dummy.png", "About");
 DEFINE_ITEM("help", "dummy.png", "Help");
-DEFINE_ITEM("install_theme", "dummy.png", "Install Theme");
 DEFINE_ITEM("wallpaper", "dummy.png", "Change Wallpaper");

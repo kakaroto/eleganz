@@ -14,6 +14,7 @@ images {
    image: "dummy.png" COMP;
    image: "package.png" COMP;
    image: "theme.png" COMP;
+   image: "usb_theme.png" COMP;
    image: "warning.png" COMP;
    image: "quit.png" COMP;
    image: "help.png" COMP;

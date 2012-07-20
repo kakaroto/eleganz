@@ -1,6 +1,10 @@
-// 2011 Ninjas
-// Licensed under the terms of the GNU GPL, version 2
-// http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
+/*
+ * Copyright (C) Youness Alaoui (KaKaRoTo)
+ *
+ * This software is distributed under the terms of the GNU General Public
+ * License ("GPL") version 3, as published by the Free Software Foundation.
+ *
+ */
 
 #include "FLHOC_menu.h"
 
@@ -194,13 +198,15 @@ theme_file_is_valid (Evas *evas, const char *filename)
       eina_list_search_unsorted (groups,
           (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/game") == NULL ||
       eina_list_search_unsorted (groups,
+          (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/package") == NULL ||
+      eina_list_search_unsorted (groups,
           (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/theme") == NULL ||
+      eina_list_search_unsorted (groups,
+          (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/usb_theme") == NULL ||
       eina_list_search_unsorted (groups,
           (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/about") == NULL ||
       eina_list_search_unsorted (groups,
           (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/help") == NULL ||
-      eina_list_search_unsorted (groups,
-          (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/install_theme") == NULL ||
       eina_list_search_unsorted (groups,
           (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/wallpaper") == NULL)
     goto end;
@@ -815,14 +821,16 @@ item_type_to_group (ItemType type)
     {
       case ITEM_TYPE_GAME:
         return "FLHOC/menu/item/game";
+      case ITEM_TYPE_PACKAGE:
+        return "FLHOC/menu/item/package";
       case ITEM_TYPE_THEME:
         return "FLHOC/menu/item/theme";
+      case ITEM_TYPE_USB_THEME:
+        return "FLHOC/menu/item/usb_theme";
       case ITEM_TYPE_ABOUT:
         return "FLHOC/menu/item/about";
       case ITEM_TYPE_HELP:
         return "FLHOC/menu/item/help";
-      case ITEM_TYPE_INSTALL_THEME:
-        return "FLHOC/menu/item/install_theme";
       case ITEM_TYPE_WALLPAPER:
         return "FLHOC/menu/item/wallpaper";
       default:

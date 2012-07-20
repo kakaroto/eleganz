@@ -569,6 +569,7 @@ group {
       }
    }
    programs {
+#undef TARGET_ALL_ITEMS
 #define TARGET_ALL_ITEMS                                                \
       target: "FLHOC/menu/category/item.before_1";                      \
       target: "item_clip.before_1";                                     \
