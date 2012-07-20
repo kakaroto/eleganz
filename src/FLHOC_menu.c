@@ -133,9 +133,11 @@ _init_secondary_cb (void *data, Evas_Object *obj,
 
   edje_object_signal_callback_del_full (main_win->edje, "FLHOC/secondary,set,end", "*",
       _init_secondary_cb, main_win);
-  edje_object_signal_callback_add (secondary->edje, "FLHOC/secondary,ready", "*",
-      _secondary_ready_cb, main_win);
-  edje_object_signal_emit (secondary->edje, "FLHOC/secondary,init", "");
+  if (secondary) {
+    edje_object_signal_callback_add (secondary->edje, "FLHOC/secondary,ready", "*",
+        _secondary_ready_cb, main_win);
+    edje_object_signal_emit (secondary->edje, "FLHOC/secondary,init", "");
+  }
 }
 
 static void
@@ -415,6 +417,7 @@ menu_delete_category (Menu *menu, Category *category)
     return EINA_FALSE;
 
   if (menu->categories_selection == list) {
+    Category *old_selection = menu_get_selected_category (menu);
     Category *new_selection;
     Item *item_selection;
 
@@ -426,6 +429,8 @@ menu_delete_category (Menu *menu, Category *category)
       return EINA_FALSE; /* Can't remove last element */
 
     _menu_reset (menu);
+    if (old_selection->selection)
+      old_selection->selection (old_selection, EINA_FALSE);
     new_selection = menu_get_selected_category (menu);
     item_selection = category_get_selected_item (new_selection);
 
@@ -679,6 +684,7 @@ category_delete_item (Category *category, Item *item)
 
   if (category->items_selection == list) {
     Item *new_selection;
+    Item *old_selection = category_get_selected_item (category);
 
     if (eina_list_prev (list) != NULL)
       category->items_selection = eina_list_prev (list);
@@ -688,10 +694,13 @@ category_delete_item (Category *category, Item *item)
       return EINA_FALSE; /* Can't remove last element */
 
     _category_reset (category);
+    if (old_selection->selection)
+      old_selection->selection (old_selection, EINA_FALSE);
     new_selection = category_get_selected_item (category);
 
     edje_object_signal_emit (new_selection->edje, "FLHOC/menu/item,selected", "");
-    new_selection->selection (new_selection, EINA_TRUE);
+    if (new_selection->selection)
+      new_selection->selection (new_selection, EINA_TRUE);
   }
 
   category->items = eina_list_remove (category->items, item);

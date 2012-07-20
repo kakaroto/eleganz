@@ -18,6 +18,7 @@ typedef struct _Item Item;
 struct _Theme {
   Evas *evas;
   char *edje_file;
+  Eina_Bool installed;
   const char *name;
   const char *author;
   const char *version;
