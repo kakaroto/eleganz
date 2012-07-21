@@ -188,6 +188,7 @@ theme_file_is_valid (Evas *evas, const char *filename)
   const char *valid_categories[] = {
     "FLHOC/menu/category/quit",
     "FLHOC/menu/category/settings",
+    "FLHOC/menu/category/games",
     "FLHOC/menu/category/homebrew",
     "FLHOC/menu/category/device_homebrew",
     "FLHOC/menu/category/device_packages",
@@ -620,6 +621,8 @@ category_type_to_group (CategoryType type)
         return "FLHOC/menu/category/settings";
       case CATEGORY_TYPE_THEME:
         return "FLHOC/menu/category/theme";
+      case CATEGORY_TYPE_GAMES:
+        return "FLHOC/menu/category/games";
       case CATEGORY_TYPE_HOMEBREW:
         return "FLHOC/menu/category/homebrew";
       case CATEGORY_TYPE_DEVICE_HOMEBREW:

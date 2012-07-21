@@ -24,6 +24,12 @@ AM_CFLAGS = \
 bin_PROGRAMS = FLHOC
 
 FLHOC_SOURCES = FLHOC.c \
-	FLHOC_menu.h FLHOC_menu.c
+	FLHOC_menu.h FLHOC_menu.c \
+	pkg.c pkg.h \
+	paged_file.c paged_file.h \
+	keys.c keys.h \
+	tools.c tools.h \
+	aes.c aes.h \
+	sha1.c sha1.h
 
 FLHOC_LDADD = @EFL_LIBS@

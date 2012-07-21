@@ -12,6 +12,7 @@
 #include "tools.h"
 #include "types.h"
 #include "common.h"
+#include "paged_file.h"
 
 typedef struct {
   u32 magic;
@@ -57,6 +58,8 @@ typedef struct {
      (x).flags = FROM_BE (32, (x).flags);
 #define PKG_HEADER_TO_BE(x) PKG_HEADER_FROM_BE (x)
 
+int pkg_open (const char *filename, PagedFile *in,
+    PKG_HEADER *header, PKG_FILE_HEADER **files);
 int pkg_list (const char *filename);
 int pkg_unpack (const char *filename, const char *destination);
 

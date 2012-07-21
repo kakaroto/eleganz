@@ -15,7 +15,6 @@
 #include "pkg.h"
 #include "keys.h"
 
-const char *keys_conf_path = "keys.conf";
 Key *keys = NULL;
 int num_keys = 0;
 
@@ -52,15 +51,17 @@ pkg_debug_decrypt (PagedFile *f, PagedFileCryptOperation operation,
   return TRUE;
 }
 
-static int
+int
 pkg_open (const char *filename, PagedFile *in,
     PKG_HEADER *header, PKG_FILE_HEADER **files)
 {
   Key *gpkg_key;
   u32 i;
 
-  if (!paged_file_open (in, filename, TRUE))
-    die ("Unable to open package file\n");
+  if (!paged_file_open (in, filename, TRUE)) {
+    printf ("Unable to open package file\n");
+    return FALSE;
+  }
 
   paged_file_read (in, header, sizeof(PKG_HEADER));
   PKG_HEADER_FROM_BE (*header);
@@ -71,9 +72,11 @@ pkg_open (const char *filename, PagedFile *in,
   paged_file_seek (in, header->data_offset);
   if (header->pkg_type == 0x80000001) {
     if (keys == NULL) {
-      keys = keys_load_from_file (keys_conf_path, &num_keys);
-      if (keys == NULL)
-        die ("Unable to load necessary keys from : %s\n", keys_conf_path);
+      keys = keys_load (&num_keys);
+      if (keys == NULL) {
+        printf ("Unable to load necessary keys\n");
+        return FALSE;
+      }
     }
 
     gpkg_key = keys_find_by_name (keys, num_keys, "Game PKG");
@@ -129,7 +132,7 @@ pkg_list (const char *filename)
     pkg_file_path = malloc (files[i].filename_size + 1);
     paged_file_read (&in, pkg_file_path, files[i].filename_size);
     pkg_file_path[files[i].filename_size] = 0;
-    printf ("File %d : %s\n\tSize : %llu\n\tFlags : %X\n", i, pkg_file_path,
+    printf ("File %d : %s\n\tSize : %lu\n\tFlags : %X\n", i, pkg_file_path,
         files[i].data_size, files[i].flags);
     free (pkg_file_path);
   }
@@ -191,6 +194,5 @@ pkg_unpack (const char *filename, const char *destination)
   }
 
   paged_file_close (&in);
-  paged_file_close (&out);
   return ret;
 }

@@ -19,25 +19,31 @@
 
 #include "common.h"
 #include "FLHOC_menu.h"
+#include "pkg.h"
+#include "keys.h"
 
 #ifdef __lv2ppu__
 #define DEV_HDD0 "/dev_hdd0/"
 #define DEV_USB_FMT "/dev_usb%03d/"
 #define THEMES_DIRECTORY "/dev_hdd0/game/FLHOC0000/USRDIR/data/themes/"
+#define GAMES_DIRECTORY "/dev_hdd0/game/"
 #define HOMEBREW_DIRECTORY "/dev_hdd0/game/"
 #define USB_HOMEBREW_DIRECTORY_FMT "/dev_usb%03d/PS3/HOMEBREW/"
 #define USB_PACKAGES_DIRECTORY_FMT "/dev_usb%03d/PS3/PACKAGES/"
 #define USB_THEMES_DIRECTORY_FMT "/dev_usb%03d/PS3/THEMES/"
+#define KEYS_PATH "/dev_hdd0/game/FLHOC0000/USRDIR/keys.conf"
 #define FLHOC_WIDTH 1280
 #define FLHOC_HEIGHT 720
 #else
 #define DEV_HDD0 "./dev_hdd0/"
 #define DEV_USB_FMT "./dev_usb%03d/"
 #define THEMES_DIRECTORY "data/themes/"
+#define GAMES_DIRECTORY "dev_hdd0/game/"
 #define HOMEBREW_DIRECTORY "dev_hdd0/game/FLHOC0000/USRDIR/HOMEBREW/"
 #define USB_HOMEBREW_DIRECTORY_FMT "dev_usb%03d/PS3/HOMEBREW/"
 #define USB_PACKAGES_DIRECTORY_FMT "dev_usb%03d/PS3/PACKAGES/"
 #define USB_THEMES_DIRECTORY_FMT "dev_usb%03d/PS3/THEMES/"
+#define KEYS_PATH "data/keys.conf"
 #define FLHOC_WIDTH 640
 #define FLHOC_HEIGHT 480
 #endif
@@ -61,9 +67,11 @@ typedef struct {
   Ecore_Evas *ee;
   Evas *evas;
   Evas_Object *exquisite;
+  Eina_Bool exquisite_done;
   Eina_List *themes;
   Theme *current_theme;
   Theme *preview_theme;
+  Eina_List *games;
   Eina_List *homebrew;
   Eina_List *usb_homebrew[MAX_USB_DEVICES];
   Eina_List *usb_packages[MAX_USB_DEVICES];
@@ -71,6 +79,8 @@ typedef struct {
   Ecore_Timer *device_check_timer;
 } FLHOC;
 
+static Eina_List *_games_new (const char *path);
+static void _games_free (Eina_List *games);
 static int _add_game_items (Eina_List *games, Category *category);
 static void _populate_themes (FLHOC *flhoc, Theme *current_theme, Eina_Bool only_usb);
 static Eina_Bool _add_main_categories (FLHOC *flhoc, Menu *menu);
@@ -79,6 +89,7 @@ static void set_current_theme (FLHOC *flhoc, Theme *theme);
 static Eina_Bool _device_check_cb (void *data);
 static void _exquisite_default_exit_cb (void *data);
 static Evas_Object *_exquisite_new (FLHOC *flhoc, const char *title, const char *message);
+static void _menu_ready_cb (Menu *menu);
 
 /* Generic callbacks */
 static void
@@ -89,6 +100,7 @@ _key_down_cb (void *data, Evas *e, Evas_Object *obj, void *event)
   Menu *menu = main_win->menu;
   Evas_Event_Key_Down *ev = event;
 
+  _menu_ready_cb (menu);
   //printf ("Key Down: '%s' - '%s' - '%s' - '%s'\n", ev->keyname, ev->key, ev->string, ev->compose);
   if (strcmp (ev->keyname, "f") == 0) {
     Ecore_Evas *ee = ecore_evas_ecore_evas_get (main_win->theme->evas);
@@ -102,7 +114,8 @@ _key_down_cb (void *data, Evas *e, Evas_Object *obj, void *event)
     Item *item = category_get_selected_item (category);
 
     if (flhoc->exquisite) {
-      exquisite_object_exit (flhoc->exquisite);
+      if (flhoc->exquisite_done)
+        exquisite_object_exit (flhoc->exquisite);
     } else if (item) {
       if (item->action)
         item->action (item);
@@ -248,19 +261,21 @@ _theme_selected (Item *item)
         exquisite_object_exit_callback_set (flhoc->exquisite,
             _continue_set_theme, new_theme);
         exquisite_object_progress_set (flhoc->exquisite, 1.0);
-        exquisite_object_text_add (flhoc->exquisite, "Copying theme file");
-        exquisite_object_status_set (flhoc->exquisite, "OK",
-            EXQUISITE_STATUS_TYPE_SUCCESS);
-        exquisite_object_text_add (flhoc->exquisite, "Installing theme");
-        exquisite_object_status_set (flhoc->exquisite, "OK",
-            EXQUISITE_STATUS_TYPE_SUCCESS);
+        exquisite_object_status_set (flhoc->exquisite,
+            exquisite_object_text_add (flhoc->exquisite, "Copying theme file"),
+            "OK", EXQUISITE_STATUS_TYPE_SUCCESS);
+        exquisite_object_status_set (flhoc->exquisite,
+            exquisite_object_text_add (flhoc->exquisite, "Installing theme"),
+            "OK", EXQUISITE_STATUS_TYPE_SUCCESS);
+        flhoc->exquisite_done = EINA_TRUE;
         return;
       } else {
         printf ("Unable to install new theme\n");
         _exquisite_new (flhoc, "Theme Install", "Error Installing theme");
-        exquisite_object_text_add (flhoc->exquisite, "Copying theme file");
-        exquisite_object_status_set (flhoc->exquisite, "FAIL",
-            EXQUISITE_STATUS_TYPE_FAILURE);
+        exquisite_object_status_set (flhoc->exquisite,
+            exquisite_object_text_add (flhoc->exquisite, "Copying theme file"),
+            "FAIL", EXQUISITE_STATUS_TYPE_FAILURE);
+        flhoc->exquisite_done = EINA_TRUE;
         return;
       }
     }
@@ -319,11 +334,138 @@ _game_selected (Item *item)
   printf ("Game '%s' is launched!!!\n", game->title);
   _exquisite_new (flhoc, "Homebrew launcher", game->title);
   exquisite_object_pulsate (flhoc->exquisite);
-  exquisite_object_text_add (flhoc->exquisite, "Launching game!");
-  exquisite_object_status_set (flhoc->exquisite, "FAIL", EXQUISITE_STATUS_TYPE_FAILURE);
+  exquisite_object_status_set (flhoc->exquisite,
+      exquisite_object_text_add (flhoc->exquisite, "Launching game!"),
+      "FAIL", EXQUISITE_STATUS_TYPE_FAILURE);
   exquisite_object_text_add (flhoc->exquisite, "Oh right, I didn't implement it yet!");
-  exquisite_object_text_add (flhoc->exquisite, "Please do it, thanks!!");
-  exquisite_object_status_set (flhoc->exquisite, "OK", EXQUISITE_STATUS_TYPE_SUCCESS);
+  exquisite_object_status_set (flhoc->exquisite,
+      exquisite_object_text_add (flhoc->exquisite, "Please do it, thanks!!"),
+      "OK", EXQUISITE_STATUS_TYPE_SUCCESS);
+  flhoc->exquisite_done = EINA_TRUE;
+}
+
+static Eina_Bool
+_ecore_sleep_cb (void *data)
+{
+  Eina_Bool *done = data;
+
+  *done = EINA_TRUE;
+
+  return EINA_FALSE;
+}
+
+static void
+_ecore_sleep (double delay)
+{
+  Eina_Bool done = EINA_FALSE;
+
+  ecore_timer_add (delay, _ecore_sleep_cb, &done);
+  while (!done)
+    ecore_main_loop_iterate ();
+}
+
+static int
+_pkg_install (FLHOC *flhoc, Package *package)
+{
+  PagedFile in = {0};
+  PagedFile out = {0};
+  char out_dir[1024];
+  char *pkg_file_path = NULL;
+  char path[1024];
+  PKG_HEADER header;
+  PKG_FILE_HEADER *files = NULL;
+  int ret = TRUE;
+  u32 i;
+  u64 current_size = 0;
+  u64 total_size = 0;
+  int last_text_id = -1;
+
+  exquisite_object_message_set (flhoc->exquisite, "Inspecting package!");
+
+  last_text_id = exquisite_object_text_add (flhoc->exquisite, "Opening package");
+  _ecore_sleep (1.0);
+  if (!pkg_open (package->path, &in, &header, &files)) {
+    exquisite_object_status_set (flhoc->exquisite,
+        last_text_id, "FAIL", EXQUISITE_STATUS_TYPE_FAILURE);
+    exquisite_object_message_set (flhoc->exquisite, "Error extracting package!");
+    exquisite_object_progress_set (flhoc->exquisite, 0);
+    return FALSE;
+  }
+  exquisite_object_status_set (flhoc->exquisite,
+      last_text_id, "OK", EXQUISITE_STATUS_TYPE_SUCCESS);
+
+  last_text_id = exquisite_object_text_add (flhoc->exquisite, "Listing files");
+  _ecore_sleep (0.25);
+  for (i = 0; i < header.item_count; i++)
+    total_size += files[i].data_size;
+
+  exquisite_object_status_set (flhoc->exquisite,
+      last_text_id, "OK", EXQUISITE_STATUS_TYPE_SUCCESS);
+
+  last_text_id = exquisite_object_text_add (flhoc->exquisite,
+      "Preparing destination");
+  _ecore_sleep (0.25);
+  snprintf (out_dir, sizeof(out_dir), "%s/%s", HOMEBREW_DIRECTORY,
+      header.contentid);
+  mkdir_recursive (out_dir);
+  exquisite_object_status_set (flhoc->exquisite,
+      last_text_id, "OK", EXQUISITE_STATUS_TYPE_SUCCESS);
+
+  exquisite_object_message_set (flhoc->exquisite, "Extracting files!");
+  exquisite_object_text_add (flhoc->exquisite, "Extracting files : ");
+  _ecore_sleep (0.25);
+  for (i = 0; i < header.item_count; i++) {
+    int j;
+
+    paged_file_seek (&in, files[i].filename_offset + header.data_offset);
+    pkg_file_path = malloc (files[i].filename_size + 1);
+    paged_file_read (&in, pkg_file_path, files[i].filename_size);
+    pkg_file_path[files[i].filename_size] = 0;
+
+    last_text_id = exquisite_object_text_add (flhoc->exquisite, pkg_file_path);
+    _ecore_sleep (0.25);
+
+    snprintf (path, sizeof(path), "%s/%s", out_dir, pkg_file_path);
+    if ((files[i].flags & 0xFF) == 4) {
+      mkdir_recursive (path);
+      exquisite_object_status_set (flhoc->exquisite,
+          last_text_id, "OK", EXQUISITE_STATUS_TYPE_SUCCESS);
+    } else {
+      j = strlen (path);
+      while (j > 0 && path[j] != '/') j--;
+      if (j > 0) {
+        path[j] = 0;
+        mkdir_recursive (path);
+        path[j] = '/';
+      }
+      paged_file_seek (&in, files[i].data_offset + header.data_offset);
+      if (!paged_file_open (&out, path, FALSE)) {
+        exquisite_object_status_set (flhoc->exquisite,
+            last_text_id, "FAIL", EXQUISITE_STATUS_TYPE_FAILURE);
+        ret = FALSE;
+        break;
+      } else {
+        paged_file_splice (&out, &in, files[i].data_size);
+        paged_file_close (&out);
+
+        exquisite_object_status_set (flhoc->exquisite,
+            last_text_id, "OK", EXQUISITE_STATUS_TYPE_SUCCESS);
+      }
+    }
+    current_size += files[i].data_size;
+    exquisite_object_progress_set (flhoc->exquisite,
+        (double) current_size / (double) total_size);
+  }
+
+  if (ret) {
+    exquisite_object_message_set (flhoc->exquisite,
+        "Package extracted successfully!");
+    exquisite_object_text_add (flhoc->exquisite, "Done!");
+  } else {
+    exquisite_object_message_set (flhoc->exquisite, "Error extracting package!");
+  }
+  paged_file_close (&in);
+  return ret;
 }
 
 static void
@@ -331,24 +473,32 @@ _package_selected (Item *item)
 {
   Package *package = item->priv;
   FLHOC *flhoc;
+  char buffer[1024];
 
   flhoc = evas_object_data_get (item->category->menu->main_win->edje, "FLHOC");
 
-  /* TODO: do it! */
   printf ("Package '%s' is to be installed!!!\n", package->name);
-  _exquisite_new (flhoc, "Package Install", package->name);
+  snprintf (buffer, sizeof(buffer), "Installing package %s", package->name);
+  _exquisite_new (flhoc, buffer, "Preparing package");
   exquisite_object_pulsate (flhoc->exquisite);
-  exquisite_object_text_add (flhoc->exquisite, "Inspecting package!");
-  exquisite_object_status_set (flhoc->exquisite, "FAIL", EXQUISITE_STATUS_TYPE_FAILURE);
-  exquisite_object_text_add (flhoc->exquisite, "Listing files!");
-  exquisite_object_status_set (flhoc->exquisite, "FAIL", EXQUISITE_STATUS_TYPE_FAILURE);
-  exquisite_object_text_add (flhoc->exquisite, "Extracting files!");
-  exquisite_object_status_set (flhoc->exquisite, "FAIL", EXQUISITE_STATUS_TYPE_FAILURE);
-  exquisite_object_text_add (flhoc->exquisite, "Installing application!");
-  exquisite_object_status_set (flhoc->exquisite, "FAIL", EXQUISITE_STATUS_TYPE_FAILURE);
-  exquisite_object_text_add (flhoc->exquisite, "Oh right, I didn't implement it yet!");
-  exquisite_object_text_add (flhoc->exquisite, "Please do it, thanks!!");
-  exquisite_object_status_set (flhoc->exquisite, "OK", EXQUISITE_STATUS_TYPE_SUCCESS);
+  if (_pkg_install (flhoc, package)) {
+    Menu *menu = flhoc->current_theme->main_win->menu;
+    Category *category;
+    Item *item;
+    Eina_List *l;
+
+    _games_free (flhoc->homebrew);
+    flhoc->homebrew = _games_new (HOMEBREW_DIRECTORY);
+    EINA_LIST_FOREACH (menu->categories, l, category) {
+      if (category->type == CATEGORY_TYPE_HOMEBREW) {
+        EINA_LIST_FREE (category->items, item)
+          item_free (item);
+        category->items_selection = NULL;
+        _add_game_items (flhoc->homebrew, category);
+      }
+    }
+  }
+  flhoc->exquisite_done = EINA_TRUE;
 }
 
 /* Utility functions */
@@ -446,9 +596,9 @@ _exquisite_new (FLHOC *flhoc, const char *title, const char *message)
 
   exquisite_object_title_set (flhoc->exquisite, title);
   exquisite_object_message_set (flhoc->exquisite, message);
-
   main_window_set_secondary (main_win, secondary);
 
+  flhoc->exquisite_done = EINA_FALSE;
   return flhoc->exquisite;
 }
 
@@ -461,6 +611,7 @@ _menu_ready_cb (Menu *menu)
 
   if (!flhoc->device_check_timer)
     flhoc->device_check_timer = ecore_timer_add (1.0, _device_check_cb, flhoc);
+  _device_check_cb (flhoc);
 }
 
 static Eina_Bool
@@ -747,10 +898,15 @@ _add_main_categories (FLHOC *flhoc, Menu *menu)
   category = category_new (menu, CATEGORY_TYPE_THEME);
   menu_append_category (menu, category);
 
-  homebrew = category_new (menu, CATEGORY_TYPE_HOMEBREW);
+  category = category_new (menu, CATEGORY_TYPE_GAMES);
+  if (flhoc->games)
+    _add_game_items (flhoc->games, category);
+  menu_append_category (menu, category);
+  category = category_new (menu, CATEGORY_TYPE_HOMEBREW);
   if (flhoc->homebrew)
-    _add_game_items (flhoc->homebrew, homebrew);
-  menu_append_category (menu, homebrew);
+    _add_game_items (flhoc->homebrew, category);
+  menu_append_category (menu, category);
+  homebrew = category;
   for (i = 0; i < MAX_USB_DEVICES; i++) {
     if (flhoc->usb_homebrew[i]) {
       category = category_new (menu, CATEGORY_TYPE_DEVICE_HOMEBREW);
@@ -1078,6 +1234,8 @@ _flhoc_init (FLHOC *flhoc)
   Theme *theme = NULL;
   char *theme_filename;
 
+  keys_set_path (KEYS_PATH);
+
   memset (flhoc, 0, sizeof(FLHOC));
   flhoc->ee = ecore_evas_new (NULL, 0, 0, FLHOC_WIDTH, FLHOC_HEIGHT, NULL);
   flhoc->evas = ecore_evas_get (flhoc->ee);
@@ -1105,6 +1263,7 @@ _flhoc_init (FLHOC *flhoc)
   EINA_LIST_FREE (theme_files, theme_filename)
       free (theme_filename);
 
+  flhoc->games = _games_new (GAMES_DIRECTORY);
   flhoc->homebrew = _games_new (HOMEBREW_DIRECTORY);
 }
 
@@ -1117,6 +1276,7 @@ _flhoc_deinit (FLHOC *flhoc)
   EINA_LIST_FREE (flhoc->themes, theme)
     theme_free (theme);
 
+  _games_free (flhoc->games);
   _games_free (flhoc->homebrew);
   for (i = 0; i < MAX_USB_DEVICES; i++)
     _games_free (flhoc->usb_homebrew[i]);

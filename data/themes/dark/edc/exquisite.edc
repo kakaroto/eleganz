@@ -1,0 +1,858 @@
+
+fonts {
+   font: "Vera.ttf" "Edje-Vera";
+   font: "VeraBd.ttf" "Edje-Vera-Bold";
+   font: "VeraMono.ttf" "Edje-Vera-Mono";
+   font: "VeraMoBd.ttf" "Edje-Vera-Mono-Bold";
+}
+
+images {
+   image: "vert-white-grad.png" COMP;
+   image: "white-logo.png" COMP;
+   image: "logo-shadow-1.png" LOSSY 90;
+   image: "logo-shadow-2.png" LOSSY 90;
+   image: "logo-shadow-3.png" LOSSY 90;
+   image: "inset.png" COMP;
+   image: "bar.png" COMP;
+   image: "ball.png" COMP;
+}
+
+styles {
+  style {
+    name: "verbose"; 
+    base: "font=Edje-Vera-Mono-Bold font_size=8 align=0.0 valign=0.5 color=#fff style=soft_outline outline_color=#aaa wrap=none";
+
+    tag:  "/p"        "+ \n";
+    tag:  "br"        "+ \n";
+  }
+  
+  style {
+    name: "status";
+    base: "font=Edje-Vera-Mono-Bold font_size=8 color=#fff align=1.0 valign=0.5 style=soft_outline outline_color=#aaa";
+    
+    tag:  "success"   "+ outline_color=#0c0";
+    tag:  "/success"  "- \n";
+    tag:  "failure"      "+ outline_color=#c00";
+    tag:  "/failure"  "- \n";
+    tag:  "br"        "+ \n";
+  }
+}
+
+collections {
+   group {
+      name: "exquisite/theme";
+      
+      script {       
+         public shift_text() {
+           new x;
+           new y;
+           new x2;
+           
+           custom_state(PART:"textarea", "default", 0.0);
+           custom_state(PART:"statusarea", "default", 0.0);
+           
+           get_state_val(PART:"statusarea", STATE_REL1_OFFSET, x2, y);
+           get_state_val(PART:"textarea", STATE_REL1_OFFSET, x, y);
+           
+           y = y - 13;
+           
+           set_state_val(PART:"textarea", STATE_REL1_OFFSET, x, y);
+           set_state_val(PART:"statusarea", STATE_REL1_OFFSET, x2, y);
+           
+           set_state(PART:"textarea", "custom", 0.0);
+           set_state(PART:"statusarea", "custom", 0.0);
+         }
+         
+         public reset_text() {
+           new x;
+           new x2;
+           new y;
+           
+           get_state_val(PART:"textarea", STATE_REL1_OFFSET, x, y);
+           get_state_val(PART:"statusarea", STATE_REL1_OFFSET, x2, y);
+           
+           set_state_val(PART:"textarea", STATE_REL1_OFFSET, x, 0);
+           set_state_val(PART:"statusarea", STATE_REL1_OFFSET, x2, 0);
+         }
+      }
+      
+      parts {
+	 
+	 part {
+	    name: "background_image";
+	    description {
+	       state: "default" 0.0;
+	       image {
+		  normal: "vert-white-grad.png";
+	       }
+               fill {
+		  size {
+		     relative: 0.0 1.0;
+		     offset:   64 0;
+		  }
+	       }
+	    }
+	 }
+         
+	 part {
+	    name: "ball";
+	    description {
+	       state: "default" 0.0;
+	       aspect: 1.0 1.0;
+	       align: 1.0 1.0;
+	       image {
+		  normal: "ball.png";
+	       }
+	       min: 0 0;
+	       max: 0 0;
+	    }
+	    description {
+	       state: "visible" 0.0;
+	       inherit: "default" 0.0;
+	       min: 48 48;
+	       max: 48 48;
+	       color: 255 255 255 0;
+	    }
+	 }
+
+	 part {
+	    name: "bar_bg";
+	    description {
+	       state: "default" 0.0;
+	       align: 0.5 0.0;
+	       rel1 {
+		  to_y: "exquisite.message";
+		  relative: 0.2 1.0;
+		  offset: 0 10;
+	       }
+	       rel2 {
+		  to_y: "exquisite.message";
+		  relative: 0.8 1.0;
+		  offset: -1 10;
+	       }
+	       min: 80 24;
+               
+	       image {
+		  normal: "inset.png";
+		  border: 14 14 14 14;
+	       }
+	    }
+	 }
+	 part {
+	    name: "bar_clip";
+	    mouse_events:  0;
+	    type: RECT;
+	    description {
+	       state: "default" 0.0;
+	       rel1 {
+		  to: "bar_bg";
+		  offset: 1 1;
+	       }
+	       rel2 {
+		  to: "bar_bg";
+		  offset: -2 -2;
+	       }
+	       color: 255 255 255 255;
+	    }
+	 }
+	 part {
+	    name: "bar";
+	    clip_to: "bar_clip";
+	    description {
+	       state: "default" 0.0;
+	       rel1 {
+		  to: "bar_bg";
+		  offset: -2 -2;
+	       }
+	       rel2 {
+		  to_x: "exquisite.progress";
+		  to_y: "bar_bg";
+		  relative: 1.0 1.0;
+		  offset: 1 1;
+	       }
+	       image {
+		  normal: "bar.png";
+		  border: 7 7 7 7;
+	       }
+	    }
+	    description {
+	       state: "pulse" 1.0;
+	       inherit: "default" 0.0;
+	       rel1 {
+		  to: "bar_bg";
+		  relative: 0.0 0.0;
+		  offset: -2 -2;
+	       }
+	       rel2 {
+		  to: "bar_bg";
+		  relative: 0.2 1.0;
+		  offset: 1 1;
+	       }
+	       image {
+		  normal: "bar.png";
+		  border: 7 7 7 7;
+	       }
+	    }
+	    description {
+	       state: "pulse" 0.0;
+	       inherit: "pulse" 1.0;
+	       rel1 {
+		  to: "bar_bg";
+		  relative: 0.8 0.0;
+		  offset: -2 -2;
+	       }
+	       rel2 {
+		  to: "bar_bg";
+		  relative: 1.0 1.0;
+		  offset: 1 1;
+	       }				
+	    }
+	 }
+	 
+	 part {
+	    name: "exquisite.progress";
+	    mouse_events: 0;
+	    type: RECT;
+	    dragable {
+	       x: 1 1 0;
+	       y: 0 0 0;
+	       confine: "bar_clip";
+	    }
+	    description {
+	       state: "default" 0.0;
+	       visible: 0;
+	       rel1 {
+		  to: "bar_clip";
+		  relative: 0.5 0.5;
+		  offset: 0 0;
+	       }
+	       rel2 {
+		  to: "bar_clip";
+		  relative: 0.5 0.5;
+		  offset: 0 0;
+	       }
+	    }
+	 }
+
+	 part {      
+	    name: "exquisite.message";
+	    type: TEXT;
+	    effect: SOFT_SHADOW;
+	    mouse_events:  0;
+	    description {
+	       state: "default" 0.0;
+	       align: 0.5 0.35;
+	       rel1 {
+		  relative: 0.5 0.5;
+		  offset: 0 35;
+	       }
+	       rel2 {
+		  relative: 0.5 0.5;
+		  offset: 1 35;
+	       }
+	       color: 255 255 255 0;
+	       color3: 0 0 0 0;
+	       text {
+		  font: "Edje-Vera-Bold";
+		  size: 14;
+		  min: 1 1;
+		  align: 0.5 0.5;
+	       }
+	    }
+	    description {
+	       state: "visible" 0.0;
+	       inherit: "default" 0.0;
+	       color: 255 255 255 255;
+	       color3: 0 0 0 8;
+	    }
+	 }
+
+	 
+	 part {      
+	    name: "exquisite.title";
+	    type: TEXT;
+	    effect: SOFT_SHADOW;
+	    mouse_events:  0;
+	    description {
+	       state: "default" 0.0;
+	       align: 0.5 0.50;
+	       rel1 {
+		  relative: 0.5 0.5;
+		  offset: 0 -169;
+	       }
+	       rel2 {
+		  relative: 0.5 0.5;
+		  offset: 1 -169;
+	       }
+	       color: 255 255 255 0;
+	       color3: 0 0 0 0;
+	       text {
+		  font: "Edje-Vera-Bold";
+		  size: 22;
+		  min: 1 1;
+		  align: 0.5 0.50;
+	       }
+	    }
+	    description {
+	       state: "visible" 0.0;
+	       inherit: "default" 0.0;
+	       color: 255 255 255 255;
+	       color3: 0 0 0 8;
+	    }
+	 }
+
+	 part {
+	    name: "logo-shadow1";
+	    mouse_events: 0;
+	    description {
+	       state: "default" 0.0;
+	       rel1 {
+		  to: "logo";
+		  offset: -15 -15;
+	       }
+	       rel2 {
+		  to: "logo";
+		  offset: 14 14;
+	       }
+	       image {
+		  normal: "logo-shadow-1.png";
+	       }
+	       color: 255 255 255 0;
+	    }
+	    description {
+	       state: "out2" 0.0;
+	       inherit: "default" 0.0;
+	       rel1 {
+		  to: "logo";
+		  offset: -15 -12;
+	       }
+	       rel2 {
+		  to: "logo";
+		  offset: 14 17;
+	       }
+	       color: 255 255 255 48;
+	    }
+	    description {
+	       state: "out3" 0.0;
+	       inherit: "default" 0.0;
+	       rel1 {
+		  to: "logo";
+		  offset: -15 -9;
+	       }
+	       rel2 {
+		  to: "logo";
+		  offset: 14 20;
+	       }
+	       color: 255 255 255 0;
+	    }
+	    description {
+	       state: "out4" 0.0;
+	       inherit: "default" 0.0;
+	       rel1 {
+		  to: "logo";
+		  offset: -15 -6;
+	       }
+	       rel2 {
+		  to: "logo";
+		  offset: 14 23;
+	       }
+	       color: 255 255 255 0;
+	    }
+	 }
+	 part {
+	    name: "logo-shadow2";
+	    mouse_events: 0;
+	    description {
+	       state: "default" 0.0;
+	       rel1 {
+		  to: "logo";
+		  offset: -15 -15;
+	       }
+	       rel2 {
+		  to: "logo";
+		  offset: 14 14;
+	       }
+	       image {
+		  normal: "logo-shadow-2.png";
+	       }
+	       color: 255 255 255 0;
+	    }
+	    description {
+	       state: "out2" 0.0;
+	       inherit: "default" 0.0;
+	       rel1 {
+		  to: "logo";
+		  offset: -15 -12;
+	       }
+	       rel2 {
+		  to: "logo";
+		  offset: 14 17;
+	       }
+	       color: 255 255 255 0;
+	    }
+	    description {
+	       state: "out3" 0.0;
+	       inherit: "default" 0.0;
+	       rel1 {
+		  to: "logo";
+		  offset: -15 -9;
+	       }
+	       rel2 {
+		  to: "logo";
+		  offset: 14 20;
+	       }
+	       color: 255 255 255 40;
+	    }
+	    description {
+	       state: "out4" 0.0;
+	       inherit: "default" 0.0;
+	       rel1 {
+		  to: "logo";
+		  offset: -15 -6;
+	       }
+	       rel2 {
+		  to: "logo";
+		  offset: 14 23;
+	       }
+	       color: 255 255 255 0;
+	    }
+	 }
+	 part {
+	    name: "logo-shadow3";
+	    mouse_events: 0;
+	    description {
+	       state: "default" 0.0;
+	       rel1 {
+		  to: "logo";
+		  offset: -15 -15;
+	       }
+	       rel2 {
+		  to: "logo";
+		  offset: 14 14;
+	       }
+	       image {
+		  normal: "logo-shadow-3.png";
+	       }
+	       color: 255 255 255 0;
+	    }
+	    description {
+	       state: "out2" 0.0;
+	       inherit: "default" 0.0;
+	       rel1 {
+		  to: "logo";
+		  offset: -15 -12;
+	       }
+	       rel2 {
+		  to: "logo";
+		  offset: 14 17;
+	       }
+	       color: 255 255 255 0;
+	    }
+	    description {
+	       state: "out3" 0.0;
+	       inherit: "default" 0.0;
+	       rel1 {
+		  to: "logo";
+		  offset: -15 -9;
+	       }
+	       rel2 {
+		  to: "logo";
+		  offset: 14 20;
+	       }
+	       color: 255 255 255 0;
+	    }
+	    description {
+	       state: "out4" 0.0;
+	       inherit: "default" 0.0;
+	       rel1 {
+		  to: "logo";
+		  offset: -15 -6;
+	       }
+	       rel2 {
+		  to: "logo";
+		  offset: 14 23;
+	       }
+	       color: 255 255 255 32;
+	    }
+	 }
+	 
+	 part {
+	    name: "logo";
+	    mouse_events: 0;
+	    description {
+	       state: "default" 0.0;
+	       aspect: 0.741666667 0.741666667;
+	       aspect_preference: VERTICAL;
+	       max: 133.5 180;
+	       image {
+		  normal: "white-logo.png";
+	       }
+	       color: 255 255 255 0;
+	       rel1 {
+		  relative: 0.5 0.50;
+		  offset: -64.75 -139;
+	       }
+	       rel2 {
+		  relative: 0.5 0.50;
+		  offset: 65.75 0;
+	       }
+	    }
+	    description {
+	       state: "out" 0.0;
+	       inherit: "default" 0.0;
+	       color: 255 255 255 255;
+	       rel1 {
+		  relative: 0.5 0.50;
+		  offset: -69.75 -144;
+	       }
+	       rel2 {
+		  relative: 0.5 0.50;
+		  offset: 70.75 5;
+	       }
+	    }
+	    description {
+	       state: "out2" 0.0;
+	       inherit: "default" 0.0;
+	       color: 255 255 255 255;
+	       rel1 {
+		  relative: 0.5 0.50;
+		  offset: -74.75 -149;
+	       }
+	       rel2 {
+		  relative: 0.5 0.50;
+		  offset: 75.75 10;
+	       }
+	    }
+	    description {
+	       state: "out3" 0.0;
+	       inherit: "default" 0.0;
+	       color: 255 255 255 255;
+	       rel1 {
+		  relative: 0.5 0.50;
+		  offset: -79.75 -154;
+	       }
+	       rel2 {
+		  relative: 0.5 0.50;
+		  offset: 80.75 15;
+	       }
+	    }
+	    description {
+	       state: "out4" 0.0;
+	       inherit: "default" 0.0;
+	       color: 255 255 255 255;
+	       rel1 {
+		  relative: 0.5 0.50;
+		  offset: -84.75 -159;
+	       }
+	       rel2 {
+		  relative: 0.5 0.50;
+		  offset: 85.75 20;
+	       }
+	    }
+	 }
+	 
+	 part {
+	    name: "black";
+	    mouse_events: 0;
+	    type: RECT;
+	    description {
+	       state: "default" 0.0;
+	       color: 0 0 0 0;
+	    }
+	    description {
+	       state: "visible" 0.0;
+	       color: 0 0 0 255;
+	    }
+	 }
+         
+         part {
+            name: "textarea_clip";
+            mouse_events: 0;
+            type: RECT;
+            description {
+               state: "default" 0.0;
+               color: 255 255 255 0;
+               rel1 {
+		  to_y: "bar_bg";
+		  relative: 0.2 1.0;
+		  offset: 0 5;
+	       }
+	       rel2 {
+		  to_y: "bar_bg";
+		  relative: 0.8 1.0;
+		  offset: -1 110;
+	       }
+            }
+            description {
+               state: "visible" 0.0;
+               inherit: "default" 0.0;
+               color: 255 255 255 255;
+            }
+         }
+
+	 part {
+	    name: "textarea_bg";
+            clip_to: "textarea_clip";
+	    description {
+	       state: "default" 0.0;
+	       align: 0.5 0.0;
+	       rel1 {
+		  to_y: "bar_bg";
+		  relative: 0.2 1.0;
+		  offset: 0 5;
+	       }
+	       rel2 {
+		  to_y: "bar_bg";
+		  relative: 0.8 1.0;
+		  offset: -1 110;
+	       }
+	       image {
+		  normal: "inset.png";
+		  border: 14 14 14 14;
+	       }
+	    }
+	 }
+         
+         part { 
+            name: "text_clip";
+            type: "RECT";
+            clip_to: "textarea_clip";
+            description {
+               state: "default" 0.0;
+               rel1 {
+                  to: "textarea_clip";
+                  offset: 0 5;
+               }
+               rel2 {
+                  to: "textarea_clip";
+                  offset: 0 0;
+               }
+            }
+         }
+
+         part {
+           name: "textarea";
+           clip_to: "text_clip";
+           type: TEXTBLOCK;
+           description {
+             state: "default" 0.0;
+             align: 0.5 0.0;
+             text {
+               style: "verbose";
+             }
+             rel1 {
+                to: "textarea_bg";
+                relative: 0.0 0.85;
+                offset: 5 5;
+             }
+             rel2 {
+                to: "textarea_bg";
+                relative: 0.85 1.0;
+                offset: -5 -5;
+             }
+           }
+         }
+         
+         part {
+           name: "statusarea";
+           clip_to: "text_clip";
+           type: TEXTBLOCK;
+           description {
+             state: "default" 0.0;
+             align: 0.5 0.0;
+             text {
+               style: "status";
+             }
+             rel1 {
+                to: "textarea_bg";
+                relative: 0.85 0.85;
+                offset: 5 5;
+             }
+             rel2 {
+                to: "textarea_bg";
+                relative: 1.0 1.0;
+                offset: -5 -5;
+             }
+           }
+         }
+      }
+      
+      programs {
+	 program {
+	    name: "logo-anim";
+	    in: 0.5 0.0;
+	    signal: "show";
+	    source: "";
+	    action: STATE_SET "out" 0.0;
+	    target: "logo";
+	    target: "logo-shadow1";
+	    target: "logo-shadow2";
+	    target: "logo-shadow3";
+	    transition: LINEAR 0.1;
+	    after: "logo-anim2";
+	 }
+	 program {
+	    name: "logo-anim2";
+	    action: STATE_SET "out2" 0.0;
+	    target: "logo";
+	    target: "logo-shadow1";
+	    target: "logo-shadow2";
+	    target: "logo-shadow3";
+	    transition: LINEAR 0.15;
+	    after: "logo-anim3";
+	 }
+	 program {
+	    name: "logo-anim3";
+	    action: STATE_SET "out3" 0.0;
+	    target: "logo";
+	    target: "logo-shadow1";
+	    target: "logo-shadow2";
+	    target: "logo-shadow3";
+	    transition: LINEAR 0.2;
+	    after: "logo-anim4";
+	 }
+	 program {
+	    name: "logo-anim4";
+	    action: STATE_SET "out4" 0.0;
+	    target: "logo";
+	    target: "logo-shadow1";
+	    target: "logo-shadow2";
+	    target: "logo-shadow3";
+	    transition: LINEAR 0.25;
+	 }
+	 
+	 program {
+	    name: "message";
+	    signal: "exquisite";
+	    source: "message";
+	    action: STATE_SET "default" 0.0;
+	    target: "exquisite.message";
+	    after: "message2";
+	 }
+	 program {
+	    name: "message2";
+	    action: STATE_SET "visible" 0.0;
+	    target: "exquisite.message";
+	    transition: LINEAR 0.25;
+	 }
+	 
+	 program {
+	    name: "title";
+	    signal: "exquisite";
+	    source: "title";
+	    action: STATE_SET "default" 0.0;
+	    target: "exquisite.title";
+	    after: "title2";
+	 }
+	 program {
+	    name: "title2";
+	    action: STATE_SET "visible" 0.0;
+	    target: "exquisite.title";
+	    transition: LINEAR 0.25;
+	 }
+
+	 program {
+	    name: "tick";
+	    signal: "exquisite";
+	    source: "tick";
+	    action: STATE_SET "default" 0.0;
+	    target: "ball";
+	    after: "tick2";
+	 }
+	 program {
+	    name: "tick2";
+	    action: STATE_SET "visible" 0.0;
+	    target: "ball";
+	    transition: LINEAR 0.5;
+	 }
+	 
+	 program {
+	    name: "exit";
+	    signal: "exquisite";
+	    source: "exit";
+	    action: STATE_SET "visible" 0.0;
+	    target: "black";
+	    transition: LINEAR 0.5;
+	    after: "exit2";
+	 }
+	 program {
+	    name: "exit2";
+	    action: SIGNAL_EMIT "exquisite" "done";
+	 }
+	 
+	 program {
+	    name: "pulsate";
+	    signal: "exquisite";
+	    source: "pulsate";
+	    action: STATE_SET "pulse" 1.0;
+	    target: "bar";
+	    after: "pulsate2";
+	 }
+	 program {
+	    name: "pulsate2";
+	    action: STATE_SET "pulse" 0.0;
+	    target: "bar";
+	    transition: SINUSOIDAL 0.8;
+	    after: "pulsate3";
+	 }
+	 program {
+	    name: "pulsate3";
+	    action: STATE_SET "pulse" 1.0;
+	    target: "bar";
+	    transition: SINUSOIDAL 0.8;
+	    after: "pulsate2";
+	 }
+	 
+	 program {
+	    name: "pulsate_stop";
+	    action: ACTION_STOP;
+	    target: "pulsate2";
+	    target: "pulsate3";
+	 }
+	 
+	 program {
+	    name: "progress";
+	    signal: "exquisite";
+	    source: "progress";
+	    action: STATE_SET "default" 0.0;
+	    target: "bar";
+	    after: "pulsate_stop";
+	 }
+
+	 program {
+	    name: "text_enable";
+	    signal: "exquisite";
+	    source: "text_enable";
+	    action: STATE_SET "visible" 0.0;
+	    target: "textarea_clip";
+            transition: SINUSOIDAL 0.2;
+	 }
+
+	 program {
+	    name: "text_set";
+	    signal: "exquisite";
+	    source: "text_set";
+            script {
+               shift_text();
+            }  
+	 }
+
+         program {
+	    name: "text_clear";
+	    signal: "exquisite";
+	    source: "text_clear";
+	    action: STATE_SET "default" 0.0;
+	    target: "textarea_clip";
+            transition: LINEAR 0.25;
+            after: "text_clear2";
+         }
+         
+         program {
+            name: "text_clear2";
+            script {
+               reset_text();
+            }
+         }
+      }
+   }
+}

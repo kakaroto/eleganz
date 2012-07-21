@@ -436,6 +436,7 @@ group {
    }
 DEFINE_CATEGORY("quit", "quit.png", "Quit");
 DEFINE_CATEGORY("settings", "settings.png", "Settings");
+DEFINE_CATEGORY("games", "homebrew.png", "Games");
 DEFINE_CATEGORY("homebrew", "homebrew.png", "Homebrew");
 DEFINE_CATEGORY("device_packages", "device_packages.png", "USB Packages");
 DEFINE_CATEGORY("device_homebrew", "device_homebrew.png", "USB Homebrew");
