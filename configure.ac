@@ -46,7 +46,7 @@ AC_PROG_CC
 # pkg-config
 PKG_PROG_PKG_CONFIG
 
-PKG_CHECK_MODULES(EFL, [edje ecore ecore-file ecore-evas evas eet eina])
+PKG_CHECK_MODULES(EFL, [edje ecore ecore-file ecore-evas evas eet eina exquisite])
 
 AC_CONFIG_FILES([
         Makefile

@@ -15,6 +15,7 @@
 #include <Ecore_File.h>
 #include <Ecore_Evas.h>
 #include <Edje.h>
+#include <Exquisite.h>
 
 #include "common.h"
 #include "FLHOC_menu.h"
@@ -59,6 +60,7 @@ typedef struct {
 typedef struct {
   Ecore_Evas *ee;
   Evas *evas;
+  Evas_Object *exquisite;
   Eina_List *themes;
   Theme *current_theme;
   Theme *preview_theme;
@@ -70,11 +72,13 @@ typedef struct {
 } FLHOC;
 
 static int _add_game_items (Eina_List *games, Category *category);
-static void _populate_games (FLHOC *flhoc);
 static void _populate_themes (FLHOC *flhoc, Theme *current_theme, Eina_Bool only_usb);
 static Eina_Bool _add_main_categories (FLHOC *flhoc, Menu *menu);
 static Eina_Bool load_theme (FLHOC *flhoc, Theme *theme);
 static void set_current_theme (FLHOC *flhoc, Theme *theme);
+static Eina_Bool _device_check_cb (void *data);
+static void _exquisite_default_exit_cb (void *data);
+static Evas_Object *_exquisite_new (FLHOC *flhoc, const char *title, const char *message);
 
 /* Generic callbacks */
 static void
@@ -86,15 +90,7 @@ _key_down_cb (void *data, Evas *e, Evas_Object *obj, void *event)
   Evas_Event_Key_Down *ev = event;
 
   //printf ("Key Down: '%s' - '%s' - '%s' - '%s'\n", ev->keyname, ev->key, ev->string, ev->compose);
-  if (strcmp (ev->keyname, menu->category_previous) == 0) {
-    menu_scroll_previous (menu);
-  } else if (strcmp (ev->keyname, menu->category_next) == 0) {
-    menu_scroll_next (menu);
-  } else if (strcmp (ev->keyname, menu->item_previous) == 0) {
-    category_scroll_previous (menu_get_selected_category (menu));
-  } else if (strcmp (ev->keyname, menu->item_next) == 0) {
-    category_scroll_next (menu_get_selected_category (menu));
-  } else if (strcmp (ev->keyname, "f") == 0) {
+  if (strcmp (ev->keyname, "f") == 0) {
     Ecore_Evas *ee = ecore_evas_ecore_evas_get (main_win->theme->evas);
     ecore_evas_fullscreen_set (ee, !ecore_evas_fullscreen_get (ee));
   } else if (strcmp (ev->keyname, "Escape") == 0 ||
@@ -105,12 +101,24 @@ _key_down_cb (void *data, Evas *e, Evas_Object *obj, void *event)
     Category *category = menu_get_selected_category (menu);
     Item *item = category_get_selected_item (category);
 
-    if (item) {
+    if (flhoc->exquisite) {
+      exquisite_object_exit (flhoc->exquisite);
+    } else if (item) {
       if (item->action)
         item->action (item);
     } else {
       if (category->action)
         category->action (category);
+    }
+  } else if (!flhoc->exquisite) {
+    if (strcmp (ev->keyname, menu->category_previous) == 0) {
+      menu_scroll_previous (menu);
+    } else if (strcmp (ev->keyname, menu->category_next) == 0) {
+      menu_scroll_next (menu);
+    } else if (strcmp (ev->keyname, menu->item_previous) == 0) {
+      category_scroll_previous (menu_get_selected_category (menu));
+    } else if (strcmp (ev->keyname, menu->item_next) == 0) {
+      category_scroll_next (menu_get_selected_category (menu));
     }
   }
 }
@@ -165,6 +173,7 @@ _theme_selection (Item *item, Eina_Bool selected)
   }
   if (selected) {
     flhoc->preview_theme = theme_new (flhoc->evas, theme->edje_file);
+    flhoc->preview_theme->priv = flhoc;
     if (load_theme (flhoc, flhoc->preview_theme) == EINA_FALSE) {
       theme_free (flhoc->preview_theme);
       flhoc->preview_theme = NULL;
@@ -175,6 +184,20 @@ _theme_selection (Item *item, Eina_Bool selected)
         "FLHOC/menu/item/theme.preview", flhoc->preview_theme->main_win->edje);
     main_window_init (flhoc->preview_theme->main_win);
   }
+}
+
+static void
+_continue_set_theme (void *data)
+{
+  Theme *new_theme = data;
+  FLHOC *flhoc = new_theme->priv;
+
+  if (flhoc->preview_theme)
+    theme_free (flhoc->preview_theme);
+  flhoc->preview_theme = NULL;
+
+  set_current_theme (flhoc, new_theme);
+  _exquisite_default_exit_cb (flhoc);
 }
 
 static void
@@ -193,11 +216,9 @@ _theme_selected (Item *item)
 
       new_theme = NULL;
       EINA_LIST_FOREACH (flhoc->themes, l, new_theme) {
-        printf ("old theme : %s -- new theme : %s\n", old_theme->name, new_theme->name);
         if (strcmp (new_theme->name, old_theme->name) == 0)
           break;
       }
-      printf ("new theme is : %p\n", new_theme);
       if (new_theme) {
         installed = ecore_file_cp (old_theme->edje_file, new_theme->edje_file);
       } else {
@@ -212,6 +233,7 @@ _theme_selected (Item *item)
 
         if (ecore_file_cp (old_theme->edje_file, path)) {
           new_theme = theme_new (old_theme->evas, path);
+          new_theme->priv = flhoc;
           new_theme->installed = EINA_TRUE;
           flhoc->themes = eina_list_append (flhoc->themes, new_theme);
           installed = EINA_TRUE;
@@ -219,9 +241,26 @@ _theme_selected (Item *item)
       }
 
       if (installed) {
-        printf ("New theme installed successfully to %s\n", new_theme->edje_file);
+        printf ("New theme installed successfully to %s\n",
+            new_theme->edje_file);
+        _theme_selection (item, EINA_FALSE);
+        _exquisite_new (flhoc, "Theme Install", "Theme Installed successfully");
+        exquisite_object_exit_callback_set (flhoc->exquisite,
+            _continue_set_theme, new_theme);
+        exquisite_object_progress_set (flhoc->exquisite, 1.0);
+        exquisite_object_text_add (flhoc->exquisite, "Copying theme file");
+        exquisite_object_status_set (flhoc->exquisite, "OK",
+            EXQUISITE_STATUS_TYPE_SUCCESS);
+        exquisite_object_text_add (flhoc->exquisite, "Installing theme");
+        exquisite_object_status_set (flhoc->exquisite, "OK",
+            EXQUISITE_STATUS_TYPE_SUCCESS);
+        return;
       } else {
         printf ("Unable to install new theme\n");
+        _exquisite_new (flhoc, "Theme Install", "Error Installing theme");
+        exquisite_object_text_add (flhoc->exquisite, "Copying theme file");
+        exquisite_object_status_set (flhoc->exquisite, "FAIL",
+            EXQUISITE_STATUS_TYPE_FAILURE);
         return;
       }
     }
@@ -235,17 +274,6 @@ _theme_selected (Item *item)
 }
 
 static void
-_game_secondary_unset_cb (void *data, Evas_Object *obj,
-    const char  *emission, const char  *source)
-{
-  Secondary *secondary = data;
-
-  edje_object_signal_callback_del_full (secondary->main_win->edje,
-      "FLHOC/secondary,unset,end", "*", _game_secondary_unset_cb, secondary);
-  secondary_free (secondary);
-}
-
-static void
 _game_selection (Item *item, Eina_Bool selected)
 {
   Game *game = item->priv;
@@ -254,14 +282,9 @@ _game_selection (Item *item, Eina_Bool selected)
 
   printf ("Game '%s' is %sselected\n", game->title, selected?"":"de");
 
-  if (main_win->secondary) {
-    secondary = main_win->secondary;
-    edje_object_part_unswallow (main_win->edje, secondary->edje);
-    edje_object_signal_callback_add (main_win->edje, "FLHOC/secondary,unset,end", "*",
-      _game_secondary_unset_cb, secondary);
-    edje_object_signal_emit (main_win->edje, "FLHOC/secondary,unset", secondary->secondary);
-    main_win->secondary = NULL;
-  }
+  if (main_win->secondary)
+    main_window_set_secondary (main_win, NULL);
+
   if (selected) {
     secondary = secondary_new (main_win, "FLHOC/secondary/game");
     if (edje_object_part_exists (secondary->edje, "FLHOC/secondary/game/title"))
@@ -288,18 +311,44 @@ static void
 _game_selected (Item *item)
 {
   Game *game = item->priv;
+  FLHOC *flhoc;
+
+  flhoc = evas_object_data_get (item->category->menu->main_win->edje, "FLHOC");
 
   /* TODO: do it! */
   printf ("Game '%s' is launched!!!\n", game->title);
+  _exquisite_new (flhoc, "Homebrew launcher", game->title);
+  exquisite_object_pulsate (flhoc->exquisite);
+  exquisite_object_text_add (flhoc->exquisite, "Launching game!");
+  exquisite_object_status_set (flhoc->exquisite, "FAIL", EXQUISITE_STATUS_TYPE_FAILURE);
+  exquisite_object_text_add (flhoc->exquisite, "Oh right, I didn't implement it yet!");
+  exquisite_object_text_add (flhoc->exquisite, "Please do it, thanks!!");
+  exquisite_object_status_set (flhoc->exquisite, "OK", EXQUISITE_STATUS_TYPE_SUCCESS);
 }
 
 static void
 _package_selected (Item *item)
 {
   Package *package = item->priv;
+  FLHOC *flhoc;
+
+  flhoc = evas_object_data_get (item->category->menu->main_win->edje, "FLHOC");
 
   /* TODO: do it! */
   printf ("Package '%s' is to be installed!!!\n", package->name);
+  _exquisite_new (flhoc, "Package Install", package->name);
+  exquisite_object_pulsate (flhoc->exquisite);
+  exquisite_object_text_add (flhoc->exquisite, "Inspecting package!");
+  exquisite_object_status_set (flhoc->exquisite, "FAIL", EXQUISITE_STATUS_TYPE_FAILURE);
+  exquisite_object_text_add (flhoc->exquisite, "Listing files!");
+  exquisite_object_status_set (flhoc->exquisite, "FAIL", EXQUISITE_STATUS_TYPE_FAILURE);
+  exquisite_object_text_add (flhoc->exquisite, "Extracting files!");
+  exquisite_object_status_set (flhoc->exquisite, "FAIL", EXQUISITE_STATUS_TYPE_FAILURE);
+  exquisite_object_text_add (flhoc->exquisite, "Installing application!");
+  exquisite_object_status_set (flhoc->exquisite, "FAIL", EXQUISITE_STATUS_TYPE_FAILURE);
+  exquisite_object_text_add (flhoc->exquisite, "Oh right, I didn't implement it yet!");
+  exquisite_object_text_add (flhoc->exquisite, "Please do it, thanks!!");
+  exquisite_object_status_set (flhoc->exquisite, "OK", EXQUISITE_STATUS_TYPE_SUCCESS);
 }
 
 /* Utility functions */
@@ -372,7 +421,48 @@ _get_dirlist (const char *path, Eina_Bool dirs, Eina_Bool files, Eina_Bool recur
   return list;
 }
 
+static void
+_exquisite_default_exit_cb (void *data)
+{
+  FLHOC *flhoc = data;
+  MainWindow *main_win = flhoc->current_theme->main_win;
+
+  main_window_set_secondary (main_win, NULL);
+  flhoc->exquisite = NULL;
+}
+
+static Evas_Object *
+_exquisite_new (FLHOC *flhoc, const char *title, const char *message)
+{
+  MainWindow *main_win = flhoc->current_theme->main_win;
+  Secondary *secondary;
+
+  secondary = secondary_exquisite_new (main_win,
+      flhoc->current_theme->edje_file);
+  flhoc->exquisite = secondary->edje;
+
+  exquisite_object_exit_callback_set (flhoc->exquisite,
+      _exquisite_default_exit_cb, flhoc);
+
+  exquisite_object_title_set (flhoc->exquisite, title);
+  exquisite_object_message_set (flhoc->exquisite, message);
+
+  main_window_set_secondary (main_win, secondary);
+
+  return flhoc->exquisite;
+}
+
 /* Theme functions */
+
+static void
+_menu_ready_cb (Menu *menu)
+{
+  FLHOC *flhoc = evas_object_data_get (menu->main_win->edje, "FLHOC");
+
+  if (!flhoc->device_check_timer)
+    flhoc->device_check_timer = ecore_timer_add (1.0, _device_check_cb, flhoc);
+}
+
 static Eina_Bool
 load_theme (FLHOC *flhoc, Theme *theme)
 {
@@ -384,6 +474,7 @@ load_theme (FLHOC *flhoc, Theme *theme)
   evas_object_data_set (theme->main_win->edje, "MainWindow", theme->main_win);
 
   theme->main_win->menu = menu_new (theme->main_win);
+  theme->main_win->menu->ready = _menu_ready_cb;
   if (theme->main_win->menu == NULL)
     return EINA_FALSE;
 
@@ -759,6 +850,7 @@ _usb_themes_new (FLHOC *flhoc, const char *path)
     if (eina_str_has_extension (theme_filename, ".edj") &&
         theme_file_is_valid (flhoc->evas, theme_filename)) {
       theme = theme_new (flhoc->evas, theme_filename);
+      theme->priv = flhoc;
       theme->installed = EINA_FALSE;
       if (load_theme (flhoc, theme) == EINA_TRUE) {
         main_window_free (theme->main_win);
@@ -979,19 +1071,6 @@ _device_check_cb (void *data)
 }
 
 static void
-_populate_games (FLHOC *flhoc)
-{
-  char buffer[1024];
-  int i;
-
-  flhoc->homebrew = _games_new (HOMEBREW_DIRECTORY);
-  for (i = 0; i < MAX_USB_DEVICES; i++) {
-    snprintf (buffer, sizeof(buffer), USB_HOMEBREW_DIRECTORY_FMT, i);
-    flhoc->usb_homebrew[i] = _games_new (buffer);
-  }
-}
-
-static void
 _flhoc_init (FLHOC *flhoc)
 {
   Eina_List *theme_files = NULL;
@@ -1011,6 +1090,7 @@ _flhoc_init (FLHOC *flhoc)
     if (eina_str_has_extension (theme_filename, ".edj") &&
         theme_file_is_valid (flhoc->evas, theme_filename)) {
       theme = theme_new (flhoc->evas, theme_filename);
+      theme->priv = flhoc;
       theme->installed = EINA_TRUE;
       if (load_theme (flhoc, theme) == EINA_TRUE) {
         main_window_free (theme->main_win);
@@ -1025,9 +1105,7 @@ _flhoc_init (FLHOC *flhoc)
   EINA_LIST_FREE (theme_files, theme_filename)
       free (theme_filename);
 
-  _populate_games (flhoc);
-
-  flhoc->device_check_timer = ecore_timer_add (1.0, _device_check_cb, flhoc);
+  flhoc->homebrew = _games_new (HOMEBREW_DIRECTORY);
 }
 
 static void
@@ -1043,10 +1121,14 @@ _flhoc_deinit (FLHOC *flhoc)
   for (i = 0; i < MAX_USB_DEVICES; i++)
     _games_free (flhoc->usb_homebrew[i]);
 
-  ecore_timer_del (flhoc->device_check_timer);
+  if (flhoc->device_check_timer)
+    ecore_timer_del (flhoc->device_check_timer);
+  flhoc->device_check_timer = NULL;
 
   if (flhoc->ee)
     ecore_evas_free (flhoc->ee);
+
+  flhoc->exquisite = NULL;
 }
 
 int

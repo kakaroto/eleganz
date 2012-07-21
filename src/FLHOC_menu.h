@@ -48,6 +48,7 @@ struct _Secondary {
   void *priv;
 };
 
+typedef void (*MenuReadyCb) (Menu *menu);
 struct _Menu {
   MainWindow *main_win;
   Evas_Object *edje;
@@ -57,6 +58,7 @@ struct _Menu {
   const char *item_previous;
   Eina_List *categories;
   Eina_List *categories_selection;
+  MenuReadyCb ready;
   void *priv;
 };
 
@@ -137,6 +139,7 @@ Item *item_new (Category *category, ItemType type);
 void item_free (Item *item);
 
 Secondary *secondary_new (MainWindow *main_win, const char *group_name);
+Secondary *secondary_exquisite_new (MainWindow *main_win, const char *theme);
 void secondary_free (Secondary *secondary);
 
 #endif /* __FLHOC_MENU_H__ */

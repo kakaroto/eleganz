@@ -29,6 +29,8 @@ data {
    item: "compatible" "1.0";
 }
 
+#include "edc/exquisite.edc"
+
 collections {
 #include "edc/main.edc"
 #include "edc/menu.edc"

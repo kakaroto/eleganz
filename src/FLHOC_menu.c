@@ -7,7 +7,7 @@
  */
 
 #include "FLHOC_menu.h"
-
+#include <Exquisite.h>
 
 static void _main_signal_cb (void *data, Evas_Object *obj,
     const char  *emission, const char  *source);
@@ -167,6 +167,8 @@ _menu_ready_cb (void *data, Evas_Object *obj,
           item_selection->selection (item_selection, EINA_TRUE);
     }
   }
+  if (menu->ready)
+    menu->ready (menu);
 }
 
 static void
@@ -208,7 +210,9 @@ theme_file_is_valid (Evas *evas, const char *filename)
       eina_list_search_unsorted (groups,
           (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/help") == NULL ||
       eina_list_search_unsorted (groups,
-          (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/wallpaper") == NULL)
+          (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/wallpaper") == NULL ||
+      eina_list_search_unsorted (groups,
+          (Eina_Compare_Cb) strcmp, "exquisite/theme") == NULL)
     goto end;
 
   for (i = 0; i < sizeof(valid_categories) / sizeof(char *); i++) {
@@ -310,6 +314,8 @@ main_window_free (MainWindow *main_win)
 {
   if (main_win->menu)
     menu_free (main_win->menu);
+  if (main_win->secondary)
+    secondary_free (main_win->secondary);
   evas_object_del (main_win->edje);
   free (main_win);
 }
@@ -323,18 +329,40 @@ main_window_init (MainWindow *main_win)
   edje_object_signal_emit (main_win->edje, "FLHOC/primary,set", "");
 }
 
+static void
+_secondary_unset_cb (void *data, Evas_Object *obj,
+    const char  *emission, const char  *source)
+{
+  Secondary *secondary = data;
+
+  edje_object_signal_callback_del_full (secondary->main_win->edje,
+      "FLHOC/secondary,unset,end", "*", _secondary_unset_cb, secondary);
+  secondary_free (secondary);
+}
+
 void
 main_window_set_secondary (MainWindow *main_win, Secondary *secondary)
 {
   char part[100];
 
-  snprintf (part, sizeof(part), "FLHOC/secondary_%s", secondary->secondary);
+  if (main_win->secondary) {
+    edje_object_part_unswallow (main_win->edje, main_win->secondary->edje);
+    edje_object_signal_callback_add (main_win->edje, "FLHOC/secondary,unset,end", "*",
+      _secondary_unset_cb, main_win->secondary);
+    edje_object_signal_emit (main_win->edje, "FLHOC/secondary,unset",
+        main_win->secondary->secondary);
+    main_win->secondary = NULL;
+  }
 
-  main_win->secondary = secondary;
-  edje_object_signal_callback_add (main_win->edje, "FLHOC/secondary,set,end", "*",
-      _init_secondary_cb, main_win);
-  edje_object_part_swallow (main_win->edje, part, main_win->secondary->edje);
-  edje_object_signal_emit (main_win->edje, "FLHOC/secondary,set", secondary->secondary);
+  if (secondary) {
+    snprintf (part, sizeof(part), "FLHOC/secondary_%s", secondary->secondary);
+
+    main_win->secondary = secondary;
+    edje_object_signal_callback_add (main_win->edje, "FLHOC/secondary,set,end", "*",
+        _init_secondary_cb, main_win);
+    edje_object_part_swallow (main_win->edje, part, main_win->secondary->edje);
+    edje_object_signal_emit (main_win->edje, "FLHOC/secondary,set", secondary->secondary);
+  }
 }
 
 Menu *
@@ -881,6 +909,23 @@ secondary_new (MainWindow *main_win, const char *group_name)
     return NULL;
   }
   secondary->secondary = edje_object_data_get (secondary->edje, "secondary");
+
+  edje_object_signal_callback_add (secondary->edje, "*", "*",
+      _secondary_signal_cb, secondary);
+
+  return secondary;
+}
+
+Secondary *
+secondary_exquisite_new (MainWindow *main_win, const char *theme)
+{
+  Secondary *secondary = calloc (1, sizeof(Secondary));
+
+  secondary->main_win = main_win;
+  secondary->group = strdup ("exquisite/theme");
+  secondary->edje = exquisite_object_add (main_win->theme->evas, theme);
+
+  secondary->secondary = "above";
 
   edje_object_signal_callback_add (secondary->edje, "*", "*",
       _secondary_signal_cb, secondary);
