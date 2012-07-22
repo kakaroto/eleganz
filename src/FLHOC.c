@@ -27,7 +27,7 @@
 #define DEV_USB_FMT "/dev_usb%03d/"
 #define THEMES_DIRECTORY "/dev_hdd0/game/FLHOC0000/USRDIR/data/themes/"
 #define GAMES_DIRECTORY "/dev_hdd0/game/"
-#define HOMEBREW_DIRECTORY "/dev_hdd0/game/"
+#define HOMEBREW_DIRECTORY "/dev_hdd0/game/FLHOC0000/USRDIR/HOMEBREW/"
 #define USB_HOMEBREW_DIRECTORY_FMT "/dev_usb%03d/PS3/HOMEBREW/"
 #define USB_PACKAGES_DIRECTORY_FMT "/dev_usb%03d/PS3/PACKAGES/"
 #define USB_THEMES_DIRECTORY_FMT "/dev_usb%03d/PS3/THEMES/"
@@ -405,8 +405,11 @@ _pkg_install (FLHOC *flhoc, Package *package)
   last_text_id = exquisite_object_text_add (flhoc->exquisite,
       "Preparing destination");
   _ecore_sleep (0.25);
-  snprintf (out_dir, sizeof(out_dir), "%s/%s", HOMEBREW_DIRECTORY,
-      header.contentid);
+  if (strcmp (header.contentid, "UP0001-FLHOC0000-0000000000000000") == 0)
+    snprintf (out_dir, sizeof(out_dir), "%s/FLHOC0000", GAMES_DIRECTORY);
+  else
+    snprintf (out_dir, sizeof(out_dir), "%s/%s", HOMEBREW_DIRECTORY,
+        header.contentid);
   mkdir_recursive (out_dir);
   exquisite_object_status_set (flhoc->exquisite,
       last_text_id, "OK", EXQUISITE_STATUS_TYPE_SUCCESS);
