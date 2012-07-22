@@ -1,6 +1,6 @@
 /* Secondary game menu */
 group {
-   name: "FLHOC/secondary/game";
+   name: "Elegance/secondary/game";
    min: 640 480;
    max: 1920 1080;
    data {
@@ -29,7 +29,7 @@ group {
          }
       }
       part {
-         name: "FLHOC/secondary/game/picture";
+         name: "Elegance/secondary/game/picture";
          mouse_events:  0;
          type: IMAGE;
          clip_to: "clip";
@@ -55,7 +55,7 @@ group {
    programs {
       program {
          name: "init";
-         signal: "FLHOC/secondary,init";
+         signal: "Elegance/secondary,init";
          script {
             timer(1.5, "init_cb", 0);
          }
@@ -63,12 +63,12 @@ group {
       program {
          name: "show_bg";
          action: STATE_SET "shown" 0.0;
-         target: "FLHOC/secondary/game/picture";
+         target: "Elegance/secondary/game/picture";
          transition: ACCELERATE 1.0;
          after: "ready";
       }
       program {
          name: "ready";
-         action: SIGNAL_EMIT "FLHOC/secondary,ready" "";
+         action: SIGNAL_EMIT "Elegance/secondary,ready" "";
       }
    }

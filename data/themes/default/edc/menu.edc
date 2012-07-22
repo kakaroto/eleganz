@@ -1,7 +1,7 @@
 
 /* The XMB Menu window */
 group {
-   name: "FLHOC/menu";
+   name: "Elegance/menu";
    min: 640 480;
    max: 1920 1080;
    data {
@@ -75,7 +75,7 @@ group {
          }                                                              \
       }                                                                 \
       part {                                                            \
-         name: "FLHOC/menu/category."NAME;                              \
+         name: "Elegance/menu/category."NAME;                           \
          type: SWALLOW;                                                 \
          mouse_events: 0;                                               \
          clip_to: "category_clip."NAME;                                 \
@@ -192,30 +192,30 @@ group {
 
    programs {
 #define TARGET_ALL_CATEGORIES                                           \
-      target: "FLHOC/menu/category.before_2";                           \
+      target: "Elegance/menu/category.before_2";                        \
       target: "category_clip.before_2";                                 \
-      target: "FLHOC/menu/category.before_1";                           \
+      target: "Elegance/menu/category.before_1";                        \
       target: "category_clip.before_1";                                 \
-      target: "FLHOC/menu/category.before_0";                           \
+      target: "Elegance/menu/category.before_0";                        \
       target: "category_clip.before_0";                                 \
-      target: "FLHOC/menu/category.selection";                          \
+      target: "Elegance/menu/category.selection";                       \
       target: "category_clip.selection";                                \
-      target: "FLHOC/menu/category.after_0";                            \
+      target: "Elegance/menu/category.after_0";                         \
       target: "category_clip.after_0";                                  \
-      target: "FLHOC/menu/category.after_1";                            \
+      target: "Elegance/menu/category.after_1";                         \
       target: "category_clip.after_1";                                  \
-      target: "FLHOC/menu/category.after_2";                            \
+      target: "Elegance/menu/category.after_2";                         \
       target: "category_clip.after_2";                                  \
-      target: "FLHOC/menu/category.after_3";                            \
+      target: "Elegance/menu/category.after_3";                         \
       target: "category_clip.after_3";                                  \
-      target: "FLHOC/menu/category.after_4";                            \
+      target: "Elegance/menu/category.after_4";                         \
       target: "category_clip.after_4";                                  \
-      target: "FLHOC/menu/category.after_5";                            \
+      target: "Elegance/menu/category.after_5";                         \
       target: "category_clip.after_5";
          
       program {
          name: "init";
-         signal: "FLHOC/menu,init";
+         signal: "Elegance/menu,init";
          action: STATE_SET "set" 0.0;
          transition: BOUNCE 1.5 3.0 4.0;
          TARGET_ALL_CATEGORIES;
@@ -223,50 +223,50 @@ group {
       }
       program {
          name: "ready";
-         action: SIGNAL_EMIT "FLHOC/menu,ready" "";
+         action: SIGNAL_EMIT "Elegance/menu,ready" "";
       }
 #define ADD_CATEGORY_SET_UNSET_PROGRAM(NAME)                            \
       program {                                                         \
          name: "set,"NAME;                                              \
-         signal: "FLHOC/menu,category_set";                             \
+         signal: "Elegance/menu,category_set";                          \
          source: NAME;                                                  \
          action: STATE_SET "set" 0.0;                                   \
          transition: ACCELERATE 1.0;                                    \
-         target: "FLHOC/menu/category."NAME;                            \
+         target: "Elegance/menu/category."NAME;                         \
          after: "send_set,"NAME",end";                                  \
       }                                                                 \
       program {                                                         \
          name: "unset,"NAME;                                            \
-         signal: "FLHOC/menu,category_unset";                           \
+         signal: "Elegance/menu,category_unset";                        \
          source: NAME;                                                  \
          action: STATE_SET "unset" 0.0;                                 \
          transition: ACCELERATE 1.0;                                    \
-         target: "FLHOC/menu/category."NAME;                            \
+         target: "Elegance/menu/category."NAME;                         \
          after: "send_unset,"NAME",end";                                \
       }                                                                 \
       program {                                                         \
          name: "set,"NAME",reset";                                      \
-         signal: "FLHOC/menu,category_set,reset";                       \
+         signal: "Elegance/menu,category_set,reset";                    \
          source: NAME;                                                  \
          action: STATE_SET "set" 0.0;                                   \
          transition: LINEAR 0.0;                                        \
-         target: "FLHOC/menu/category."NAME;                            \
+         target: "Elegance/menu/category."NAME;                         \
       }                                                                 \
       program {                                                         \
          name: "unset,"NAME",reset";                                    \
-         signal: "FLHOC/menu,category_unset,reset";                     \
+         signal: "Elegance/menu,category_unset,reset";                  \
          source: NAME;                                                  \
          action: STATE_SET "unset" 0.0;                                 \
          transition: LINEAR 0.0;                                        \
-         target: "FLHOC/menu/category."NAME;                            \
+         target: "Elegance/menu/category."NAME;                         \
       }                                                                 \
       program {                                                         \
          name: "send_set,"NAME",end";                                   \
-         action: SIGNAL_EMIT "FLHOC/menu,category_set,end" NAME;        \
+         action: SIGNAL_EMIT "Elegance/menu,category_set,end" NAME;     \
       }                                                                 \
       program {                                                         \
          name: "send_unset,"NAME",end";                                 \
-         action: SIGNAL_EMIT "FLHOC/menu,category_unset,end" NAME;      \
+         action: SIGNAL_EMIT "Elegance/menu,category_unset,end" NAME;   \
       }
       ADD_CATEGORY_SET_UNSET_PROGRAM("before_2");
       ADD_CATEGORY_SET_UNSET_PROGRAM("before_1");
@@ -282,7 +282,7 @@ group {
       /* Scrolling left means all parts must go to the right */
       program {
          name: "scroll_left";
-         signal: "FLHOC/menu,category_previous";
+         signal: "Elegance/menu,category_previous";
          action: STATE_SET "next" 0.0;
          transition: SINUSOIDAL 0.5;
          TARGET_ALL_CATEGORIES;
@@ -291,7 +291,7 @@ group {
       /* Scrolling right means all parts must go to the left */
       program {
          name: "scroll_right";
-         signal: "FLHOC/menu,category_next";
+         signal: "Elegance/menu,category_next";
          action: STATE_SET "previous" 0.0;
          transition: SINUSOIDAL 0.5;
          TARGET_ALL_CATEGORIES;
@@ -299,18 +299,18 @@ group {
       }
       program {
          name: "reset";
-         signal: "FLHOC/menu,category_reset";
+         signal: "Elegance/menu,category_reset";
          action: STATE_SET "set" 0.0;
          transition: LINEAR 0.0;
          TARGET_ALL_CATEGORIES;
       }
       program {
          name: "scroll_left_end";
-         action: SIGNAL_EMIT "FLHOC/menu,category_previous,end" "";
+         action: SIGNAL_EMIT "Elegance/menu,category_previous,end" "";
       }
       program {
          name: "scroll_right_end";
-         action: SIGNAL_EMIT "FLHOC/menu,category_next,end" "";
+         action: SIGNAL_EMIT "Elegance/menu,category_next,end" "";
       }
    }
 }

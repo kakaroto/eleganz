@@ -6,7 +6,7 @@
  *
  */
 
-#include "FLHOC_menu.h"
+#include "menu.h"
 #include <Exquisite.h>
 
 static void _main_signal_cb (void *data, Evas_Object *obj,
@@ -52,20 +52,20 @@ _menu_signal_cb (void *data, Evas_Object *obj,
 
   //printf ("Menu: Signal '%s' coming from part '%s'\n", emission, source);
 
-  if (strcmp (emission, "FLHOC/menu,category_previous,end") == 0 ||
-      strcmp (emission, "FLHOC/menu,category_next,end") == 0) {
+  if (strcmp (emission, "Elegance/menu,category_previous,end") == 0 ||
+      strcmp (emission, "Elegance/menu,category_next,end") == 0) {
     Category *selection = menu_get_selected_category (menu);
     Item *item_selection = category_get_selected_item (selection);
 
     if (item_selection) {
-      edje_object_signal_emit (item_selection->edje, "FLHOC/menu/item,selected", "");
+      edje_object_signal_emit (item_selection->edje, "Elegance/menu/item,selected", "");
       if (item_selection->selection)
         item_selection->selection (item_selection, EINA_TRUE);
     }
 
     _menu_reset (menu);
-  } else if (strcmp (emission, "FLHOC/menu,category_unset,end") == 0) {
-    char part[40] = "FLHOC/menu/category.";
+  } else if (strcmp (emission, "Elegance/menu,category_unset,end") == 0) {
+    char part[40] = "Elegance/menu/category.";
     Evas_Object *obj;
 
     strncat (part, source, sizeof(part)-1);
@@ -84,11 +84,11 @@ _category_signal_cb (void *data, Evas_Object *obj,
   Category *category = data;
 
   //printf ("Category: Signal '%s' coming from part '%s'!\n", emission, source);
-  if (strcmp (emission, "FLHOC/menu/category,item_previous,end") == 0 ||
-      strcmp (emission, "FLHOC/menu/category,item_next,end") == 0) {
+  if (strcmp (emission, "Elegance/menu/category,item_previous,end") == 0 ||
+      strcmp (emission, "Elegance/menu/category,item_next,end") == 0) {
     _category_reset (category);
-  } else if (strcmp (emission, "FLHOC/menu/category,item_unset,end") == 0) {
-    char part[40] = "FLHOC/menu/category/item.";
+  } else if (strcmp (emission, "Elegance/menu/category,item_unset,end") == 0) {
+    char part[40] = "Elegance/menu/category/item.";
     Evas_Object *obj;
 
     strncat (part, source, sizeof(part)-1);
@@ -121,11 +121,11 @@ _init_menu_cb (void *data, Evas_Object *obj,
   MainWindow *main_win = data;
   Menu *menu = main_win->menu;
 
-  edje_object_signal_callback_del_full (main_win->edje, "FLHOC/primary,set,end", "*",
+  edje_object_signal_callback_del_full (main_win->edje, "Elegance/primary,set,end", "*",
       _init_menu_cb, main_win);
-  edje_object_signal_callback_add (menu->edje, "FLHOC/menu,ready", "*",
+  edje_object_signal_callback_add (menu->edje, "Elegance/menu,ready", "*",
       _menu_ready_cb, main_win);
-  edje_object_signal_emit (menu->edje, "FLHOC/menu,init", "");
+  edje_object_signal_emit (menu->edje, "Elegance/menu,init", "");
 }
 
 static void
@@ -135,12 +135,12 @@ _init_secondary_cb (void *data, Evas_Object *obj,
   MainWindow *main_win = data;
   Secondary *secondary = main_win->secondary;
 
-  edje_object_signal_callback_del_full (main_win->edje, "FLHOC/secondary,set,end", "*",
+  edje_object_signal_callback_del_full (main_win->edje, "Elegance/secondary,set,end", "*",
       _init_secondary_cb, main_win);
   if (secondary) {
-    edje_object_signal_callback_add (secondary->edje, "FLHOC/secondary,ready", "*",
+    edje_object_signal_callback_add (secondary->edje, "Elegance/secondary,ready", "*",
         _secondary_ready_cb, main_win);
-    edje_object_signal_emit (secondary->edje, "FLHOC/secondary,init", "");
+    edje_object_signal_emit (secondary->edje, "Elegance/secondary,init", "");
   }
 }
 
@@ -153,16 +153,16 @@ _menu_ready_cb (void *data, Evas_Object *obj,
   Category *selection = menu_get_selected_category (menu);
   Item *item_selection = category_get_selected_item (selection);
 
-  edje_object_signal_callback_del_full (menu->edje, "FLHOC/menu,ready", "*",
+  edje_object_signal_callback_del_full (menu->edje, "Elegance/menu,ready", "*",
       _menu_ready_cb, main_win);
   menu_set_categories (menu, "reset");
 
   if (selection) {
-    edje_object_signal_emit (selection->edje, "FLHOC/menu/category,selected", "");
+    edje_object_signal_emit (selection->edje, "Elegance/menu/category,selected", "");
     if (selection->selection)
       selection->selection (selection, EINA_TRUE);
     if (item_selection) {
-        edje_object_signal_emit (item_selection->edje, "FLHOC/menu/item,selected", "");
+        edje_object_signal_emit (item_selection->edje, "Elegance/menu/item,selected", "");
         if (item_selection->selection)
           item_selection->selection (item_selection, EINA_TRUE);
     }
@@ -186,32 +186,32 @@ theme_file_is_valid (Evas *evas, const char *filename)
   unsigned int i;
 
   const char *valid_categories[] = {
-    "FLHOC/menu/category/quit",
-    "FLHOC/menu/category/settings",
-    "FLHOC/menu/category/games",
-    "FLHOC/menu/category/homebrew",
-    "FLHOC/menu/category/device_homebrew",
-    "FLHOC/menu/category/device_packages",
+    "Elegance/menu/category/quit",
+    "Elegance/menu/category/settings",
+    "Elegance/menu/category/games",
+    "Elegance/menu/category/homebrew",
+    "Elegance/menu/category/device_homebrew",
+    "Elegance/menu/category/device_packages",
   };
 
   if (eina_list_search_unsorted (groups,
           (Eina_Compare_Cb) strcmp, "main") == NULL ||
       eina_list_search_unsorted (groups,
-          (Eina_Compare_Cb) strcmp, "FLHOC/menu") == NULL ||
+          (Eina_Compare_Cb) strcmp, "Elegance/menu") == NULL ||
       eina_list_search_unsorted (groups,
-          (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/game") == NULL ||
+          (Eina_Compare_Cb) strcmp, "Elegance/menu/item/game") == NULL ||
       eina_list_search_unsorted (groups,
-          (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/package") == NULL ||
+          (Eina_Compare_Cb) strcmp, "Elegance/menu/item/package") == NULL ||
       eina_list_search_unsorted (groups,
-          (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/theme") == NULL ||
+          (Eina_Compare_Cb) strcmp, "Elegance/menu/item/theme") == NULL ||
       eina_list_search_unsorted (groups,
-          (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/usb_theme") == NULL ||
+          (Eina_Compare_Cb) strcmp, "Elegance/menu/item/usb_theme") == NULL ||
       eina_list_search_unsorted (groups,
-          (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/about") == NULL ||
+          (Eina_Compare_Cb) strcmp, "Elegance/menu/item/about") == NULL ||
       eina_list_search_unsorted (groups,
-          (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/help") == NULL ||
+          (Eina_Compare_Cb) strcmp, "Elegance/menu/item/help") == NULL ||
       eina_list_search_unsorted (groups,
-          (Eina_Compare_Cb) strcmp, "FLHOC/menu/item/wallpaper") == NULL ||
+          (Eina_Compare_Cb) strcmp, "Elegance/menu/item/wallpaper") == NULL ||
       eina_list_search_unsorted (groups,
           (Eina_Compare_Cb) strcmp, "exquisite/theme") == NULL)
     goto end;
@@ -225,15 +225,15 @@ theme_file_is_valid (Evas *evas, const char *filename)
   edje = edje_object_add (evas);
   if (!edje_object_file_set (edje, filename, "main"))
     goto end;
-  if (!edje_object_part_exists (edje, "FLHOC/primary") ||
-      !edje_object_part_exists (edje, "FLHOC/secondary_above") ||
-      !edje_object_part_exists (edje, "FLHOC/secondary_below") ||
-      !edje_object_part_exists (edje, "FLHOC/wallpaper"))
+  if (!edje_object_part_exists (edje, "Elegance/primary") ||
+      !edje_object_part_exists (edje, "Elegance/secondary_above") ||
+      !edje_object_part_exists (edje, "Elegance/secondary_below") ||
+      !edje_object_part_exists (edje, "Elegance/wallpaper"))
     goto end;
 
-  if (!edje_object_file_set (edje, filename, "FLHOC/menu"))
+  if (!edje_object_file_set (edje, filename, "Elegance/menu"))
     goto end;
-  if (!edje_object_part_exists (edje, "FLHOC/menu/category.selection") ||
+  if (!edje_object_part_exists (edje, "Elegance/menu/category.selection") ||
       edje_object_data_get (edje, "category_next") == NULL ||
       edje_object_data_get (edje, "category_previous") == NULL ||
       edje_object_data_get (edje, "item_next") == NULL ||
@@ -243,21 +243,21 @@ theme_file_is_valid (Evas *evas, const char *filename)
   for (i = 0; i < sizeof(valid_categories) / sizeof(char *); i++) {
     if (!edje_object_file_set (edje, filename, valid_categories[i]))
       goto end;
-    if (!edje_object_part_exists (edje, "FLHOC/menu/category/item.selection"))
+    if (!edje_object_part_exists (edje, "Elegance/menu/category/item.selection"))
       goto end;
   }
-  if (!edje_object_file_set (edje, filename, "FLHOC/menu/item/game"))
+  if (!edje_object_file_set (edje, filename, "Elegance/menu/item/game"))
     goto end;
-  if (!edje_object_part_exists (edje, "FLHOC/menu/item/game.icon") ||
-      !edje_object_part_exists (edje, "FLHOC/menu/item/game.title"))
+  if (!edje_object_part_exists (edje, "Elegance/menu/item/game.icon") ||
+      !edje_object_part_exists (edje, "Elegance/menu/item/game.title"))
     goto end;
-  if (!edje_object_file_set (edje, filename, "FLHOC/menu/item/theme"))
+  if (!edje_object_file_set (edje, filename, "Elegance/menu/item/theme"))
     goto end;
-  if (!edje_object_part_exists (edje, "FLHOC/menu/item/theme.name") ||
-      !edje_object_part_exists (edje, "FLHOC/menu/item/theme.author") ||
-      !edje_object_part_exists (edje, "FLHOC/menu/item/theme.version") ||
-      !edje_object_part_exists (edje, "FLHOC/menu/item/theme.description") ||
-      !edje_object_part_exists (edje, "FLHOC/menu/item/theme.preview"))
+  if (!edje_object_part_exists (edje, "Elegance/menu/item/theme.name") ||
+      !edje_object_part_exists (edje, "Elegance/menu/item/theme.author") ||
+      !edje_object_part_exists (edje, "Elegance/menu/item/theme.version") ||
+      !edje_object_part_exists (edje, "Elegance/menu/item/theme.description") ||
+      !edje_object_part_exists (edje, "Elegance/menu/item/theme.preview"))
     goto end;
 
   is_valid = EINA_TRUE;
@@ -324,10 +324,10 @@ main_window_free (MainWindow *main_win)
 void
 main_window_init (MainWindow *main_win)
 {
-  edje_object_signal_callback_add (main_win->edje, "FLHOC/primary,set,end", "*",
+  edje_object_signal_callback_add (main_win->edje, "Elegance/primary,set,end", "*",
       _init_menu_cb, main_win);
-  edje_object_part_swallow (main_win->edje, "FLHOC/primary", main_win->menu->edje);
-  edje_object_signal_emit (main_win->edje, "FLHOC/primary,set", "");
+  edje_object_part_swallow (main_win->edje, "Elegance/primary", main_win->menu->edje);
+  edje_object_signal_emit (main_win->edje, "Elegance/primary,set", "");
 }
 
 static void
@@ -337,7 +337,7 @@ _secondary_unset_cb (void *data, Evas_Object *obj,
   Secondary *secondary = data;
 
   edje_object_signal_callback_del_full (secondary->main_win->edje,
-      "FLHOC/secondary,unset,end", "*", _secondary_unset_cb, secondary);
+      "Elegance/secondary,unset,end", "*", _secondary_unset_cb, secondary);
   secondary_free (secondary);
 }
 
@@ -348,21 +348,21 @@ main_window_set_secondary (MainWindow *main_win, Secondary *secondary)
 
   if (main_win->secondary) {
     edje_object_part_unswallow (main_win->edje, main_win->secondary->edje);
-    edje_object_signal_callback_add (main_win->edje, "FLHOC/secondary,unset,end", "*",
+    edje_object_signal_callback_add (main_win->edje, "Elegance/secondary,unset,end", "*",
       _secondary_unset_cb, main_win->secondary);
-    edje_object_signal_emit (main_win->edje, "FLHOC/secondary,unset",
+    edje_object_signal_emit (main_win->edje, "Elegance/secondary,unset",
         main_win->secondary->secondary);
     main_win->secondary = NULL;
   }
 
   if (secondary) {
-    snprintf (part, sizeof(part), "FLHOC/secondary_%s", secondary->secondary);
+    snprintf (part, sizeof(part), "Elegance/secondary_%s", secondary->secondary);
 
     main_win->secondary = secondary;
-    edje_object_signal_callback_add (main_win->edje, "FLHOC/secondary,set,end", "*",
+    edje_object_signal_callback_add (main_win->edje, "Elegance/secondary,set,end", "*",
         _init_secondary_cb, main_win);
     edje_object_part_swallow (main_win->edje, part, main_win->secondary->edje);
-    edje_object_signal_emit (main_win->edje, "FLHOC/secondary,set", secondary->secondary);
+    edje_object_signal_emit (main_win->edje, "Elegance/secondary,set", secondary->secondary);
   }
 }
 
@@ -373,7 +373,7 @@ menu_new (MainWindow *main_win)
 
   menu->main_win = main_win;
   menu->edje = edje_object_add (main_win->theme->evas);
-  if (!edje_object_file_set (menu->edje, main_win->theme->edje_file, "FLHOC/menu")) {
+  if (!edje_object_file_set (menu->edje, main_win->theme->edje_file, "Elegance/menu")) {
     menu_free (menu);
     return NULL;
   }
@@ -469,11 +469,11 @@ menu_delete_category (Menu *menu, Category *category)
     new_selection = menu_get_selected_category (menu);
     item_selection = category_get_selected_item (new_selection);
 
-    edje_object_signal_emit (new_selection->edje, "FLHOC/menu/category,selected", "");
+    edje_object_signal_emit (new_selection->edje, "Elegance/menu/category,selected", "");
     if (new_selection->selection)
       new_selection->selection (new_selection, EINA_TRUE);
     if (item_selection) {
-      edje_object_signal_emit (item_selection->edje, "FLHOC/menu/item,selected", "");
+      edje_object_signal_emit (item_selection->edje, "Elegance/menu/item,selected", "");
       if (item_selection->selection)
         item_selection->selection (item_selection, EINA_TRUE);
     }
@@ -503,22 +503,22 @@ menu_scroll_next (Menu *menu)
   if (next && new) {
     Item *item_selection = category_get_selected_item (old);
 
-    edje_object_signal_emit (old->edje, "FLHOC/menu/category,deselected", "");
+    edje_object_signal_emit (old->edje, "Elegance/menu/category,deselected", "");
     if (old->selection)
       old->selection (old, EINA_FALSE);
-    edje_object_signal_emit (new->edje, "FLHOC/menu/category,selected", "");
+    edje_object_signal_emit (new->edje, "Elegance/menu/category,selected", "");
     if (new->selection)
       new->selection (new, EINA_TRUE);
 
     if (item_selection) {
-      edje_object_signal_emit (item_selection->edje, "FLHOC/menu/item,deselected", "");
+      edje_object_signal_emit (item_selection->edje, "Elegance/menu/item,deselected", "");
       if (item_selection->selection)
         item_selection->selection (item_selection, EINA_FALSE);
     }
 
     menu->categories_selection = next;
 
-    edje_object_signal_emit (menu->edje, "FLHOC/menu,category_next", "");
+    edje_object_signal_emit (menu->edje, "Elegance/menu,category_next", "");
   }
 }
 
@@ -533,22 +533,22 @@ menu_scroll_previous (Menu *menu)
   _category_reset (old);
   _menu_reset (menu);
   if (previous && new) {
-    edje_object_signal_emit (old->edje, "FLHOC/menu/category,deselected", "");
+    edje_object_signal_emit (old->edje, "Elegance/menu/category,deselected", "");
     if (old->selection)
       old->selection (old, EINA_FALSE);
-    edje_object_signal_emit (new->edje, "FLHOC/menu/category,selected", "");
+    edje_object_signal_emit (new->edje, "Elegance/menu/category,selected", "");
     if (new->selection)
       new->selection (new, EINA_TRUE);
 
     if (item_selection) {
-      edje_object_signal_emit (item_selection->edje, "FLHOC/menu/item,deselected", "");
+      edje_object_signal_emit (item_selection->edje, "Elegance/menu/item,deselected", "");
       if (item_selection->selection)
         item_selection->selection (item_selection, EINA_FALSE);
     }
 
     menu->categories_selection = previous;
 
-    edje_object_signal_emit (menu->edje, "FLHOC/menu,category_previous", "");
+    edje_object_signal_emit (menu->edje, "Elegance/menu,category_previous", "");
   }
 }
 
@@ -556,7 +556,7 @@ static Eina_Bool
 _menu_swallow_category (Menu *menu, Category *category, int index, const char *signal_suffix)
 {
   char signal[40];
-  char part[40] = "FLHOC/menu/category.";
+  char part[40] = "Elegance/menu/category.";
   int prefix_len = strlen (part);
   char *name = part + prefix_len;
 
@@ -580,13 +580,13 @@ _menu_swallow_category (Menu *menu, Category *category, int index, const char *s
 
     edje_object_part_swallow (menu->edje, part, category->edje);
     if (signal_suffix) {
-      snprintf (signal, sizeof(signal),  "FLHOC/menu,category_set%s%s",
+      snprintf (signal, sizeof(signal),  "Elegance/menu,category_set%s%s",
           signal_suffix[0] == 0 ? "" : ",", signal_suffix);
       edje_object_signal_emit (menu->edje, signal, name);
     }
   } else {
     if (signal_suffix) {
-      snprintf (signal, sizeof(signal),  "FLHOC/menu,category_unset%s%s",
+      snprintf (signal, sizeof(signal),  "Elegance/menu,category_unset%s%s",
           signal_suffix[0] == 0 ? "" : ",", signal_suffix);
       edje_object_signal_emit (menu->edje, signal, name);
       if (strcmp (signal_suffix, "reset") == 0) {
@@ -606,7 +606,7 @@ _menu_swallow_category (Menu *menu, Category *category, int index, const char *s
 static void
 _menu_reset (Menu *menu)
 {
-  edje_object_signal_emit (menu->edje, "FLHOC/menu,category_reset", "");
+  edje_object_signal_emit (menu->edje, "Elegance/menu,category_reset", "");
   menu_set_categories (menu, "reset");
 }
 
@@ -616,19 +616,19 @@ category_type_to_group (CategoryType type)
   switch(type)
     {
       case CATEGORY_TYPE_QUIT:
-        return "FLHOC/menu/category/quit";
+        return "Elegance/menu/category/quit";
       case CATEGORY_TYPE_SETTINGS:
-        return "FLHOC/menu/category/settings";
+        return "Elegance/menu/category/settings";
       case CATEGORY_TYPE_THEME:
-        return "FLHOC/menu/category/theme";
+        return "Elegance/menu/category/theme";
       case CATEGORY_TYPE_GAMES:
-        return "FLHOC/menu/category/games";
+        return "Elegance/menu/category/games";
       case CATEGORY_TYPE_HOMEBREW:
-        return "FLHOC/menu/category/homebrew";
+        return "Elegance/menu/category/homebrew";
       case CATEGORY_TYPE_DEVICE_HOMEBREW:
-        return "FLHOC/menu/category/device_homebrew";
+        return "Elegance/menu/category/device_homebrew";
       case CATEGORY_TYPE_DEVICE_PACKAGES:
-        return "FLHOC/menu/category/device_packages";
+        return "Elegance/menu/category/device_packages";
       default:
         return "";
     }
@@ -735,7 +735,7 @@ category_delete_item (Category *category, Item *item)
       old_selection->selection (old_selection, EINA_FALSE);
     new_selection = category_get_selected_item (category);
 
-    edje_object_signal_emit (new_selection->edje, "FLHOC/menu/item,selected", "");
+    edje_object_signal_emit (new_selection->edje, "Elegance/menu/item,selected", "");
     if (new_selection->selection)
       new_selection->selection (new_selection, EINA_TRUE);
   }
@@ -761,15 +761,15 @@ category_scroll_next (Category *category)
 
   _category_reset (category);
   if (next && new) {
-    edje_object_signal_emit (old->edje, "FLHOC/menu/item,deselected", "");
+    edje_object_signal_emit (old->edje, "Elegance/menu/item,deselected", "");
     if (old->selection)
       old->selection (old, EINA_FALSE);
-    edje_object_signal_emit (new->edje, "FLHOC/menu/item,selected", "");
+    edje_object_signal_emit (new->edje, "Elegance/menu/item,selected", "");
     if (new->selection)
       new->selection (new, EINA_TRUE);
     category->items_selection = next;
 
-    edje_object_signal_emit (category->edje, "FLHOC/menu/category,item_next", "");
+    edje_object_signal_emit (category->edje, "Elegance/menu/category,item_next", "");
   }
 }
 
@@ -782,15 +782,15 @@ category_scroll_previous (Category *category)
 
   _category_reset (category);
   if (previous && new) {
-    edje_object_signal_emit (old->edje, "FLHOC/menu/item,deselected", "");
+    edje_object_signal_emit (old->edje, "Elegance/menu/item,deselected", "");
     if (old->selection)
       old->selection (old, EINA_FALSE);
-    edje_object_signal_emit (new->edje, "FLHOC/menu/item,selected", "");
+    edje_object_signal_emit (new->edje, "Elegance/menu/item,selected", "");
     if (new->selection)
       new->selection (new, EINA_TRUE);
     category->items_selection = previous;
 
-    edje_object_signal_emit (category->edje, "FLHOC/menu/category,item_previous", "");
+    edje_object_signal_emit (category->edje, "Elegance/menu/category,item_previous", "");
   }
 }
 
@@ -799,7 +799,7 @@ _category_swallow_item (Category *category, Item *item,
     int index, const char *signal_suffix)
 {
   char signal[40];
-  char part[40] = "FLHOC/menu/category/item.";
+  char part[40] = "Elegance/menu/category/item.";
   int prefix_len = strlen (part);
   char *name = part + prefix_len;
 
@@ -816,7 +816,7 @@ _category_swallow_item (Category *category, Item *item,
   if (item) {
     edje_object_part_swallow (category->edje, part, item->edje);
     if (signal_suffix) {
-      snprintf (signal, sizeof(signal),  "FLHOC/menu/category,item_set%s%s",
+      snprintf (signal, sizeof(signal),  "Elegance/menu/category,item_set%s%s",
           signal_suffix[0] == 0 ? "" : ",", signal_suffix);
       edje_object_signal_emit (category->edje, signal, name);
     }
@@ -830,7 +830,7 @@ _category_swallow_item (Category *category, Item *item,
           evas_object_hide (obj);
         }
       }
-      snprintf (signal, sizeof(signal),  "FLHOC/menu/category,item_unset%s%s",
+      snprintf (signal, sizeof(signal),  "Elegance/menu/category,item_unset%s%s",
           signal_suffix[0] == 0 ? "" : ",", signal_suffix);
       edje_object_signal_emit (category->edje, signal, name);
     }
@@ -841,7 +841,7 @@ _category_swallow_item (Category *category, Item *item,
 static void
 _category_reset (Category *category)
 {
-  edje_object_signal_emit (category->edje, "FLHOC/menu/category,item_reset", "");
+  edje_object_signal_emit (category->edje, "Elegance/menu/category,item_reset", "");
   category_set_items (category, "reset");
 }
 
@@ -851,19 +851,19 @@ item_type_to_group (ItemType type)
   switch(type)
     {
       case ITEM_TYPE_GAME:
-        return "FLHOC/menu/item/game";
+        return "Elegance/menu/item/game";
       case ITEM_TYPE_PACKAGE:
-        return "FLHOC/menu/item/package";
+        return "Elegance/menu/item/package";
       case ITEM_TYPE_THEME:
-        return "FLHOC/menu/item/theme";
+        return "Elegance/menu/item/theme";
       case ITEM_TYPE_USB_THEME:
-        return "FLHOC/menu/item/usb_theme";
+        return "Elegance/menu/item/usb_theme";
       case ITEM_TYPE_ABOUT:
-        return "FLHOC/menu/item/about";
+        return "Elegance/menu/item/about";
       case ITEM_TYPE_HELP:
-        return "FLHOC/menu/item/help";
+        return "Elegance/menu/item/help";
       case ITEM_TYPE_WALLPAPER:
-        return "FLHOC/menu/item/wallpaper";
+        return "Elegance/menu/item/wallpaper";
       default:
         return "";
     }

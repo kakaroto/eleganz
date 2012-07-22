@@ -21,10 +21,10 @@ AM_CFLAGS = \
 	-Wno-redundant-decls \
 	-g -O0
 
-bin_PROGRAMS = FLHOC
+bin_PROGRAMS = Elegance
 
-FLHOC_SOURCES = FLHOC.c \
-	FLHOC_menu.h FLHOC_menu.c \
+Elegance_SOURCES = Elegance.c \
+	menu.h menu.c \
 	pkg.c pkg.h \
 	paged_file.c paged_file.h \
 	keys.c keys.h \
@@ -32,4 +32,4 @@ FLHOC_SOURCES = FLHOC.c \
 	aes.c aes.h \
 	sha1.c sha1.h
 
-FLHOC_LDADD = @EFL_LIBS@
+Elegance_LDADD = @EFL_LIBS@

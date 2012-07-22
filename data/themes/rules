@@ -2,153 +2,154 @@
 - Data "author" for the author of the theme
 - Data "version" for the version of the theme
 - Data "description" for the description of the theme
-- Data "compatible" for the FLHOC version compatibility
+- Data "compatible" for the Elegance version compatibility
 
 - Main window
   - Group "main"
-  - Part "FLHOC/primary" of type SWALLOW for the primary screen
-  - Part "FLHOC/secondary_below" of type SWALLOW for the secondary screens (behind primary)
-  - Part "FLHOC/secondary_above" of type SWALLOW for the secondary screens (above primary)
-  - Signal handler "FLHOC/primary,set" for when setting the primary screen
-  - Signal handler "FLHOC/secondary,set" for when setting the secondary screen
+  - Part "Elegance/primary" of type SWALLOW for the primary screen
+  - Part "Elegance/secondary_below" of type SWALLOW for the secondary screens (behind primary)
+  - Part "Elegance/secondary_above" of type SWALLOW for the secondary screens (above primary)
+  - Signal handler "Elegance/primary,set" for when setting the primary screen
+  - Signal handler "Elegance/secondary,set" for when setting the secondary screen
     - Signal source will be set to "above" or "below"
-  - Signal handler "FLHOC/primary,unset" for when unsetting the primary screen
-  - Signal handler "FLHOC/secondary,unset" for when unsetting the secondary screen
+  - Signal handler "Elegance/primary,unset" for when unsetting the primary screen
+  - Signal handler "Elegance/secondary,unset" for when unsetting the secondary screen
     - Signal source will be set to "above" or "below"
-  - Signal "FLHOC/primary,set,end" for when setting the primary screen is done
-  - Signal "FLHOC/secondary,set,end" for when setting the secondary screen is done
+  - Signal "Elegance/primary,set,end" for when setting the primary screen is done
+  - Signal "Elegance/secondary,set,end" for when setting the secondary screen is done
     - Signal source must be set to "above" or "below"
-  - Signal "FLHOC/primary,unset,end" for when unsetting the primary screen is done
-  - Signal "FLHOC/secondary,unset,end" for when unsetting the secondary screen is done
+  - Signal "Elegance/primary,unset,end" for when unsetting the primary screen is done
+  - Signal "Elegance/secondary,unset,end" for when unsetting the secondary screen is done
     - Signal source must be set to "above" or "below"
 - Main menu group
-  - Group "FLHOC/menu"
+  - Group "Elegance/menu"
   - Data 'category_next' for key event to go to next category
   - Data 'category_previous' for key event to go to next category
   - Data 'select' for key event to enter category (OPTIONAL)
-  - Signal handler "FLHOC/menu,init" to start splash screen
-  - Signal "FLHOC/menu,ready" for when the menu is ready for actions
+  - Signal handler "Elegance/menu,init" to start splash screen
+  - Signal "Elegance/menu,ready" for when the menu is ready for actions
     set to "Up/Down/Right/Left" to represent how the menu should be navigated
   - Custom Wallpaper (for games)
-    - Part "FLHOC/menu/wallpaper" of type IMAGE for the wallpaper/background
-    - Signal handler "FLHOC/menu/wallpaper,set" for when the custom wallpaper is set
-    - Signal handler "FLHOC/menu/wallpaper,unset" for when the custom wallpaper is removed
+    - Part "Elegance/menu/wallpaper" of type IMAGE for the wallpaper/background
+    - Signal handler "Elegance/menu/wallpaper,set" for when the custom wallpaper is set
+    - Signal handler "Elegance/menu/wallpaper,unset" for when the custom wallpaper is removed
   - Menu categories
-    - Parts "FLHOC/menu/category.before_%d" of type SWALLOW for previous categories
-    - Part "FLHOC/menu/category.selection" of type SWALLOW for the selected category
-    - Parts "FLHOC/menu/category.after_%d" of type SWALLOW for next categories
-    - Signal handler "FLHOC/menu,category_set" for when a category is added
+    - Parts "Elegance/menu/category.before_%d" of type SWALLOW for previous categories
+    - Part "Elegance/menu/category.selection" of type SWALLOW for the selected category
+    - Parts "Elegance/menu/category.after_%d" of type SWALLOW for next categories
+    - Signal handler "Elegance/menu,category_set" for when a category is added
       - The source of the signal will be the suffix of the part that was set 
-    - Signal handler "FLHOC/menu,category_unset" for when a category is removed
+    - Signal handler "Elegance/menu,category_unset" for when a category is removed
       - The source of the signal will be the suffix of the part that was unset 
-    - Signal handler "FLHOC/menu,category_set,reset" for when a category is valid after a reset
+    - Signal handler "Elegance/menu,category_set,reset" for when a category is valid after a reset
       - The source of the signal will be the suffix of the part that was set 
-    - Signal handler "FLHOC/menu,category_unset,reset" for when a category is invalid after a reset
+    - Signal handler "Elegance/menu,category_unset,reset" for when a category is invalid after a reset
       - The source of the signal will be the suffix of the part that was unset
-    - Signal handler "FLHOC/menu,category_next" for when the user scrolls to the next category
-    - Signal handler "FLHOC/menu,category_previous" for when the user scrolls the previous category
-    - Signal handler "FLHOC/menu,category_reset" for resetting the state to all set after a next/previous
-    - Signal handler "FLHOC/menu,category_error_tail" for when the user tries to seek beyond the end
-    - Signal handler "FLHOC/menu,category_error_head" for when the user tries to seek before the start
-    - Signal "FLHOC/menu,category_next,end" for when the animation of a 'next' scroll is finished
-    - Signal "FLHOC/menu,category_previous,end" for when the animation of a 'previous' scroll is finished
-    - Signal "FLHOC/menu,category_set,end" for when the set animation is done (not on ",reset")
-    - Signal "FLHOC/menu,category_unset,end" for when the unset animation is done (not on ",reset")
+    - Signal handler "Elegance/menu,category_next" for when the user scrolls to the next category
+    - Signal handler "Elegance/menu,category_previous" for when the user scrolls the previous category
+    - Signal handler "Elegance/menu,category_reset" for resetting the state to all set after a next/previous
+    - Signal handler "Elegance/menu,category_error_tail" for when the user tries to seek beyond the end
+    - Signal handler "Elegance/menu,category_error_head" for when the user tries to seek before the start
+    - Signal "Elegance/menu,category_next,end" for when the animation of a 'next' scroll is finished
+    - Signal "Elegance/menu,category_previous,end" for when the animation of a 'previous' scroll is finished
+    - Signal "Elegance/menu,category_set,end" for when the set animation is done (not on ",reset")
+    - Signal "Elegance/menu,category_unset,end" for when the unset animation is done (not on ",reset")
 
-- "FLHOC/menu/category/*" groups :
+- "Elegance/menu/category/*" groups :
   - Data 'item_next' for key event to go to next category
   - Data 'item_previous' for key event to go to next category
   - Data 'select' for key event to select the item
-  - Signal handler "FLHOC/menu/category,selected" when selecting it
-  - Signal handler "FLHOC/menu/category,deselected" when deselecting it
-  - Signal "FLHOC/menu/category,selected,end" when the animation of 'selected' is finished
-  - Signal "FLHOC/menu/category,deselected,end" when the animation of 'deselected' is finished
+  - Signal handler "Elegance/menu/category,selected" when selecting it
+  - Signal handler "Elegance/menu/category,deselected" when deselecting it
+  - Signal "Elegance/menu/category,selected,end" when the animation of 'selected' is finished
+  - Signal "Elegance/menu/category,deselected,end" when the animation of 'deselected' is finished
   - Category Items
-    - Parts "FLHOC/menu/category/item.before_%d" of type SWALLOW for previous items
-    - Part "FLHOC/menu/category/item.selection" of type SWALLOW for the selected item
-    - Parts "FLHOC/menu/category/item.after_%d" of type SWALLOW for next items
-    - Signal handler "FLHOC/menu/category,item_set" for when an item is added
+    - Parts "Elegance/menu/category/item.before_%d" of type SWALLOW for previous items
+    - Part "Elegance/menu/category/item.selection" of type SWALLOW for the selected item
+    - Parts "Elegance/menu/category/item.after_%d" of type SWALLOW for next items
+    - Signal handler "Elegance/menu/category,item_set" for when an item is added
       - The source of the signal will be the suffix of the part that was set 
-    - Signal handler "FLHOC/menu/category,item_unset" for when an item is removed
+    - Signal handler "Elegance/menu/category,item_unset" for when an item is removed
       - The source of the signal will be the suffix of the part that was unset 
-    - Signal handler "FLHOC/menu/category,item_set,reset" for when an item is valid after a reset
+    - Signal handler "Elegance/menu/category,item_set,reset" for when an item is valid after a reset
       - The source of the signal will be the suffix of the part that was set 
-    - Signal handler "FLHOC/menu/category,item_unset,reset" for when an item is invalid after a reset
+    - Signal handler "Elegance/menu/category,item_unset,reset" for when an item is invalid after a reset
       - The source of the signal will be the suffix of the part that was unset 
-    - Signal handler "FLHOC/menu/category,item_next" for when the user scrolls to the next item
-    - Signal handler "FLHOC/menu/category,item_previous" for when the user scrolls the previous item
-    - Signal handler "FLHOC/menu/category,item_reset" for resetting the state to all set after a next/previous
-    - Signal handler "FLHOC/menu/category,item_error_tail" for when the user tries to seek beyond the end
-    - Signal handler "FLHOC/menu/category,item_error_head" for when the user tries to seek before the start
-    - Signal "FLHOC/menu/category,item_next,end" for when the animation of a 'next' scroll is finished
-    - Signal "FLHOC/menu/category,item_previous,end" for when the animation of a 'previous' scroll is finished
+    - Signal handler "Elegance/menu/category,item_next" for when the user scrolls to the next item
+    - Signal handler "Elegance/menu/category,item_previous" for when the user scrolls the previous item
+    - Signal handler "Elegance/menu/category,item_reset" for resetting the state to all set after a next/previous
+    - Signal handler "Elegance/menu/category,item_error_tail" for when the user tries to seek beyond the end
+    - Signal handler "Elegance/menu/category,item_error_head" for when the user tries to seek before the start
+    - Signal "Elegance/menu/category,item_next,end" for when the animation of a 'next' scroll is finished
+    - Signal "Elegance/menu/category,item_previous,end" for when the animation of a 'previous' scroll is finished
   - Accepted Individual Categories
-    - Group "FLHOC/menu/category/quit" for the settings
-    - Group "FLHOC/menu/category/settings" for the settings
-    - Group "FLHOC/menu/category/theme" for the settings
-    - Group "FLHOC/menu/category/homebrew" for the installed homebrew games
-    - Group "FLHOC/menu/category/device_homebrew" for the homebrew games on a USB device
-    - Group "FLHOC/menu/category/device_packages" for the homebrew packages on a USB device
+    - Group "Elegance/menu/category/quit" for the settings
+    - Group "Elegance/menu/category/settings" for the settings
+    - Group "Elegance/menu/category/theme" for the settings
+    - Group "Elegance/menu/category/games" for the installed system games
+    - Group "Elegance/menu/category/homebrew" for the installed homebrew games
+    - Group "Elegance/menu/category/device_homebrew" for the homebrew games on a USB device
+    - Group "Elegance/menu/category/device_packages" for the homebrew packages on a USB device
 
-- "FLHOC/menu/item/*" groups :
-  - Signal handler "FLHOC/menu/item,selected" when selecting it
-  - Signal handler "FLHOC/menu/item,deselected" when deselecting it
+- "Elegance/menu/item/*" groups :
+  - Signal handler "Elegance/menu/item,selected" when selecting it
+  - Signal handler "Elegance/menu/item,deselected" when deselecting it
   - Individual items
-    - Group "FLHOC/menu/item/game" for a game item
-      - Part "FLHOC/menu/item/game/icon" for the game icon
-      - Part "FLHOC/menu/item/game/title" for the game title
-    - Group "FLHOC/menu/item/package" for a game item
-      - Part "FLHOC/menu/item/game/name" for the game package name
-    - Group "FLHOC/menu/item/theme" for a theme item
-      - Part "FLHOC/menu/item/theme/name" for the theme name
-      - Part "FLHOC/menu/item/theme/author" for the theme author
-      - Part "FLHOC/menu/item/theme/version" for the theme version
-      - Part "FLHOC/menu/item/theme/description" for the theme description
-      - Part "FLHOC/menu/item/theme/preview" for the theme preview screen
-    - Group "FLHOC/menu/item/usb_theme" for a theme item from usb
-      - same parts as "FLHOC/menu/item/theme"
-    - Group "FLHOC/menu/item/about"
-    - Group "FLHOC/menu/item/help"
-    - Group "FLHOC/menu/item/wallpaper"
+    - Group "Elegance/menu/item/game" for a game item
+      - Part "Elegance/menu/item/game/icon" for the game icon
+      - Part "Elegance/menu/item/game/title" for the game title
+    - Group "Elegance/menu/item/package" for a game item
+      - Part "Elegance/menu/item/game/name" for the game package name
+    - Group "Elegance/menu/item/theme" for a theme item
+      - Part "Elegance/menu/item/theme/name" for the theme name
+      - Part "Elegance/menu/item/theme/author" for the theme author
+      - Part "Elegance/menu/item/theme/version" for the theme version
+      - Part "Elegance/menu/item/theme/description" for the theme description
+      - Part "Elegance/menu/item/theme/preview" for the theme preview screen
+    - Group "Elegance/menu/item/usb_theme" for a theme item from usb
+      - same parts as "Elegance/menu/item/theme"
+    - Group "Elegance/menu/item/about"
+    - Group "Elegance/menu/item/help"
+    - Group "Elegance/menu/item/wallpaper"
 
 - Secondary windows
-  - Signal handler "FLHOC/secondary,init" to show the screen
-  - Signal "FLHOC/secondary,ready" for when the screen is shown
+  - Signal handler "Elegance/secondary,init" to show the screen
+  - Signal "Elegance/secondary,ready" for when the screen is shown
   - Data "secondary" set to "above" or "below" to determine which screen to swallow
-  - Group "FLHOC/secondary/game"
-    - Part "FLHOC/secondary/game/picture" for the game background picture
-    - Part "FLHOC/secondary/game/icon" for the game icon (optional)
-    - Part "FLHOC/secondary/game/title" for the game title (optional)
-  - Group "FLHOC/secondary/dialogbox"
-    - Part "FLHOC/secondary/dialogbox/message"
+  - Group "Elegance/secondary/game"
+    - Part "Elegance/secondary/game/picture" for the game background picture
+    - Part "Elegance/secondary/game/icon" for the game icon (optional)
+    - Part "Elegance/secondary/game/title" for the game title (optional)
+  - Group "Elegance/secondary/dialogbox"
+    - Part "Elegance/secondary/dialogbox/message"
   - Group "exquisite/theme" for exquisite theme (messages and progress bar)
 
 Behavior :
 
-At first, the "main" group will be created and the "FLHOC/primary" part will be swallowed by the "FLHOC/menu" group.
-All swallowed parts from "FLHOC/menu" will be set depending on the available categories at startup .
-Then the signal "FLHOC/primary,set" will be sent to the "main" group so it can show the screen, then it should send
-the signal "FLHOC/primary,set,end" to notify the app that the animation is done and the primary screen is shown.
-Then the signal "FLHOC/menu,init" will be sent to notify the group to start any initialization, then it will wait to receive
-the signal "FLHOC/menu,ready" at which point it will send the signal "FLHOC/menu,category_set,reset" and
-the signal "FLHOC/menu,category_unset,reset" to the group with the source of the emission set to the part name's suffix
-that is set or unset ("before_0" will be sent for part "FLHOC/menu/category.before_0" for example) to reflect that status.
+At first, the "main" group will be created and the "Elegance/primary" part will be swallowed by the "Elegance/menu" group.
+All swallowed parts from "Elegance/menu" will be set depending on the available categories at startup .
+Then the signal "Elegance/primary,set" will be sent to the "main" group so it can show the screen, then it should send
+the signal "Elegance/primary,set,end" to notify the app that the animation is done and the primary screen is shown.
+Then the signal "Elegance/menu,init" will be sent to notify the group to start any initialization, then it will wait to receive
+the signal "Elegance/menu,ready" at which point it will send the signal "Elegance/menu,category_set,reset" and
+the signal "Elegance/menu,category_unset,reset" to the group with the source of the emission set to the part name's suffix
+that is set or unset ("before_0" will be sent for part "Elegance/menu/category.before_0" for example) to reflect that status.
 
 This is to allow you to do an animation or splash screen at bootup. Since non-swallowed parts will appear invisble,
-you can assume that all the parts are 'set', until you receive the "FLHOC/menu_category_set,reset" and
-"FLHOC/menu/category_unset,reset" signals. Note that these two signals (the ',reset' variants) should be instantenuous, so
+you can assume that all the parts are 'set', until you receive the "Elegance/menu_category_set,reset" and
+"Elegance/menu/category_unset,reset" signals. Note that these two signals (the ',reset' variants) should be instantenuous, so
 the user shouldn't notice that they happened. It will only allow you to have a better animation if later a new category
-is added and the "FLHOC/menu/category_set" signal is sent for it.
+is added and the "Elegance/menu/category_set" signal is sent for it.
 
-The item parts of a category will be swallowed then the "FLHOC/menu/category,selected" signal will be sent to the
+The item parts of a category will be swallowed then the "Elegance/menu/category,selected" signal will be sent to the
 selected category. You can assume that all are items are 'set' at that point. Once the animation is done, you should
-send the "FLHOC/menu/category,selected,end" signal, at which point the "FLHOC/menu/category,item_set,reset"
-and "FLHOC/menu/category,item_unset,reset" signals will be sent for each item.
+send the "Elegance/menu/category,selected,end" signal, at which point the "Elegance/menu/category,item_set,reset"
+and "Elegance/menu/category,item_unset,reset" signals will be sent for each item.
 
 There you go, the menu is finally appearing and you are ready to handle user events!
 At this point, the user can either scroll the categories or the items, for both, the behavior is the same, you will
 receive the signal "*_next" or "*_previous" to create the scrolling, once you are done, you should send the associated
-",end" signal. FLHOC will then send the unswallow and swallow the parts properly to reflect the scroll then it will
+",end" signal. Elegance will then send the unswallow and swallow the parts properly to reflect the scroll then it will
 send the signal "*_reset" to reset the screen as it should be, and send the "*_set,reset" and "*_unset,reset" signals.
 This next,end->swallow->unswallow->reset->set,reset+unset,reset chain of events should happen instantenuously so that the
 user does not perceive it and only sees the actual scrolling animation.

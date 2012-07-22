@@ -9,10 +9,10 @@ generate_ps3sfo() {
 }
 
 make_pkg() {
-    name="FLHOC"
+    name="Elegance"
     logo=data/themes/dark/images/homebrew.png 
-    title="Homebrew Center"
-    appid="FLHOC0000"
+    title="Elegance"
+    appid="ELEGANCE0"
     datadir="/dev_hdd0/game/$appid/USRDIR/"
     contentid="UP0001-$appid-0000000000000000"
 
@@ -33,7 +33,7 @@ make_pkg() {
 }
         
 if test -z $NOCONFIGURE ; then
-  AR="powerpc64-ps3-elf-ar" CC="powerpc64-ps3-elf-gcc" RANLIB="powerpc64-ps3-elf-ranlib" CFLAGS="$DEBUG_CFLAGS -Wall -I$PSL1GHT/ppu/include -I$PS3DEV/portlibs/ppu/include $MINIMAL_TOC $MYCFLAGS" CPPFLAGS="-I$PSL1GHT/ppu/include -I$PS3DEV/portlibs/ppu/include" CXXFLAGS="-I$PSL1GHT/ppu/include -I$PS3DEV/portlibs/ppu/include"  LDFLAGS="-L$PSL1GHT/ppu/lib -L$PS3DEV/portlibs/ppu/lib" PKG_CONFIG_LIBDIR="$PSL1GHT/ppu/lib/pkgconfig" PKG_CONFIG_PATH="$PS3DEV/portlibs/ppu/lib/pkgconfig"  PKG_CONFIG="pkg-config --static" ./configure   --prefix="$PS3DEV/portlibs/ppu"   --host=powerpc64-ps3-elf    --includedir="$PS3DEV/portlibs/ppu/include"   --libdir="$PS3DEV/portlibs/ppu/lib" --datadir="/dev_hdd0/game/FLHOC0000/USRDIR/data"
+  AR="powerpc64-ps3-elf-ar" CC="powerpc64-ps3-elf-gcc" RANLIB="powerpc64-ps3-elf-ranlib" CFLAGS="$DEBUG_CFLAGS -Wall -I$PSL1GHT/ppu/include -I$PS3DEV/portlibs/ppu/include $MINIMAL_TOC $MYCFLAGS" CPPFLAGS="-I$PSL1GHT/ppu/include -I$PS3DEV/portlibs/ppu/include" CXXFLAGS="-I$PSL1GHT/ppu/include -I$PS3DEV/portlibs/ppu/include"  LDFLAGS="-L$PSL1GHT/ppu/lib -L$PS3DEV/portlibs/ppu/lib" PKG_CONFIG_LIBDIR="$PSL1GHT/ppu/lib/pkgconfig" PKG_CONFIG_PATH="$PS3DEV/portlibs/ppu/lib/pkgconfig"  PKG_CONFIG="pkg-config --static" ./configure   --prefix="$PS3DEV/portlibs/ppu"   --host=powerpc64-ps3-elf    --includedir="$PS3DEV/portlibs/ppu/include"   --libdir="$PS3DEV/portlibs/ppu/lib" --datadir="/dev_hdd0/game/ELEGANCE0/USRDIR/data"
 fi 
 
 make clean all EDJE_CC=$(which edje_cc) && make_pkg

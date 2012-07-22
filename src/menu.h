@@ -6,8 +6,8 @@
  *
  */
 
-#ifndef __FLHOC_MENU_H__
-#define __FLHOC_MENU_H__
+#ifndef __ELEGANCE_MENU_H__
+#define __ELEGANCE_MENU_H__
 
 #include <Edje.h>
 #include <Evas.h>
@@ -143,5 +143,5 @@ Secondary *secondary_new (MainWindow *main_win, const char *group_name);
 Secondary *secondary_exquisite_new (MainWindow *main_win, const char *theme);
 void secondary_free (Secondary *secondary);
 
-#endif /* __FLHOC_MENU_H__ */
+#endif /* __ELEGANCE_MENU_H__ */
 
