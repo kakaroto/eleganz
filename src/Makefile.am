@@ -30,6 +30,7 @@ Elegance_SOURCES = Elegance.c \
 	keys.c keys.h \
 	tools.c tools.h \
 	aes.c aes.h \
-	sha1.c sha1.h
+	sha1.c sha1.h \
+	common.h types.h
 
 Elegance_LDADD = @EFL_LIBS@
