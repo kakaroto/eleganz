@@ -21,9 +21,9 @@ AM_CFLAGS = \
 	-Wno-redundant-decls \
 	-g -O0
 
-bin_PROGRAMS = Elegance
+bin_PROGRAMS = Eleganz
 
-Elegance_SOURCES = Elegance.c \
+Eleganz_SOURCES = Eleganz.c \
 	menu.h menu.c \
 	pkg.c pkg.h \
 	paged_file.c paged_file.h \
@@ -33,4 +33,4 @@ Elegance_SOURCES = Elegance.c \
 	sha1.c sha1.h \
 	common.h types.h
 
-Elegance_LDADD = @EFL_LIBS@
+Eleganz_LDADD = @EFL_LIBS@

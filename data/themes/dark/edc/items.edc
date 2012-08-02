@@ -1,5 +1,5 @@
 group {
-   name: "Elegance/menu/item/game";
+   name: "Eleganz/menu/item/game";
    parts {
       part {
          name: "clip";
@@ -19,7 +19,7 @@ group {
          }
       }
       part {
-         name: "Elegance/menu/item/game.icon";
+         name: "Eleganz/menu/item/game.icon";
          type: IMAGE;
          mouse_events: 0;
          clip_to: "clip";
@@ -51,7 +51,7 @@ group {
          }
       }
       part {
-         name: "Elegance/menu/item/game.title";
+         name: "Eleganz/menu/item/game.title";
          type: TEXT;
          effect: SHADOW;
          mouse_events: 0;
@@ -61,7 +61,7 @@ group {
             rel1 {
                relative: 1.0 0.0;
                offset: 25 0;
-               to: "Elegance/menu/item/game.icon";
+               to: "Eleganz/menu/item/game.icon";
             }
             rel2 {
                relative: 1.0 1.0;
@@ -92,27 +92,27 @@ group {
    programs {
       program {
          name: "selected";
-         signal : "Elegance/menu/item,selected";
+         signal : "Eleganz/menu/item,selected";
          action: STATE_SET "selected" 0.0;
          transition: SINUSOIDAL 0.5;
-         target: "Elegance/menu/item/game.icon";
-         target: "Elegance/menu/item/game.title";
+         target: "Eleganz/menu/item/game.icon";
+         target: "Eleganz/menu/item/game.title";
          after: "pulse";
       }
       program {
          name: "pulse";
          action: STATE_SET "default" 0.0;
          transition: SINUSOIDAL 0.5;
-         target: "Elegance/menu/item/game.icon";
+         target: "Eleganz/menu/item/game.icon";
          after: "selected";
       }
       program {
          name: "deselected";
-         signal : "Elegance/menu/item,deselected";
+         signal : "Eleganz/menu/item,deselected";
          action: STATE_SET "default" 0.0;
          transition: SINUSOIDAL 0.5;
-         target: "Elegance/menu/item/game.icon";
-         target: "Elegance/menu/item/game.title";
+         target: "Eleganz/menu/item/game.icon";
+         target: "Eleganz/menu/item/game.title";
          after: "stop_pulse";
       }
       program {
@@ -124,7 +124,7 @@ group {
 }
 
 group {
-   name: "Elegance/menu/item/package";
+   name: "Eleganz/menu/item/package";
    parts {
       part {
          name: "clip";
@@ -179,7 +179,7 @@ group {
          }
       }
       part {
-         name: "Elegance/menu/item/package.name";
+         name: "Eleganz/menu/item/package.name";
          type: TEXT;
          effect: SHADOW;
          mouse_events: 0;
@@ -220,11 +220,11 @@ group {
    programs {
       program {
          name: "selected";
-         signal : "Elegance/menu/item,selected";
+         signal : "Eleganz/menu/item,selected";
          action: STATE_SET "selected" 0.0;
          transition: SINUSOIDAL 0.5;
          target: "icon";
-         target: "Elegance/menu/item/package.name";
+         target: "Eleganz/menu/item/package.name";
          after: "pulse";
       }
       program {
@@ -236,11 +236,11 @@ group {
       }
       program {
          name: "deselected";
-         signal : "Elegance/menu/item,deselected";
+         signal : "Eleganz/menu/item,deselected";
          action: STATE_SET "default" 0.0;
          transition: SINUSOIDAL 0.5;
          target: "icon";
-         target: "Elegance/menu/item/package.name";
+         target: "Eleganz/menu/item/package.name";
          after: "stop_pulse";
       }
       program {
@@ -252,7 +252,7 @@ group {
 }
 
 group {
-   name: "Elegance/menu/item/theme";
+   name: "Eleganz/menu/item/theme";
    images {
       image: "theme_preview_frame.png" COMP;
    }
@@ -307,7 +307,7 @@ group {
          }
       }
       part {
-         name: "Elegance/menu/item/theme.preview";
+         name: "Eleganz/menu/item/theme.preview";
          type: SWALLOW;
          mouse_events: 0;
          description {
@@ -362,7 +362,7 @@ group {
          }
       }
       part {
-         name: "Elegance/menu/item/theme.name";
+         name: "Eleganz/menu/item/theme.name";
          type: TEXT;
          effect: SHADOW;
          mouse_events: 0;
@@ -390,7 +390,7 @@ group {
          }
       }
       part {
-         name: "Elegance/menu/item/theme.author";
+         name: "Eleganz/menu/item/theme.author";
          type: TEXT;
          effect: SHADOW;
          mouse_events: 0;
@@ -426,12 +426,12 @@ group {
             rel1 {
                relative: 0.0 1.0;
                offset: 0 20;
-               to: "Elegance/menu/item/theme.preview";
+               to: "Eleganz/menu/item/theme.preview";
             }
             rel2 {
                relative: 0.0 1.0;
                offset: 80 30;
-               to: "Elegance/menu/item/theme.preview";
+               to: "Eleganz/menu/item/theme.preview";
             }
             color: 128 128 255 255;
             color2: 0 0 0 255;
@@ -449,7 +449,7 @@ group {
          }
       }
       part {
-         name: "Elegance/menu/item/theme.version";
+         name: "Eleganz/menu/item/theme.version";
          type: TEXT;
          effect: SHADOW;
          mouse_events: 0;
@@ -459,12 +459,12 @@ group {
             rel1 {
                relative: 0.0 1.0;
                offset: 80 20;
-               to: "Elegance/menu/item/theme.preview";
+               to: "Eleganz/menu/item/theme.preview";
             }
             rel2 {
                relative: 1.0 1.0;
                offset: -1 30;
-               to: "Elegance/menu/item/theme.preview";
+               to: "Eleganz/menu/item/theme.preview";
             }
             color: 128 128 255 255;
             color2: 0 0 0 255;
@@ -483,7 +483,7 @@ group {
          }
       }
       part {
-         name: "Elegance/menu/item/theme.description";
+         name: "Eleganz/menu/item/theme.description";
          type: TEXT;
          effect: SHADOW;
          mouse_events: 0;
@@ -493,12 +493,12 @@ group {
             rel1 {
                relative: 0.0 1.0;
                offset: 0 30;
-               to: "Elegance/menu/item/theme.preview";
+               to: "Eleganz/menu/item/theme.preview";
             }
             rel2 {
                relative: 1.0 1.0;
                offset: -1 50;
-               to: "Elegance/menu/item/theme.preview";
+               to: "Eleganz/menu/item/theme.preview";
             }
             color: 255 255 255 255;
             color2: 0 0 0 255;
@@ -521,32 +521,32 @@ group {
    programs {
       program {
          name: "selected";
-         signal : "Elegance/menu/item,selected";
+         signal : "Eleganz/menu/item,selected";
          action: STATE_SET "selected" 0.0;
          transition: LINEAR 0.0;
-         target: "Elegance/menu/item/theme.preview";
+         target: "Eleganz/menu/item/theme.preview";
          target: "preview_frame";
-         target: "Elegance/menu/item/theme.description";
+         target: "Eleganz/menu/item/theme.description";
          target: "version_label";
-         target: "Elegance/menu/item/theme.version";
+         target: "Eleganz/menu/item/theme.version";
       }
       program {
          name: "deselected";
-         signal : "Elegance/menu/item,deselected";
+         signal : "Eleganz/menu/item,deselected";
          action: STATE_SET "default" 0.0;
          transition: LINEAR 0.0;
-         target: "Elegance/menu/item/theme.preview";
+         target: "Eleganz/menu/item/theme.preview";
          target: "preview_frame";
-         target: "Elegance/menu/item/theme.description";
+         target: "Eleganz/menu/item/theme.description";
          target: "version_label";
-         target: "Elegance/menu/item/theme.version";
+         target: "Eleganz/menu/item/theme.version";
       }
    }
 }
 
 group {
-   name: "Elegance/menu/item/usb_theme";
-   inherit: "Elegance/menu/item/theme";
+   name: "Eleganz/menu/item/usb_theme";
+   inherit: "Eleganz/menu/item/theme";
    parts {
       part {
          name: "icon";
@@ -658,7 +658,7 @@ group {
    programs {
       program {
          name: "selected";
-         signal : "Elegance/menu/item,selected";
+         signal : "Eleganz/menu/item,selected";
          action: STATE_SET "selected" 0.0;
          transition: SINUSOIDAL 0.5;
          target: "icon";
@@ -674,7 +674,7 @@ group {
       }
       program {
          name: "deselected";
-         signal : "Elegance/menu/item,deselected";
+         signal : "Eleganz/menu/item,deselected";
          action: STATE_SET "default" 0.0;
          transition: SINUSOIDAL 0.5;
          target: "icon";
@@ -694,7 +694,7 @@ group {
       images {                                                          \
          image: IMAGE COMP;                                             \
       }                                                                 \
-      name: "Elegance/menu/item/"NAME;                                  \
+      name: "Eleganz/menu/item/"NAME;                                   \
       inherit: "generic_item";                                          \
       parts {                                                           \
 	 part {                                                         \

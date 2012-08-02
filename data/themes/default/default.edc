@@ -22,7 +22,7 @@ images {
 }
 
 data {
-   item: "name" "Elegance";
+   item: "name" "Eleganz";
    item: "author" "KaKaRoTo";
    item: "version" "1.0";
    item: "description" "This is the default theme";

@@ -25,27 +25,27 @@
 #ifdef __lv2ppu__
 #define DEV_HDD0 "/dev_hdd0/"
 #define DEV_USB_FMT "/dev_usb%03d/"
-#define THEMES_DIRECTORY "/dev_hdd0/game/ELEGANCE0/USRDIR/data/themes/"
+#define THEMES_DIRECTORY "/dev_hdd0/game/ELEGANZ00/USRDIR/data/themes/"
 #define GAMES_DIRECTORY "/dev_hdd0/game/"
-#define HOMEBREW_DIRECTORY "/dev_hdd0/game/ELEGANCE0/USRDIR/HOMEBREW/"
+#define HOMEBREW_DIRECTORY "/dev_hdd0/game/ELEGANZ00/USRDIR/HOMEBREW/"
 #define USB_HOMEBREW_DIRECTORY_FMT "/dev_usb%03d/PS3/HOMEBREW/"
 #define USB_PACKAGES_DIRECTORY_FMT "/dev_usb%03d/PS3/PACKAGES/"
 #define USB_THEMES_DIRECTORY_FMT "/dev_usb%03d/PS3/THEMES/"
-#define KEYS_PATH "/dev_hdd0/game/ELEGANCE0/USRDIR/keys.conf"
-#define ELEGANCE_WIDTH 1280
-#define ELEGANCE_HEIGHT 720
+#define KEYS_PATH "/dev_hdd0/game/ELEGANZ00/USRDIR/keys.conf"
+#define ELEGANZ_WIDTH 1280
+#define ELEGANZ_HEIGHT 720
 #else
 #define DEV_HDD0 "./dev_hdd0/"
 #define DEV_USB_FMT "./dev_usb%03d/"
 #define THEMES_DIRECTORY "data/themes/"
 #define GAMES_DIRECTORY "dev_hdd0/game/"
-#define HOMEBREW_DIRECTORY "dev_hdd0/game/ELEGANCE0/USRDIR/HOMEBREW/"
+#define HOMEBREW_DIRECTORY "dev_hdd0/game/ELEGANZ00/USRDIR/HOMEBREW/"
 #define USB_HOMEBREW_DIRECTORY_FMT "dev_usb%03d/PS3/HOMEBREW/"
 #define USB_PACKAGES_DIRECTORY_FMT "dev_usb%03d/PS3/PACKAGES/"
 #define USB_THEMES_DIRECTORY_FMT "dev_usb%03d/PS3/THEMES/"
 #define KEYS_PATH "data/keys.conf"
-#define ELEGANCE_WIDTH 640
-#define ELEGANCE_HEIGHT 480
+#define ELEGANZ_WIDTH 640
+#define ELEGANZ_HEIGHT 480
 #endif
 
 #define MAX_USB_DEVICES 10
@@ -77,25 +77,25 @@ typedef struct {
   Eina_List *usb_packages[MAX_USB_DEVICES];
   Eina_List *usb_themes[MAX_USB_DEVICES];
   Ecore_Timer *device_check_timer;
-} Elegance;
+} Eleganz;
 
 static Eina_List *_games_new (const char *path);
 static void _games_free (Eina_List *games);
 static int _add_game_items (Eina_List *games, Category *category);
-static void _populate_themes (Elegance *self, Theme *current_theme, Eina_Bool only_usb);
-static Eina_Bool _add_main_categories (Elegance *self, Menu *menu);
-static Eina_Bool load_theme (Elegance *self, Theme *theme);
-static void set_current_theme (Elegance *self, Theme *theme);
+static void _populate_themes (Eleganz *self, Theme *current_theme, Eina_Bool only_usb);
+static Eina_Bool _add_main_categories (Eleganz *self, Menu *menu);
+static Eina_Bool load_theme (Eleganz *self, Theme *theme);
+static void set_current_theme (Eleganz *self, Theme *theme);
 static Eina_Bool _device_check_cb (void *data);
 static void _exquisite_default_exit_cb (void *data);
-static Evas_Object *_exquisite_new (Elegance *self, const char *title, const char *message);
+static Evas_Object *_exquisite_new (Eleganz *self, const char *title, const char *message);
 static void _menu_ready_cb (Menu *menu);
 
 /* Generic callbacks */
 static void
 _key_down_cb (void *data, Evas *e, Evas_Object *obj, void *event)
 {
-  Elegance *self = data;
+  Eleganz *self = data;
   MainWindow *main_win = self->current_theme->main_win;
   Menu *menu = main_win->menu;
   Evas_Event_Key_Down *ev = event;
@@ -164,20 +164,20 @@ _category_action_quit (Category *category)
   Menu *menu = category->menu;
   MainWindow *main_win = menu->main_win;
 
-  edje_object_signal_callback_add (main_win->edje, "Elegance/primary,unset,end", "*",
+  edje_object_signal_callback_add (main_win->edje, "Eleganz/primary,unset,end", "*",
       _quit_ready_cb, main_win);
-  edje_object_signal_emit (main_win->edje, "Elegance/primary,unset", "");
+  edje_object_signal_emit (main_win->edje, "Eleganz/primary,unset", "");
 }
 
 static void
 _theme_selection (Item *item, Eina_Bool selected)
 {
   Theme *theme = item->priv;
-  Elegance *self = NULL;
+  Eleganz *self = NULL;
   Evas_Object *obj;
 
-  self = evas_object_data_get (item->category->menu->main_win->edje, "Elegance");
-  obj = edje_object_part_swallow_get (item->edje, "Elegance/menu/item/theme.preview");
+  self = evas_object_data_get (item->category->menu->main_win->edje, "Eleganz");
+  obj = edje_object_part_swallow_get (item->edje, "Eleganz/menu/item/theme.preview");
   if (obj) {
     edje_object_part_unswallow (item->edje, obj);
     evas_object_hide (obj);
@@ -194,7 +194,7 @@ _theme_selection (Item *item, Eina_Bool selected)
   }
   if (self->preview_theme) {
     edje_object_part_swallow (item->edje,
-        "Elegance/menu/item/theme.preview", self->preview_theme->main_win->edje);
+        "Eleganz/menu/item/theme.preview", self->preview_theme->main_win->edje);
     main_window_init (self->preview_theme->main_win);
   }
 }
@@ -203,7 +203,7 @@ static void
 _continue_set_theme (void *data)
 {
   Theme *new_theme = data;
-  Elegance *self = new_theme->priv;
+  Eleganz *self = new_theme->priv;
 
   if (self->preview_theme)
     theme_free (self->preview_theme);
@@ -216,10 +216,10 @@ _continue_set_theme (void *data)
 static void
 _theme_selected (Item *item)
 {
-  Elegance *self;
+  Eleganz *self;
   Theme *new_theme = item->priv;
 
-  self = evas_object_data_get (item->category->menu->main_win->edje, "Elegance");
+  self = evas_object_data_get (item->category->menu->main_win->edje, "Eleganz");
   if (new_theme != NULL && new_theme != self->current_theme) {
     if (!new_theme->installed) {
       Eina_List *l;
@@ -301,20 +301,20 @@ _game_selection (Item *item, Eina_Bool selected)
     main_window_set_secondary (main_win, NULL);
 
   if (selected) {
-    secondary = secondary_new (main_win, "Elegance/secondary/game");
-    if (edje_object_part_exists (secondary->edje, "Elegance/secondary/game/title"))
+    secondary = secondary_new (main_win, "Eleganz/secondary/game");
+    if (edje_object_part_exists (secondary->edje, "Eleganz/secondary/game/title"))
       edje_object_part_text_set (secondary->edje,
-          "Elegance/secondary/game/title", game->title);
+          "Eleganz/secondary/game/title", game->title);
     if (game->icon &&
-        edje_object_part_exists (secondary->edje, "Elegance/secondary/game/icon")) {
+        edje_object_part_exists (secondary->edje, "Eleganz/secondary/game/icon")) {
       Evas_Object *img = (Evas_Object *) edje_object_part_object_get (
-          secondary->edje, "Elegance/secondary/game/icon");
+          secondary->edje, "Eleganz/secondary/game/icon");
       evas_object_image_file_set (img, game->icon, NULL);
     }
     if (game->picture &&
-        edje_object_part_exists (secondary->edje, "Elegance/secondary/game/picture")) {
+        edje_object_part_exists (secondary->edje, "Eleganz/secondary/game/picture")) {
       Evas_Object *img = (Evas_Object *) edje_object_part_object_get (
-          secondary->edje, "Elegance/secondary/game/picture");
+          secondary->edje, "Eleganz/secondary/game/picture");
       evas_object_image_file_set (img, game->picture, NULL);
     }
 
@@ -326,9 +326,9 @@ static void
 _game_selected (Item *item)
 {
   Game *game = item->priv;
-  Elegance *self;
+  Eleganz *self;
 
-  self = evas_object_data_get (item->category->menu->main_win->edje, "Elegance");
+  self = evas_object_data_get (item->category->menu->main_win->edje, "Eleganz");
 
   /* TODO: do it! */
   printf ("Game '%s' is launched!!!\n", game->title);
@@ -365,7 +365,7 @@ _ecore_sleep (double delay)
 }
 
 static int
-_pkg_install (Elegance *self, Package *package)
+_pkg_install (Eleganz *self, Package *package)
 {
   PagedFile in = {0};
   PagedFile out = {0};
@@ -405,8 +405,8 @@ _pkg_install (Elegance *self, Package *package)
   last_text_id = exquisite_object_text_add (self->exquisite,
       "Preparing destination");
   _ecore_sleep (0.25);
-  if (strcmp (header.contentid, "UP0001-ELEGANCE0-0000000000000000") == 0)
-    snprintf (out_dir, sizeof(out_dir), "%s/ELEGANCE0", GAMES_DIRECTORY);
+  if (strcmp (header.contentid, "UP0001-ELEGANZ00-0000000000000000") == 0)
+    snprintf (out_dir, sizeof(out_dir), "%s/ELEGANZ00", GAMES_DIRECTORY);
   else
     snprintf (out_dir, sizeof(out_dir), "%s/%s", HOMEBREW_DIRECTORY,
         header.contentid);
@@ -475,10 +475,10 @@ static void
 _package_selected (Item *item)
 {
   Package *package = item->priv;
-  Elegance *self;
+  Eleganz *self;
   char buffer[1024];
 
-  self = evas_object_data_get (item->category->menu->main_win->edje, "Elegance");
+  self = evas_object_data_get (item->category->menu->main_win->edje, "Eleganz");
 
   printf ("Package '%s' is to be installed!!!\n", package->name);
   snprintf (buffer, sizeof(buffer), "Installing package %s", package->name);
@@ -577,7 +577,7 @@ _get_dirlist (const char *path, Eina_Bool dirs, Eina_Bool files, Eina_Bool recur
 static void
 _exquisite_default_exit_cb (void *data)
 {
-  Elegance *self = data;
+  Eleganz *self = data;
   MainWindow *main_win = self->current_theme->main_win;
 
   main_window_set_secondary (main_win, NULL);
@@ -585,7 +585,7 @@ _exquisite_default_exit_cb (void *data)
 }
 
 static Evas_Object *
-_exquisite_new (Elegance *self, const char *title, const char *message)
+_exquisite_new (Eleganz *self, const char *title, const char *message)
 {
   MainWindow *main_win = self->current_theme->main_win;
   Secondary *secondary;
@@ -610,7 +610,7 @@ _exquisite_new (Elegance *self, const char *title, const char *message)
 static void
 _menu_ready_cb (Menu *menu)
 {
-  Elegance *self = evas_object_data_get (menu->main_win->edje, "Elegance");
+  Eleganz *self = evas_object_data_get (menu->main_win->edje, "Eleganz");
 
   if (!self->device_check_timer)
     self->device_check_timer = ecore_timer_add (1.0, _device_check_cb, self);
@@ -618,13 +618,13 @@ _menu_ready_cb (Menu *menu)
 }
 
 static Eina_Bool
-load_theme (Elegance *self, Theme *theme)
+load_theme (Eleganz *self, Theme *theme)
 {
   theme->main_win = main_window_new (theme);
   if (theme->main_win == NULL)
     return EINA_FALSE;
 
-  evas_object_data_set (theme->main_win->edje, "Elegance", self);
+  evas_object_data_set (theme->main_win->edje, "Eleganz", self);
   evas_object_data_set (theme->main_win->edje, "MainWindow", theme->main_win);
 
   theme->main_win->menu = menu_new (theme->main_win);
@@ -636,7 +636,7 @@ load_theme (Elegance *self, Theme *theme)
 }
 
 static void
-set_current_theme (Elegance *self, Theme *theme)
+set_current_theme (Eleganz *self, Theme *theme)
 {
   Evas_Coord w, h;
 
@@ -679,19 +679,19 @@ set_current_theme (Elegance *self, Theme *theme)
 }
 
 static Item *
-_add_theme (Elegance *self, Category *category, Theme *theme, ItemType type)
+_add_theme (Eleganz *self, Category *category, Theme *theme, ItemType type)
 {
   Item *item;
 
   item = item_new (category, type);
   edje_object_part_text_set (item->edje,
-      "Elegance/menu/item/theme.name", theme->name);
+      "Eleganz/menu/item/theme.name", theme->name);
   edje_object_part_text_set (item->edje,
-      "Elegance/menu/item/theme.version", theme->version);
+      "Eleganz/menu/item/theme.version", theme->version);
   edje_object_part_text_set (item->edje,
-      "Elegance/menu/item/theme.author", theme->author);
+      "Eleganz/menu/item/theme.author", theme->author);
   edje_object_part_text_set (item->edje,
-      "Elegance/menu/item/theme.description", theme->description);
+      "Eleganz/menu/item/theme.description", theme->description);
   item->selection = _theme_selection;
   item->action = _theme_selected;
   item->priv = theme;
@@ -701,7 +701,7 @@ _add_theme (Elegance *self, Category *category, Theme *theme, ItemType type)
 }
 
 static void
-_populate_themes (Elegance *self, Theme *current_theme, Eina_Bool only_usb)
+_populate_themes (Eleganz *self, Theme *current_theme, Eina_Bool only_usb)
 {
   Eina_List *l, *l2;
   Menu *menu = current_theme->main_win->menu;
@@ -836,9 +836,9 @@ _add_game_items (Eina_List *games, Category *category)
     Evas_Object *img = NULL;
 
     item = item_new (category, ITEM_TYPE_GAME);
-    edje_object_part_text_set (item->edje, "Elegance/menu/item/game.title", game->title);
+    edje_object_part_text_set (item->edje, "Eleganz/menu/item/game.title", game->title);
     if (game->icon) {
-      img = (Evas_Object *) edje_object_part_object_get (item->edje, "Elegance/menu/item/game.icon");
+      img = (Evas_Object *) edje_object_part_object_get (item->edje, "Eleganz/menu/item/game.icon");
       evas_object_image_file_set (img, game->icon, NULL);
     }
     item->selection = _game_selection;
@@ -863,7 +863,7 @@ _add_package_items (Eina_List *packages, Category *category)
 
   EINA_LIST_FOREACH (packages, l, package) {
     item = item_new (category, ITEM_TYPE_PACKAGE);
-    edje_object_part_text_set (item->edje, "Elegance/menu/item/package.name",
+    edje_object_part_text_set (item->edje, "Eleganz/menu/item/package.name",
         package->name);
     item->action = _package_selected;
     item->priv = package;
@@ -878,7 +878,7 @@ _add_package_items (Eina_List *packages, Category *category)
 }
 
 static Eina_Bool
-_add_main_categories (Elegance *self, Menu *menu)
+_add_main_categories (Eleganz *self, Menu *menu)
 {
   Category *category = NULL;
   Category *homebrew = NULL;
@@ -996,7 +996,7 @@ _games_free (Eina_List *games)
 }
 
 static Eina_List *
-_usb_themes_new (Elegance *self, const char *path)
+_usb_themes_new (Eleganz *self, const char *path)
 {
   Eina_List *theme_files = NULL;
   Eina_List *l;
@@ -1087,7 +1087,7 @@ _packages_free (Eina_List *packages)
 }
 
 static Eina_Bool
-_device_check_homebrew (Elegance *self, Menu *menu, Eina_List **list, char *path)
+_device_check_homebrew (Eleganz *self, Menu *menu, Eina_List **list, char *path)
 {
   if (*list == NULL) {
     *list = _games_new (path);
@@ -1130,7 +1130,7 @@ _device_check_homebrew (Elegance *self, Menu *menu, Eina_List **list, char *path
 
 
 static Eina_Bool
-_device_check_packages (Elegance *self, Menu *menu, Eina_List **list,
+_device_check_packages (Eleganz *self, Menu *menu, Eina_List **list,
     char *path1, char *path2)
 {
   if (*list == NULL) {
@@ -1176,7 +1176,7 @@ _device_check_packages (Elegance *self, Menu *menu, Eina_List **list,
 }
 
 static void
-_device_check_themes (Elegance *self, Menu *menu, Eina_List **list, char *path)
+_device_check_themes (Eleganz *self, Menu *menu, Eina_List **list, char *path)
 {
   if (*list == NULL) {
     *list = _usb_themes_new (self, path);
@@ -1202,7 +1202,7 @@ _device_check_themes (Elegance *self, Menu *menu, Eina_List **list, char *path)
 static Eina_Bool
 _device_check_cb (void *data)
 {
-  Elegance *self = data;
+  Eleganz *self = data;
   Menu *menu = self->current_theme->main_win->menu;
   char dev_path[1024], path[1024];
   Eina_Bool changed = EINA_FALSE;
@@ -1230,7 +1230,7 @@ _device_check_cb (void *data)
 }
 
 static void
-_elegance_init (Elegance *self)
+_eleganz_init (Eleganz *self)
 {
   Eina_List *theme_files = NULL;
   Eina_List *l;
@@ -1239,8 +1239,8 @@ _elegance_init (Elegance *self)
 
   keys_set_path (KEYS_PATH);
 
-  memset (self, 0, sizeof(Elegance));
-  self->ee = ecore_evas_new (NULL, 0, 0, ELEGANCE_WIDTH, ELEGANCE_HEIGHT, NULL);
+  memset (self, 0, sizeof(Eleganz));
+  self->ee = ecore_evas_new (NULL, 0, 0, ELEGANZ_WIDTH, ELEGANZ_HEIGHT, NULL);
   self->evas = ecore_evas_get (self->ee);
   ecore_evas_show (self->ee);
   ecore_event_handler_add(ECORE_EVENT_SIGNAL_EXIT, _ee_signal_exit, NULL);
@@ -1271,7 +1271,7 @@ _elegance_init (Elegance *self)
 }
 
 static void
-_elegance_deinit (Elegance *self)
+_eleganz_deinit (Eleganz *self)
 {
   Theme *theme = NULL;
   int i;
@@ -1297,7 +1297,7 @@ _elegance_deinit (Elegance *self)
 int
 main (int argc, char *argv[])
 {
-  Elegance self;
+  Eleganz self;
   int ret = 1;
 
   if (!eina_init ()) {
@@ -1318,7 +1318,7 @@ main (int argc, char *argv[])
     goto ecore_evas_shutdown;
   }
 
-  _elegance_init (&self);
+  _eleganz_init (&self);
 
   if (self.themes == NULL) {
     printf ("No valid themes found\n");
@@ -1332,7 +1332,7 @@ main (int argc, char *argv[])
   ret = 0;
 
  edje_shutdown:
-  _elegance_deinit (&self);
+  _eleganz_deinit (&self);
 
   edje_shutdown ();
  ecore_evas_shutdown:

@@ -61,12 +61,12 @@ group {
             rel1 {
                relative: 0.0 0.0;
                offset: 0 0;
-               to: "Elegance/primary";
+               to: "Eleganz/primary";
             }
             rel2 {
                relative: 1.0 1.0;
                offset: -1 -1;
-               to: "Elegance/primary";
+               to: "Eleganz/primary";
             }
             image {
                normal: "wallpaper.png";
@@ -76,7 +76,7 @@ group {
       /* TODO: Add clipping and handling fade-in/fade-out of wallpaper,set/unset */
       /* Customizable wallpaper */
       part {
-         name: "Elegance/wallpaper";
+         name: "Eleganz/wallpaper";
          type: IMAGE;
          mouse_events: 0;
          clip_to: "clip";
@@ -85,18 +85,18 @@ group {
             rel1 {
                relative: 0.0 0.0;
                offset: 0 0;
-               to: "Elegance/primary";
+               to: "Eleganz/primary";
             }
             rel2 {
                relative: 1.0 1.0;
                offset: -1 -1;
-               to: "Elegance/primary";
+               to: "Eleganz/primary";
             }
          }
       }
       /* Secondary window below */
       part {
-         name: "Elegance/secondary_below";
+         name: "Eleganz/secondary_below";
          mouse_events:  0;
          type: SWALLOW;
          clip_to: "clip";
@@ -105,18 +105,18 @@ group {
             rel1 {
                relative: 0.0 0.0;
                offset: 0 0;
-               to: "Elegance/primary";
+               to: "Eleganz/primary";
             }
             rel2 {
                relative: 1.0 1.0;
                offset: -1 -1;
-               to: "Elegance/primary";
+               to: "Eleganz/primary";
             }
          }
       }
-      /* The primary Elegance window */
+      /* The primary Eleganz window */
       part {
-         name: "Elegance/primary";
+         name: "Eleganz/primary";
          mouse_events:  0;
          type: SWALLOW;
          clip_to: "clip";
@@ -145,7 +145,7 @@ group {
       }
       /* Secondary window above */
       part {
-         name: "Elegance/secondary_above";
+         name: "Eleganz/secondary_above";
          mouse_events:  0;
          type: SWALLOW;
          clip_to: "clip";
@@ -154,12 +154,12 @@ group {
             rel1 {
                relative: 0.0 0.0;
                offset: 0 0;
-               to: "Elegance/primary";
+               to: "Eleganz/primary";
             }
             rel2 {
                relative: 1.0 1.0;
                offset: -1 -1;
-               to: "Elegance/primary";
+               to: "Eleganz/primary";
             }
          }
       }
@@ -173,12 +173,12 @@ group {
             rel1 {
                relative: 0.75 0.0;
                offset: +10 +10;
-               to: "Elegance/primary";
+               to: "Eleganz/primary";
             }
             rel2 {
                relative: 1.0 0.15;
                offset: -10 -10;
-               to: "Elegance/primary";
+               to: "Eleganz/primary";
             }
             image {
                normal: "clock_box.png";
@@ -244,29 +244,29 @@ group {
 #define SET_UNSET_SCREEN(NAME, PART, SOURCE, SET_TIME, UNSET_TIME)      \
       program {                                                         \
          name: NAME"_"SOURCE"_set";                                     \
-         signal: "Elegance/"NAME",set";                                 \
+         signal: "Eleganz/"NAME",set";                                  \
          source: SOURCE;                                                \
          action: STATE_SET "shown" 0.0;                                 \
          transition: ACCELERATE SET_TIME;                               \
-         target: "Elegance/"PART;                                       \
+         target: "Eleganz/"PART;                                        \
          after: NAME""SOURCE"_set_end";                                 \
       }                                                                 \
       program {                                                         \
          name: NAME""SOURCE"_set_end";                                  \
-         action: SIGNAL_EMIT "Elegance/"NAME",set,end" SOURCE;          \
+         action: SIGNAL_EMIT "Eleganz/"NAME",set,end" SOURCE;           \
       }                                                                 \
       program {                                                         \
          name: NAME""SOURCE"_unset";                                    \
-         signal: "Elegance/"NAME",unset";                               \
+         signal: "Eleganz/"NAME",unset";                                \
          source: SOURCE;                                                \
          action: STATE_SET "default" 0.0;                               \
          transition: ACCELERATE UNSET_TIME;                             \
-         target: "Elegance/"PART;                                       \
+         target: "Eleganz/"PART;                                        \
          after: NAME""SOURCE"_unset_end";                               \
       }                                                                 \
       program {                                                         \
          name: NAME""SOURCE"_unset_end";                                \
-         action: SIGNAL_EMIT "Elegance/"NAME",unset,end" SOURCE;        \
+         action: SIGNAL_EMIT "Eleganz/"NAME",unset,end" SOURCE;         \
       }
 
       SET_UNSET_SCREEN("primary", "primary", "", 1.5, 1.0);

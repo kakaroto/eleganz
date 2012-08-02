@@ -65,7 +65,7 @@ group {
          }                                                              \
       }                                                                 \
       part {                                                            \
-         name: "Elegance/menu/category/item."NAME;                      \
+         name: "Eleganz/menu/category/item."NAME;                       \
          type: SWALLOW;                                                 \
          mouse_events: 0;                                               \
          clip_to: "item_clip."NAME;                                     \
@@ -257,30 +257,30 @@ group {
    }
    programs {
 #define TARGET_ALL_ITEMS                                                \
-      target: "Elegance/menu/category/item.before_2";                   \
+      target: "Eleganz/menu/category/item.before_2";                    \
       target: "item_clip.before_2";                                     \
-      target: "Elegance/menu/category/item.before_1";                   \
+      target: "Eleganz/menu/category/item.before_1";                    \
       target: "item_clip.before_1";                                     \
-      target: "Elegance/menu/category/item.before_0";                   \
+      target: "Eleganz/menu/category/item.before_0";                    \
       target: "item_clip.before_0";                                     \
-      target: "Elegance/menu/category/item.selection";                  \
+      target: "Eleganz/menu/category/item.selection";                   \
       target: "item_clip.selection";                                    \
-      target: "Elegance/menu/category/item.after_0";                    \
+      target: "Eleganz/menu/category/item.after_0";                     \
       target: "item_clip.after_0";                                      \
-      target: "Elegance/menu/category/item.after_1";                    \
+      target: "Eleganz/menu/category/item.after_1";                     \
       target: "item_clip.after_1";                                      \
-      target: "Elegance/menu/category/item.after_2";                    \
+      target: "Eleganz/menu/category/item.after_2";                     \
       target: "item_clip.after_2";                                      \
-      target: "Elegance/menu/category/item.after_3";                    \
+      target: "Eleganz/menu/category/item.after_3";                     \
       target: "item_clip.after_3";                                      \
-      target: "Elegance/menu/category/item.after_4";                    \
+      target: "Eleganz/menu/category/item.after_4";                     \
       target: "item_clip.after_4";                                      \
-      target: "Elegance/menu/category/item.after_5";                    \
+      target: "Eleganz/menu/category/item.after_5";                     \
       target: "item_clip.after_5";
 
       program {
          name: "category_selected";
-         signal: "Elegance/menu/category,selected";
+         signal: "Eleganz/menu/category,selected";
          action: STATE_SET "selected" 0.0;
          transition: LINEAR 0.5;
          target: "icon";
@@ -288,14 +288,14 @@ group {
       }
       program {
          name: "show_items";
-         signal: "Elegance/menu/category,selected";
+         signal: "Eleganz/menu/category,selected";
          action: STATE_SET "set" 0.0;
          transition: LINEAR 0.5;
          TARGET_ALL_ITEMS;
       }
       program {
          name: "category_deselected";
-         signal: "Elegance/menu/category,deselected";
+         signal: "Eleganz/menu/category,deselected";
          action: STATE_SET "default" 0.0;
          transition: LINEAR 0.5;
          target: "icon";
@@ -303,7 +303,7 @@ group {
       }
       program {
          name: "hide_items";
-         signal: "Elegance/menu/category,deselected";
+         signal: "Eleganz/menu/category,deselected";
          action: STATE_SET "default" 0.0;
          transition: LINEAR 0.5;
          TARGET_ALL_ITEMS;
@@ -312,45 +312,45 @@ group {
 #define ADD_ITEM_SET_UNSET_PROGRAM(NAME)                                \
       program {                                                         \
          name: "set,"NAME;                                              \
-         signal: "Elegance/menu/category,item_set";                     \
+         signal: "Eleganz/menu/category,item_set";                      \
          source: NAME;                                                  \
          action: STATE_SET "set" 0.0;                                   \
          transition: ACCELERATE 1.0;                                    \
-         target: "Elegance/menu/category/item."NAME;                    \
+         target: "Eleganz/menu/category/item."NAME;                     \
          after: "send_set,"NAME",end";                                  \
       }                                                                 \
       program {                                                         \
          name: "unset,"NAME;                                            \
-         signal: "Elegance/menu/category,item_unset";                   \
+         signal: "Eleganz/menu/category,item_unset";                    \
          source: NAME;                                                  \
          action: STATE_SET "unset" 0.0;                                 \
          transition: ACCELERATE 1.0;                                    \
-         target: "Elegance/menu/category/item."NAME;                    \
+         target: "Eleganz/menu/category/item."NAME;                     \
          after: "send_unset,"NAME",end";                                \
       }                                                                 \
       program {                                                         \
          name: "set,"NAME",reset";                                      \
-         signal: "Elegance/menu/category,item_set,reset";               \
+         signal: "Eleganz/menu/category,item_set,reset";                \
          source: NAME;                                                  \
          action: STATE_SET "set" 0.0;                                   \
          transition: LINEAR 0.0;                                        \
-         target: "Elegance/menu/category/item."NAME;                    \
+         target: "Eleganz/menu/category/item."NAME;                     \
       }                                                                 \
       program {                                                         \
          name: "unset,"NAME",reset";                                    \
-         signal: "Elegance/menu/category,item_unset,reset";             \
+         signal: "Eleganz/menu/category,item_unset,reset";              \
          source: NAME;                                                  \
          action: STATE_SET "unset" 0.0;                                 \
          transition: LINEAR 0.0;                                        \
-         target: "Elegance/menu/category/item."NAME;                    \
+         target: "Eleganz/menu/category/item."NAME;                     \
       }                                                                 \
       program {                                                         \
          name: "send_set,"NAME",end";                                   \
-         action: SIGNAL_EMIT "Elegance/menu/category,item_set,end" NAME; \
+         action: SIGNAL_EMIT "Eleganz/menu/category,item_set,end" NAME; \
       }                                                                 \
       program {                                                         \
          name: "send_unset,"NAME",end";                                 \
-         action: SIGNAL_EMIT "Elegance/menu/category,item_unset,end" NAME; \
+         action: SIGNAL_EMIT "Eleganz/menu/category,item_unset,end" NAME; \
       }
       ADD_ITEM_SET_UNSET_PROGRAM("before_2");
       ADD_ITEM_SET_UNSET_PROGRAM("before_1");
@@ -365,7 +365,7 @@ group {
 
       program {
          name: "scroll_up";
-         signal: "Elegance/menu/category,item_previous";
+         signal: "Eleganz/menu/category,item_previous";
          action: STATE_SET "previous" 0.0;
          transition: SINUSOIDAL 0.5;
          TARGET_ALL_ITEMS;
@@ -373,7 +373,7 @@ group {
       }
       program {
          name: "scroll_down";
-         signal: "Elegance/menu/category,item_next";
+         signal: "Eleganz/menu/category,item_next";
          action: STATE_SET "next" 0.0;
          transition: SINUSOIDAL 0.5;
          TARGET_ALL_ITEMS;
@@ -381,25 +381,25 @@ group {
       }
       program {
          name: "reset";
-         signal: "Elegance/menu/category,item_reset";
+         signal: "Eleganz/menu/category,item_reset";
          action: STATE_SET "set" 0.0;
          transition: LINEAR 0.0;
          TARGET_ALL_ITEMS;
       }
       program {
          name: "scroll_up_end";
-         action: SIGNAL_EMIT "Elegance/menu/category,item_previous,end" "";
+         action: SIGNAL_EMIT "Eleganz/menu/category,item_previous,end" "";
       }
       program {
          name: "scroll_down_end";
-         action: SIGNAL_EMIT "Elegance/menu/category,item_next,end" "";
+         action: SIGNAL_EMIT "Eleganz/menu/category,item_next,end" "";
       }
    }
 }
 
 #define DEFINE_CATEGORY(NAME, IMAGE, TEXT)                              \
    group {                                                              \
-      name: "Elegance/menu/category/"NAME;                              \
+      name: "Eleganz/menu/category/"NAME;                               \
       inherit: "generic_category";                                      \
       parts {                                                           \
 	 part {                                                         \
@@ -444,7 +444,7 @@ DEFINE_CATEGORY("device_homebrew", "device_homebrew.png", "USB Homebrew");
 //DEFINE_CATEGORY("theme", "theme.png", "Theme");
 /* Theme category will look a bit different than the generic one */
 group {
-   name: "Elegance/menu/category/theme";
+   name: "Eleganz/menu/category/theme";
    parts {
       part {
          name: "clip";
@@ -572,24 +572,24 @@ group {
    programs {
 #undef TARGET_ALL_ITEMS
 #define TARGET_ALL_ITEMS                                                \
-      target: "Elegance/menu/category/item.before_1";                   \
+      target: "Eleganz/menu/category/item.before_1";                    \
       target: "item_clip.before_1";                                     \
-      target: "Elegance/menu/category/item.before_0";                   \
+      target: "Eleganz/menu/category/item.before_0";                    \
       target: "item_clip.before_0";                                     \
-      target: "Elegance/menu/category/item.selection";                  \
+      target: "Eleganz/menu/category/item.selection";                   \
       target: "item_clip.selection";                                    \
-      target: "Elegance/menu/category/item.after_0";                    \
+      target: "Eleganz/menu/category/item.after_0";                     \
       target: "item_clip.after_0";                                      \
-      target: "Elegance/menu/category/item.after_1";                    \
+      target: "Eleganz/menu/category/item.after_1";                     \
       target: "item_clip.after_1";                                      \
-      target: "Elegance/menu/category/item.after_2";                    \
+      target: "Eleganz/menu/category/item.after_2";                     \
       target: "item_clip.after_2";                                      \
-      target: "Elegance/menu/category/item.after_3";                    \
+      target: "Eleganz/menu/category/item.after_3";                     \
       target: "item_clip.after_3";
 
       program {
          name: "category_selected";
-         signal: "Elegance/menu/category,selected";
+         signal: "Eleganz/menu/category,selected";
          action: STATE_SET "selected" 0.0;
          transition: LINEAR 0.5;
          target: "icon";
@@ -597,14 +597,14 @@ group {
       }
       program {
          name: "show_items";
-         signal: "Elegance/menu/category,selected";
+         signal: "Eleganz/menu/category,selected";
          action: STATE_SET "set" 0.0;
          transition: LINEAR 0.5;
          TARGET_ALL_ITEMS;
       }
       program {
          name: "category_deselected";
-         signal: "Elegance/menu/category,deselected";
+         signal: "Eleganz/menu/category,deselected";
          action: STATE_SET "default" 0.0;
          transition: LINEAR 0.5;
          target: "icon";
@@ -612,7 +612,7 @@ group {
       }
       program {
          name: "hide_items";
-         signal: "Elegance/menu/category,deselected";
+         signal: "Eleganz/menu/category,deselected";
          action: STATE_SET "default" 0.0;
          transition: LINEAR 0.5;
          TARGET_ALL_ITEMS;
@@ -621,45 +621,45 @@ group {
 #define ADD_ITEM_SET_UNSET_PROGRAM(NAME)                                \
       program {                                                         \
          name: "set,"NAME;                                              \
-         signal: "Elegance/menu/category,item_set";                     \
+         signal: "Eleganz/menu/category,item_set";                      \
          source: NAME;                                                  \
          action: STATE_SET "set" 0.0;                                   \
          transition: ACCELERATE 1.0;                                    \
-         target: "Elegance/menu/category/item."NAME;                    \
+         target: "Eleganz/menu/category/item."NAME;                     \
          after: "send_set,"NAME",end";                                  \
       }                                                                 \
       program {                                                         \
          name: "unset,"NAME;                                            \
-         signal: "Elegance/menu/category,item_unset";                   \
+         signal: "Eleganz/menu/category,item_unset";                    \
          source: NAME;                                                  \
          action: STATE_SET "unset" 0.0;                                 \
          transition: ACCELERATE 1.0;                                    \
-         target: "Elegance/menu/category/item."NAME;                    \
+         target: "Eleganz/menu/category/item."NAME;                     \
          after: "send_unset,"NAME",end";                                \
       }                                                                 \
       program {                                                         \
          name: "set,"NAME",reset";                                      \
-         signal: "Elegance/menu/category,item_set,reset";               \
+         signal: "Eleganz/menu/category,item_set,reset";                \
          source: NAME;                                                  \
          action: STATE_SET "set" 0.0;                                   \
          transition: LINEAR 0.0;                                        \
-         target: "Elegance/menu/category/item."NAME;                    \
+         target: "Eleganz/menu/category/item."NAME;                     \
       }                                                                 \
       program {                                                         \
          name: "unset,"NAME",reset";                                    \
-         signal: "Elegance/menu/category,item_unset,reset";             \
+         signal: "Eleganz/menu/category,item_unset,reset";              \
          source: NAME;                                                  \
          action: STATE_SET "unset" 0.0;                                 \
          transition: LINEAR 0.0;                                        \
-         target: "Elegance/menu/category/item."NAME;                    \
+         target: "Eleganz/menu/category/item."NAME;                     \
       }                                                                 \
       program {                                                         \
          name: "send_set,"NAME",end";                                   \
-         action: SIGNAL_EMIT "Elegance/menu/category,item_set,end" NAME; \
+         action: SIGNAL_EMIT "Eleganz/menu/category,item_set,end" NAME; \
       }                                                                 \
       program {                                                         \
          name: "send_unset,"NAME",end";                                 \
-         action: SIGNAL_EMIT "Elegance/menu/category,item_unset,end" NAME; \
+         action: SIGNAL_EMIT "Eleganz/menu/category,item_unset,end" NAME; \
       }
       ADD_ITEM_SET_UNSET_PROGRAM("before_1");
       ADD_ITEM_SET_UNSET_PROGRAM("before_0");
@@ -671,7 +671,7 @@ group {
 
       program {
          name: "scroll_up";
-         signal: "Elegance/menu/category,item_previous";
+         signal: "Eleganz/menu/category,item_previous";
          action: STATE_SET "previous" 0.0;
          transition: SINUSOIDAL 0.5;
          TARGET_ALL_ITEMS;
@@ -679,7 +679,7 @@ group {
       }
       program {
          name: "scroll_down";
-         signal: "Elegance/menu/category,item_next";
+         signal: "Eleganz/menu/category,item_next";
          action: STATE_SET "next" 0.0;
          transition: SINUSOIDAL 0.5;
          TARGET_ALL_ITEMS;
@@ -687,18 +687,18 @@ group {
       }
       program {
          name: "reset";
-         signal: "Elegance/menu/category,item_reset";
+         signal: "Eleganz/menu/category,item_reset";
          action: STATE_SET "set" 0.0;
          transition: LINEAR 0.0;
          TARGET_ALL_ITEMS;
       }
       program {
          name: "scroll_up_end";
-         action: SIGNAL_EMIT "Elegance/menu/category,item_previous,end" "";
+         action: SIGNAL_EMIT "Eleganz/menu/category,item_previous,end" "";
       }
       program {
          name: "scroll_down_end";
-         action: SIGNAL_EMIT "Elegance/menu/category,item_next,end" "";
+         action: SIGNAL_EMIT "Eleganz/menu/category,item_next,end" "";
       }
    }
 }
