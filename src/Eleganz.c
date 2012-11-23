@@ -22,6 +22,8 @@
 #include "pkg.h"
 #include "keys.h"
 
+#define ECORE_EVAS_ENGINE NULL
+
 #ifdef __lv2ppu__
 #define DEV_HDD0 "/dev_hdd0/"
 #define DEV_USB_FMT "/dev_usb%03d/"
@@ -32,8 +34,8 @@
 #define USB_PACKAGES_DIRECTORY_FMT "/dev_usb%03d/PS3/PACKAGES/"
 #define USB_THEMES_DIRECTORY_FMT "/dev_usb%03d/PS3/THEMES/"
 #define KEYS_PATH "/dev_hdd0/game/ELEGANZ00/USRDIR/keys.conf"
-#define ELEGANZ_WIDTH 1280
-#define ELEGANZ_HEIGHT 720
+#define ELEGANZ_WIDTH 1920
+#define ELEGANZ_HEIGHT 1080
 #else
 #define DEV_HDD0 "./dev_hdd0/"
 #define DEV_USB_FMT "./dev_usb%03d/"
@@ -1240,7 +1242,8 @@ _eleganz_init (Eleganz *self)
   keys_set_path (KEYS_PATH);
 
   memset (self, 0, sizeof(Eleganz));
-  self->ee = ecore_evas_new (NULL, 0, 0, ELEGANZ_WIDTH, ELEGANZ_HEIGHT, NULL);
+  self->ee = ecore_evas_new (ECORE_EVAS_ENGINE, 0, 0,
+      ELEGANZ_WIDTH, ELEGANZ_HEIGHT, NULL);
   self->evas = ecore_evas_get (self->ee);
   ecore_evas_show (self->ee);
   ecore_event_handler_add(ECORE_EVENT_SIGNAL_EXIT, _ee_signal_exit, NULL);
@@ -1268,6 +1271,8 @@ _eleganz_init (Eleganz *self)
 
   self->games = _games_new (GAMES_DIRECTORY);
   self->homebrew = _games_new (HOMEBREW_DIRECTORY);
+
+  edje_frametime_set ( 1.0/60 );
 }
 
 static void
