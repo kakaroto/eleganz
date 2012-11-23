@@ -10,7 +10,7 @@ generate_ps3sfo() {
 
 make_pkg() {
     name="Eleganz"
-    logo=data/themes/dark/images/homebrew.png 
+    logo=data/themes/default/images/homebrew.png
     title="Eleganz"
     appid="ELEGANZ00"
     datadir="/dev_hdd0/game/$appid/USRDIR/"

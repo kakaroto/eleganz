@@ -1,21 +1,21 @@
-
 EDJE_CC = @edje_cc@
-EDJE_FLAGS = -v -id $(top_srcdir)/data/themes/light/images -fd $(top_srcdir)/data/themes/light/fonts
+THEME_NAME = light
+THEME_DIR = $(top_srcdir)/data/themes/$(THEME_NAME)
+EDJE_FLAGS = -v -id $(THEME_DIR)/images -fd $(THEME_DIR)/fonts
 
 EXTRA_DIST = \
-light.edc \
-edc/*.edc \
-images/*.png \
-fonts/*.ttf
+$(THEME_DIR)/$(THEME_NAME).edc \
+$(THEME_DIR)/edc/*.edc \
+$(THEME_DIR)/images/*.png \
+$(THEME_DIR)/fonts/*.ttf
 
+filesdir = $(datadir)/themes/$(THEME_NAME)
+files_DATA = $(THEME_NAME).edj
 
-filesdir = $(datadir)/themes/light
-files_DATA = light.edj
-
-light.edj: Makefile $(EXTRA_DIST)
+$(THEME_NAME).edj: Makefile $(EXTRA_DIST)
 	$(EDJE_CC) $(EDJE_FLAGS) \
-	$(top_srcdir)/data/themes/light/light.edc \
-	$(top_builddir)/data/themes/light/light.edj
+	$(THEME_DIR)/$(THEME_NAME).edc \
+	$(THEME_NAME).edj
 
 clean-local:
 	rm -f *.edj

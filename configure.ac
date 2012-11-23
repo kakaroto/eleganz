@@ -54,7 +54,6 @@ AC_CONFIG_FILES([
         data/Makefile
         data/themes/Makefile
         data/themes/default/Makefile
-        data/themes/dark/Makefile
         data/themes/light/Makefile
 ])
 AC_OUTPUT

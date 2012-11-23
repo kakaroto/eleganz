@@ -1,7 +1,7 @@
 
 fonts {
-   font: "Vera.ttf"   "Edje Vera";
-   font: "VeraBd.ttf" "Edje Vera Bold";
+   font: "bankgthd.ttf"   "Edje Vera";
+   font: "bankgthl.ttf" "Edje Vera Bold";
 }
 
 images {
@@ -22,10 +22,10 @@ images {
 }
 
 data {
-   item: "name" "Eleganz";
-   item: "author" "KaKaRoTo";
+   item: "name" "Default Theme";
+   item: "author" "KaKaRoTo & opium";
    item: "version" "1.0";
-   item: "description" "This is the default theme";
+   item: "description" "Default Eleganz theme";
    item: "compatible" "1.0";
 }
 
@@ -37,4 +37,5 @@ collections {
 #include "edc/categories.edc"
 #include "edc/items.edc"
 #include "edc/secondary.edc"
+/* TODO: Add specific settings items and secondary screens */
 }

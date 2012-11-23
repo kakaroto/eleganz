@@ -23,7 +23,7 @@ images {
 
 data {
    item: "name" "Light Theme";
-   item: "author" "opium";
+   item: "author" "KaKaRoTo & opium";
    item: "version" "1.0";
    item: "description" "This is a light theme";
    item: "compatible" "1.0";
