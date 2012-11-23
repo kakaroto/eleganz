@@ -64,7 +64,7 @@ group {
          name: "show_bg";
          action: STATE_SET "shown" 0.0;
          target: "Eleganz/secondary/game/picture";
-         transition: ACCELERATE 1.0;
+         transition: ACCELERATE 2.5;
          after: "ready";
       }
       program {
