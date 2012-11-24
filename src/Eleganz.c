@@ -125,6 +125,9 @@ _key_down_cb (void *data, Evas *e, Evas_Object *obj, void *event)
       if (category->action)
         category->action (category);
     }
+  } else if (self->exquisite && strcmp (ev->keyname, "Circle") == 0) {
+    if (self->exquisite_done)
+      exquisite_object_exit (self->exquisite);
   } else if (!self->exquisite) {
     if (strcmp (ev->keyname, menu->category_previous) == 0) {
       menu_scroll_previous (menu);
