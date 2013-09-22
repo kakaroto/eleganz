@@ -269,7 +269,7 @@ group {
          action: SIGNAL_EMIT "Eleganz/"NAME",unset,end" SOURCE;         \
       }
 
-      SET_UNSET_SCREEN("primary", "primary", "", 1.5, 1.0);
+      SET_UNSET_SCREEN("primary", "primary", "", 1.0, 1.0);
       SET_UNSET_SCREEN("secondary", "secondary_above", "above", 0.0, 0.0);
       SET_UNSET_SCREEN("secondary", "secondary_below", "below", 0.0, 0.0);
    }

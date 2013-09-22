@@ -7,7 +7,7 @@ fonts {
 }
 
 images {
-   image: "vert-white-grad.png" COMP;
+   image: "wallpaper.png" COMP;
    image: "white-logo.png" COMP;
    image: "logo-shadow-1.png" LOSSY 90;
    image: "logo-shadow-2.png" LOSSY 90;
@@ -20,7 +20,7 @@ images {
 styles {
   style {
     name: "verbose"; 
-    base: "font=Edje-Vera-Mono-Bold font_size=8 align=0.0 valign=0.5 color=#fff style=soft_outline outline_color=#aaa wrap=none";
+    base: "font=Edje-Vera-Mono-Bold font_size=12 align=0.0 valign=0.5 color=#fff style=soft_shadow outline_color=#aaa wrap=none";
 
     tag:  "/p"        "+ \n";
     tag:  "br"        "+ \n";
@@ -54,7 +54,7 @@ collections {
            get_state_val(PART:"statusarea", STATE_REL1_OFFSET, x2, y);
            get_state_val(PART:"textarea", STATE_REL1_OFFSET, x, y);
            
-           y = y - 13;
+           y = y - 18;
            
            set_state_val(PART:"textarea", STATE_REL1_OFFSET, x, y);
            set_state_val(PART:"statusarea", STATE_REL1_OFFSET, x2, y);
@@ -83,14 +83,16 @@ collections {
 	    description {
 	       state: "default" 0.0;
 	       image {
-		  normal: "vert-white-grad.png";
+		  normal: "wallpaper.png";
 	       }
-               fill {
-		  size {
-		     relative: 0.0 1.0;
-		     offset:   64 0;
-		  }
-	       }
+               rel1 {
+                  relative: 0.0 0.0;
+                  offset: 0 0;
+               }
+               rel2 {
+                  relative: 1.0 1.0;
+                  offset: -1 -1;
+               }
 	    }
 	 }
          
