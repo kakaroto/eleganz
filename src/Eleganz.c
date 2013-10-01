@@ -14,43 +14,65 @@
 #include <Ecore.h>
 #include <Ecore_File.h>
 #include <Ecore_Evas.h>
+#include <Ecore_Psl1ght.h>
 #include <Edje.h>
 #include <Exquisite.h>
 
 #include "common.h"
 #include "menu.h"
+
+#ifndef COBRA_ODE
 #include "pkg.h"
 #include "keys.h"
+#else
+#include "manager.h"
+#undef DEV_BDVD
+#endif
 
 #define ECORE_EVAS_ENGINE NULL
 
 #ifdef __lv2ppu__
+#include <sys/process.h>
+
 #define DEV_HDD0 "/dev_hdd0/"
+#define DEV_BDVD "/dev_bdvd/"
 #define DEV_USB_FMT "/dev_usb%03d/"
-#define THEMES_DIRECTORY "/dev_hdd0/game/ELEGANZ00/USRDIR/data/themes/"
-#define GAMES_DIRECTORY "/dev_hdd0/game/"
-#define HOMEBREW_DIRECTORY "/dev_hdd0/game/ELEGANZ00/USRDIR/HOMEBREW/"
-#define USB_HOMEBREW_DIRECTORY_FMT "/dev_usb%03d/PS3/HOMEBREW/"
-#define USB_PACKAGES_DIRECTORY_FMT "/dev_usb%03d/PS3/PACKAGES/"
-#define USB_THEMES_DIRECTORY_FMT "/dev_usb%03d/PS3/THEMES/"
-#define KEYS_PATH "/dev_hdd0/game/ELEGANZ00/USRDIR/keys.conf"
+#define THEMES_DIRECTORY DEV_HDD0 "game/ELEGANZ00/data/themes/"
+#define KEYS_PATH DEV_HDD0 "game/ELEGANZ00/USRDIR/keys.conf"
 #define ELEGANZ_WIDTH 1920
 #define ELEGANZ_HEIGHT 1080
 #else
 #define DEV_HDD0 "./dev_hdd0/"
+#define DEV_BDVD "./dev_bdvd/"
 #define DEV_USB_FMT "./dev_usb%03d/"
 #define THEMES_DIRECTORY "data/themes/"
-#define GAMES_DIRECTORY "dev_hdd0/game/"
-#define HOMEBREW_DIRECTORY "dev_hdd0/game/ELEGANZ00/USRDIR/HOMEBREW/"
-#define USB_HOMEBREW_DIRECTORY_FMT "dev_usb%03d/PS3/HOMEBREW/"
-#define USB_PACKAGES_DIRECTORY_FMT "dev_usb%03d/PS3/PACKAGES/"
-#define USB_THEMES_DIRECTORY_FMT "dev_usb%03d/PS3/THEMES/"
 #define KEYS_PATH "data/keys.conf"
 #define ELEGANZ_WIDTH 640
 #define ELEGANZ_HEIGHT 480
 #endif
 
+#ifdef COBRA_ODE
+Eina_Bool cobra_selection_made;
+#define GAMES_DIRECTORY DEV_BDVD "COBRA/"
+#define HOMEBREW_DIRECTORY DEV_BDVD "PS3_GAME/USRDIR/HOMEBREW/"
+#define USB_THEMES_DIRECTORY_FMT DEV_USB_FMT "PS3/THEMES/"
+#undef KEYS_PATH
+#ifdef __lv2ppu__
+#undef THEMES_DIRECTORY
+#define THEMES_DIRECTORY DEV_BDVD "PS3_GAME/USRDIR/data/themes/"
+#define COBRA_ICON DEV_BDVD "PS3_GAME/USRDIR/data/cobra.png"
+#else
+#define COBRA_ICON "data/cobra.png"
+#endif
+#else
+#define GAMES_DIRECTORY DEV_HDD0 "game/"
+#define HOMEBREW_DIRECTORY DEV_HDD0 "game/ELEGANZ00/USRDIR/HOMEBREW/"
+#define USB_HOMEBREW_DIRECTORY_FMT DEV_USB_FMT "PS3/HOMEBREW/"
+#define USB_PACKAGES_DIRECTORY_FMT DEV_USB_FMT "PS3/PACKAGES/"
+#define USB_THEMES_DIRECTORY_FMT DEV_USB_FMT "PS3/THEMES/"
+/* TODO: Add support for installing themes from usb to dev_hdd0 */
 #define MAX_USB_DEVICES 10
+#endif
 
 typedef struct {
   char *path;
@@ -60,10 +82,12 @@ typedef struct {
   char *picture;
 } Game;
 
+#ifndef COBRA_ODE
 typedef struct {
   char *path;
   char *name;
 } Package;
+#endif
 
 typedef struct {
   Ecore_Evas *ee;
@@ -75,20 +99,26 @@ typedef struct {
   Theme *preview_theme;
   Eina_List *games;
   Eina_List *homebrew;
+#ifndef COBRA_ODE
   Eina_List *usb_homebrew[MAX_USB_DEVICES];
   Eina_List *usb_packages[MAX_USB_DEVICES];
   Eina_List *usb_themes[MAX_USB_DEVICES];
   Ecore_Timer *device_check_timer;
+#else
+  CobraManager cobra;
+#endif
 } Eleganz;
 
-static Eina_List *_games_new (const char *path);
+static Eina_List *_games_new (Eleganz *self, const char *path);
 static void _games_free (Eina_List *games);
 static int _add_game_items (Eina_List *games, Category *category);
 static void _populate_themes (Eleganz *self, Theme *current_theme, Eina_Bool only_usb);
 static Eina_Bool _add_main_categories (Eleganz *self, Menu *menu);
 static Eina_Bool load_theme (Eleganz *self, Theme *theme);
 static void set_current_theme (Eleganz *self, Theme *theme);
+#ifndef COBRA_ODE
 static Eina_Bool _device_check_cb (void *data);
+#endif
 static void _exquisite_default_exit_cb (void *data);
 static Evas_Object *_exquisite_new (Eleganz *self, const char *title, const char *message);
 static void _menu_ready_cb (Menu *menu);
@@ -109,6 +139,9 @@ _key_down_cb (void *data, Evas *e, Evas_Object *obj, void *event)
     ecore_evas_fullscreen_set (ee, !ecore_evas_fullscreen_get (ee));
   } else if (strcmp (ev->keyname, "Escape") == 0 ||
       strcmp (ev->keyname, "q") == 0) {
+#ifdef COBRA_ODE
+    cobra_selection_made = EINA_FALSE;
+#endif
     ecore_main_loop_quit();
   } else if (strcmp (ev->keyname, "Return") == 0 ||
       strcmp (ev->keyname, "Cross") == 0) {
@@ -145,6 +178,9 @@ static void
 _quit_ready_cb (void *data, Evas_Object *obj,
     const char  *emission, const char  *source)
 {
+#ifdef COBRA_ODE
+  cobra_selection_made = EINA_FALSE;
+#endif
   ecore_main_loop_quit ();
 }
 
@@ -335,20 +371,70 @@ _game_selected (Item *item)
 
   self = evas_object_data_get (item->category->menu->main_win->edje, "Eleganz");
 
-  /* TODO: do it! */
+#ifdef COBRA_ODE
+  if (game->path == NULL)
+    return;
+  if (strcmp (game->path + strlen (game->path) - 4, ".RUN") == 0) {
+    FILE *f = fopen (game->path, "rb");
+    char buffer[2048];
+
+    if (f) {
+      fread (buffer, 1, 2048, f);
+      fclose (f);
+    }
+    _exquisite_new (self, "COBRA ODE", game->title);
+    exquisite_object_pulsate (self->exquisite);
+    if (self->cobra.info.major > 1 || self->cobra.info.minor >= 1) {
+      exquisite_object_text_add (self->exquisite,
+          "To load the selected game, reboot or eject disc");
+      exquisite_object_text_add (self->exquisite,
+          "If you quit Eleganz from the XMB menu, it will");
+      exquisite_object_text_add (self->exquisite,
+          "fake reboot and load your game.");
+    } else {
+      exquisite_object_text_add (self->exquisite,
+          "To load the selected game, reboot the console");
+      exquisite_object_text_add (self->exquisite,
+          "If you quit Eleganz from the XMB menu, it will");
+      exquisite_object_text_add (self->exquisite,
+          "fake reboot and load your game.");
+    }
+    self->exquisite_done = EINA_TRUE;
+    cobra_selection_made = EINA_TRUE;
+  } else {
+#endif
+#ifdef __lv2ppu__
+    char path[512];
+    char *launchenv[2];
+    char *launchargs[2];
+
+    memset(launchenv, 0, sizeof(launchenv));
+    memset(launchargs, 0, sizeof(launchargs));
+
+    launchargs[0] = (char*)malloc(512);
+    strncpy (path, game->path, 512);
+    strncat (path, "/USRDIR/EBOOT.BIN", 512);
+    strncpy (launchargs[0], path, 512);
+
+    printf ("Launching homebrew : %s\n", path);
+    sysProcessExitSpawn2 ( (const char*)path, (const char**)launchargs,
+        (const char**)launchenv, 0, 0, 1001, SYS_PROCESS_SPAWN_STACK_SIZE_1M ) ;
+#else
   printf ("Game '%s' is launched!!!\n", game->title);
   _exquisite_new (self, "Homebrew launcher", game->title);
   exquisite_object_pulsate (self->exquisite);
   exquisite_object_status_set (self->exquisite,
       exquisite_object_text_add (self->exquisite, "Launching game!"),
       "FAIL", EXQUISITE_STATUS_TYPE_FAILURE);
-  exquisite_object_text_add (self->exquisite, "Oh right, I didn't implement it yet!");
-  exquisite_object_status_set (self->exquisite,
-      exquisite_object_text_add (self->exquisite, "Please do it, thanks!!"),
-      "OK", EXQUISITE_STATUS_TYPE_SUCCESS);
+  exquisite_object_text_add (self->exquisite, "Can't launch games from the PC!");
   self->exquisite_done = EINA_TRUE;
+#endif
+#ifdef COBRA_ODE
+  }
+#endif
 }
 
+#ifndef COBRA_ODE
 static Eina_Bool
 _ecore_sleep_cb (void *data)
 {
@@ -496,7 +582,7 @@ _package_selected (Item *item)
     Eina_List *l;
 
     _games_free (self->homebrew);
-    self->homebrew = _games_new (HOMEBREW_DIRECTORY);
+    self->homebrew = _games_new (self, HOMEBREW_DIRECTORY);
     EINA_LIST_FOREACH (menu->categories, l, category) {
       if (category->type == CATEGORY_TYPE_HOMEBREW) {
         EINA_LIST_FREE (category->items, item)
@@ -508,6 +594,7 @@ _package_selected (Item *item)
   }
   self->exquisite_done = EINA_TRUE;
 }
+#endif
 
 /* Utility functions */
 static int
@@ -615,11 +702,13 @@ _exquisite_new (Eleganz *self, const char *title, const char *message)
 static void
 _menu_ready_cb (Menu *menu)
 {
+#ifndef COBRA_ODE
   Eleganz *self = evas_object_data_get (menu->main_win->edje, "Eleganz");
 
   if (!self->device_check_timer)
     self->device_check_timer = ecore_timer_add (1.0, _device_check_cb, self);
   _device_check_cb (self);
+#endif
 }
 
 static Eina_Bool
@@ -713,7 +802,9 @@ _populate_themes (Eleganz *self, Theme *current_theme, Eina_Bool only_usb)
   Theme *theme;
   Category *category;
   Item *item;
+#ifndef COBRA_ODE
   int i;
+#endif
 
   EINA_LIST_FOREACH (menu->categories, l, category) {
     if (category->type == CATEGORY_TYPE_THEME) {
@@ -734,10 +825,12 @@ _populate_themes (Eleganz *self, Theme *current_theme, Eina_Bool only_usb)
                 eina_list_data_find_list (category->items, item);
         }
       }
+#ifndef COBRA_ODE
       for (i = 0; i < MAX_USB_DEVICES; i++) {
         EINA_LIST_FOREACH (self->usb_themes[i], l2, theme)
             _add_theme (self, category, theme, ITEM_TYPE_USB_THEME);
       }
+#endif
 
       if (menu_get_selected_category (menu) == category)
         category_set_items (category, "");
@@ -859,6 +952,7 @@ _add_game_items (Eina_List *games, Category *category)
   return EINA_TRUE;
 }
 
+#ifndef COBRA_ODE
 static int
 _add_package_items (Eina_List *packages, Category *category)
 {
@@ -881,13 +975,16 @@ _add_package_items (Eina_List *packages, Category *category)
 
   return EINA_TRUE;
 }
+#endif
 
 static Eina_Bool
 _add_main_categories (Eleganz *self, Menu *menu)
 {
   Category *category = NULL;
   Category *homebrew = NULL;
+#ifndef COBRA_ODE
   int i;
+#endif
 
   category = category_new (menu, CATEGORY_TYPE_QUIT);
   category->action = _category_action_quit;
@@ -910,10 +1007,14 @@ _add_main_categories (Eleganz *self, Menu *menu)
   if (self->games)
     _add_game_items (self->games, category);
   menu_append_category (menu, category);
+#ifdef COBRA_ODE
+  homebrew = category;
+#endif
   category = category_new (menu, CATEGORY_TYPE_HOMEBREW);
   if (self->homebrew)
     _add_game_items (self->homebrew, category);
   menu_append_category (menu, category);
+#ifndef COBRA_ODE
   homebrew = category;
   for (i = 0; i < MAX_USB_DEVICES; i++) {
     if (self->usb_homebrew[i]) {
@@ -927,7 +1028,7 @@ _add_main_categories (Eleganz *self, Menu *menu)
       menu_append_category (menu, category);
     }
   }
-
+#endif
   menu->categories_selection = eina_list_data_find_list (menu->categories, homebrew);
 
   menu_set_categories (menu, NULL);
@@ -936,11 +1037,39 @@ _add_main_categories (Eleganz *self, Menu *menu)
 }
 
 static Eina_List *
-_games_new (const char *path)
+_games_new (Eleganz *self, const char *path)
 {
   Eina_List *dirlist;
   Eina_List *l;
   Eina_List *games = NULL;
+
+#ifdef COBRA_ODE
+  if (strcmp (path, GAMES_DIRECTORY) == 0) {
+    Game *game = NULL;
+    int i;
+
+    game = calloc (1, sizeof(Game));
+    game->path = NULL;
+    game->name = strdup ("COBRA ODE");
+    game->title = _strdup_printf ("COBRA ODE v%d.%d", self->cobra.info.major,
+        self->cobra.info.minor);
+    game->icon = strdup (COBRA_ICON);
+    game->picture = NULL;
+    games = eina_list_append (games, game);
+    for (i = 0; i < self->cobra.num_iso; i++) {
+      game = calloc (1, sizeof(Game));
+      game->path = strdup (self->cobra.iso[i].run_path);
+      game->name = strdup (self->cobra.iso[i].game_id);
+      game->title = _param_sfo_get_string (self->cobra.iso[i].sfo_path, "TITLE");
+      if (self->cobra.iso[i].png)
+        game->icon = strdup (self->cobra.iso[i].png);
+      else
+        game->icon = NULL;
+      game->picture = NULL;
+      games = eina_list_append (games, game);
+    }
+  } else {
+#endif
   char *game_dir;
 
   dirlist = _get_dirlist (path, EINA_TRUE, EINA_FALSE, EINA_FALSE);
@@ -978,6 +1107,9 @@ _games_new (const char *path)
   }
   EINA_LIST_FREE (dirlist, game_dir)
       free (game_dir);
+#ifdef COBRA_ODE
+  }
+#endif
 
   return games;
 }
@@ -1000,6 +1132,7 @@ _games_free (Eina_List *games)
   }
 }
 
+#ifndef COBRA_ODE
 static Eina_List *
 _usb_themes_new (Eleganz *self, const char *path)
 {
@@ -1095,7 +1228,7 @@ static Eina_Bool
 _device_check_homebrew (Eleganz *self, Menu *menu, Eina_List **list, char *path)
 {
   if (*list == NULL) {
-    *list = _games_new (path);
+    *list = _games_new (self, path);
     if (*list) {
       Category *category = category_new (menu, CATEGORY_TYPE_DEVICE_HOMEBREW);
 
@@ -1233,6 +1366,7 @@ _device_check_cb (void *data)
 
   return ECORE_CALLBACK_RENEW;
 }
+#endif
 
 static void
 _eleganz_init (Eleganz *self)
@@ -1241,12 +1375,16 @@ _eleganz_init (Eleganz *self)
   Eina_List *l;
   Theme *theme = NULL;
   char *theme_filename;
+  int width = ELEGANZ_WIDTH;
+  int height = ELEGANZ_HEIGHT;
 
-  keys_set_path (KEYS_PATH);
+#ifdef __lv2ppu__
+  ecore_psl1ght_screen_resolution_get (&width, &height);
+#endif
 
   memset (self, 0, sizeof(Eleganz));
   self->ee = ecore_evas_new (ECORE_EVAS_ENGINE, 0, 0,
-      ELEGANZ_WIDTH, ELEGANZ_HEIGHT, NULL);
+      width, height, NULL);
   self->evas = ecore_evas_get (self->ee);
   ecore_evas_show (self->ee);
   ecore_event_handler_add(ECORE_EVENT_SIGNAL_EXIT, _ee_signal_exit, NULL);
@@ -1272,8 +1410,15 @@ _eleganz_init (Eleganz *self)
   EINA_LIST_FREE (theme_files, theme_filename)
       free (theme_filename);
 
-  self->games = _games_new (GAMES_DIRECTORY);
-  self->homebrew = _games_new (HOMEBREW_DIRECTORY);
+#ifndef COBRA_ODE
+  keys_set_path (KEYS_PATH);
+#else
+  cobra_manager_init (&self->cobra);
+#endif
+
+  self->games = _games_new (self, GAMES_DIRECTORY);
+  self->homebrew = _games_new (self, HOMEBREW_DIRECTORY);
+
 
   edje_frametime_set ( 1.0/60 );
 }
@@ -1282,24 +1427,42 @@ static void
 _eleganz_deinit (Eleganz *self)
 {
   Theme *theme = NULL;
+#ifndef COBRA_ODE
   int i;
+#endif
 
   EINA_LIST_FREE (self->themes, theme)
     theme_free (theme);
 
   _games_free (self->games);
   _games_free (self->homebrew);
+#ifdef COBRA_ODE
+  cobra_manager_free (&self->cobra);
+#else
   for (i = 0; i < MAX_USB_DEVICES; i++)
     _games_free (self->usb_homebrew[i]);
 
   if (self->device_check_timer)
     ecore_timer_del (self->device_check_timer);
   self->device_check_timer = NULL;
+#endif
 
   if (self->ee)
     ecore_evas_free (self->ee);
 
   self->exquisite = NULL;
+}
+
+static void _exit_handler(void)
+{
+  printf ("Exiting Eleganz\n");
+
+#ifdef COBRA_ODE
+  if (cobra_selection_made == EINA_TRUE) {
+    char *ptr = NULL;
+    *ptr = 0;
+  }
+#endif
 }
 
 int
@@ -1308,6 +1471,7 @@ main (int argc, char *argv[])
   Eleganz self;
   int ret = 1;
 
+  atexit(_exit_handler);
   if (!eina_init ()) {
     printf ("Error setting up eina\n");
     return 1;

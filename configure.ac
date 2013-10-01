@@ -42,11 +42,25 @@ AC_SUBST(edje_cc)
 
 ### Checks for programs
 AC_PROG_CC
+AM_PROG_CC_C_O
 
 # pkg-config
 PKG_PROG_PKG_CONFIG
 
 PKG_CHECK_MODULES(EFL, [edje ecore ecore-file ecore-evas evas eet eina exquisite])
+
+ELEGANZ_CFLAGS=""
+AC_ARG_ENABLE([cobra-ode],
+        AC_HELP_STRING([--enable-cobra-ode], [Enable COBRA ODE support]),
+        [case "${enableval}" in
+            yes) ENABLE_COBRA=yes ; ELEGANZ_CFLAGS="-DCOBRA_ODE" ;;
+            no)  ENABLE_COBRA=no ;;
+            *) AC_MSG_ERROR(bad value ${enableval} for --enable-cobra-ode) ;;
+        esac],
+        ENABLE_COBRA=no)
+
+AM_CONDITIONAL([ENABLE_COBRA_ODE], test "x$ENABLE_COBRA" != "xno")
+AC_SUBST(ELEGANZ_CFLAGS)
 
 AC_CONFIG_FILES([
         Makefile
