@@ -25,18 +25,18 @@ make_pkg() {
 
     generate_ps3sfo "$title" "$appid" || return 1
 
+    rm -rf pkg
     cp src/$name $name.elf && sprxlinker $name.elf && sprxlinker $name.elf && \
         cp $name.elf $name.dbg.elf && ppu-strip $name.elf && \
         make_fself $name.elf $name.self && \
         mkdir -p pkg/USRDIR && cp $logo pkg/ICON0.PNG && \
-        make_self_npdrm $name.elf pkg/USRDIR/EBOOT.BIN $contentid && \
+        scetool --sce-type=SELF --key-revision=01 --self-auth-id=1010000001000003 --self-vendor-id=01000002 --self-type=NPDRM --self-fw-version=0003005500000000 --self-app-version=0001000000000000 --self-ctrl-flags=4000000000000000000000000000000000000000000000000000000000000002 --self-cap-flags=00000000000000000000000000000000000000000000003B0000000100002000 --np-license-type=FREE --np-app-type=EXEC --np-content-id=$contentid --np-real-fname=EBOOT.BIN --compress-data=TRUE --encrypt $name.elf pkg/USRDIR/EBOOT.BIN && \
         sfo.py --title "$title" --appid "$appid" -f ps3sfo.xml pkg/PARAM.SFO  && \
         make install DESTDIR=`pwd`/temp_install && \
         cp -rf temp_install/$datadir/* pkg/USRDIR/  && \
         rm -rf temp_install && \
         pkg.py --contentid $contentid pkg/ $name.pkg && \
-        cp $name.pkg $name.retail.pkg && package_finalize $name.retail.pkg && \
-        rm -rf pkg
+        cp $name.pkg $name.retail.pkg && package_finalize $name.retail.pkg
 }
         
 make_iso() {
