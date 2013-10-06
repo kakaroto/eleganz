@@ -37,8 +37,8 @@
 #define DEV_HDD0 "/dev_hdd0/"
 #define DEV_BDVD "/dev_bdvd/"
 #define DEV_USB_FMT "/dev_usb%03d/"
-#define THEMES_DIRECTORY DEV_HDD0 "game/ELEGANZ00/data/themes/"
-#define KEYS_PATH DEV_HDD0 "game/ELEGANZ00/USRDIR/keys.conf"
+#define THEMES_DIRECTORY DEV_HDD0 "game/ELEGANZ00/USRDIR/data/themes/"
+#define KEYS_PATH DEV_HDD0 "game/ELEGANZ00/USRDIR/data/keys.conf"
 #define ELEGANZ_WIDTH 1920
 #define ELEGANZ_HEIGHT 1080
 #else

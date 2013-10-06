@@ -3,7 +3,9 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = themes
 
-if ENABLE_COBRA_ODE
 filesdir = $(datadir)/
-files_DATA = cobra.png
+if ENABLE_COBRA_ODE
+files_DATA = cobra.png keys.conf
+else
+files_DATA = keys.conf
 endif
