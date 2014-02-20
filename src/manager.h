@@ -1,4 +1,4 @@
-/* COBRA manager parsing library. v1.3
+/* COBRA manager parsing library. v1.6
  * This software is released into the public domain.
  */
 #ifndef _MANAGER_H_
@@ -37,10 +37,12 @@
   // Parse all ISO files
   for (i = 0; i < manager.num_iso; i++)
   {
-    parse_sfo_file(manager.iso[i].sfo);
-    if (manager.iso[i].png != NULL)
-      load_png_from_file(manager.iso[i].png);
+    if (manager.iso[i].sfo_path != NULL)
+    parse_sfo_file(manager.iso[i].sfo_path);
+    if (manager.iso[i].png_path != NULL)
+      load_png_from_file(manager.iso[i].png_path);
     show_filename(manager.iso[i].filename);
+    show_iso_type(manager.iso[i].type);
     if (manager.info.major > 1 || manager.info.minor >= 3)
       show_iso_size(manager.iso[i].size);
   }
@@ -66,23 +68,36 @@
   sysFsClose (out);
   cobra_disc_close (disc);
 
+  // Eject and load game
+  cobra_manager_eject(&manager);
+
   // Exit
   cobra_manager_free(&manager);
 
  *
  */
 
-#define MAX_ISO 128
+#define MAX_ISO 500
 #define MAX_FILENAME_LENGTH 128
 #define DEV_BDVD "/dev_bdvd"
 #define COBRA_PATH DEV_BDVD "/COBRA"
 
+enum {
+  COBRA_ISO_TYPE_PS1_GAME = 1,
+  COBRA_ISO_TYPE_PS2_GAME = 2,
+  COBRA_ISO_TYPE_PS3_GAME = 3,
+  COBRA_ISO_TYPE_BD_MOVIE = 4,
+  COBRA_ISO_TYPE_DVD_MOVIE = 5,
+};
+
 typedef struct {
   char game_id[10];
   char *filename;
+  char volume_name[32]; // Since 1.9
   u64 size; // Since 1.3
-  char *png; // NULL if iso has no ICON0.PNG
-  char sfo_path[MAX_FILENAME_LENGTH+1];
+  u8 type; // Since 1.9
+  char *png_path; // NULL if iso is not a PS3 game or has no ICON0.PNG
+  char *sfo_path; // NULL if iso not a PS3 game;
   char run_path[MAX_FILENAME_LENGTH+1];
 } CobraIso;
 
@@ -90,12 +105,14 @@ typedef struct {
   u8 major;
   u8 minor; // 1.0 and 1.1 appear as 1.0
   u32 disc_lba; // Since 1.3
+  u8 quick_eject; // Since 1.6
 } __attribute__ ((packed)) CobraInfo;
 
 typedef struct {
   CobraIso iso[MAX_ISO];
   int num_iso;
   char disc_iso[MAX_FILENAME_LENGTH+1];
+  char *eject;
   CobraInfo info;
 } CobraManager;
 
@@ -118,8 +135,10 @@ typedef struct {
 int cobra_manager_init (CobraManager *manager);
 // Free resources
 void cobra_manager_free (CobraManager *manager);
+// Eject manager disc and load game
+u8 cobra_manager_eject (CobraManager *manager);
 // Run the selected iso
-void cobra_iso_run (CobraIso *iso);
+u8 cobra_iso_run (CobraIso *iso);
 // Open DISC.ISO for dumping. Requires MCU firmware v1.3 or later
 CobraDisc * cobra_disc_open (CobraManager *manager);
 // Read 32 sectors from DISC.ISO and write them to the output file.
