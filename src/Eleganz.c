@@ -17,6 +17,8 @@
 #include <Ecore_Psl1ght.h>
 #include <Edje.h>
 #include <Exquisite.h>
+#include <sys/memory.h>
+
 
 #include "common.h"
 #include "menu.h"
@@ -34,9 +36,11 @@
 #ifdef __lv2ppu__
 #include <sys/process.h>
 
+
 #define DEV_HDD0 "/dev_hdd0/"
 #define DEV_BDVD "/dev_bdvd/"
 #define DEV_USB_FMT "/dev_usb%03d/"
+#define DEV_USB_000 "/dev_usb000/"
 #define THEMES_DIRECTORY DEV_HDD0 "game/ELEGANZ00/USRDIR/data/themes/"
 #define KEYS_PATH DEV_HDD0 "game/ELEGANZ00/USRDIR/data/keys.conf"
 #define ELEGANZ_WIDTH 1920
@@ -45,6 +49,7 @@
 #define DEV_HDD0 "./dev_hdd0/"
 #define DEV_BDVD "./dev_bdvd/"
 #define DEV_USB_FMT "./dev_usb%03d/"
+#define DEV_USB_000 "./dev_usb000/"
 #define THEMES_DIRECTORY "data/themes/"
 #define KEYS_PATH "data/keys.conf"
 #define ELEGANZ_WIDTH 640
@@ -56,6 +61,7 @@ Eina_Bool cobra_selection_made;
 #define GAMES_DIRECTORY DEV_BDVD "COBRA/"
 #define HOMEBREW_DIRECTORY DEV_BDVD "PS3_GAME/USRDIR/HOMEBREW/"
 #define USB_THEMES_DIRECTORY_FMT DEV_USB_FMT "PS3/THEMES/"
+#define USB_PIC0_DIRECTORY_FMT DEV_USB_000 "PICS/"
 #undef KEYS_PATH
 #ifdef __lv2ppu__
 #undef THEMES_DIRECTORY
@@ -382,25 +388,15 @@ _game_selected (Item *item)
       fread (buffer, 1, 2048, f);
       fclose (f);
     }
-    _exquisite_new (self, "COBRA ODE", game->title);
-    exquisite_object_pulsate (self->exquisite);
-    if (self->cobra.info.major > 1 || self->cobra.info.minor >= 1) {
-      exquisite_object_text_add (self->exquisite,
-          "To load the selected game, reboot or eject disc");
-      exquisite_object_text_add (self->exquisite,
-          "If you quit Eleganz from the XMB menu, it will");
-      exquisite_object_text_add (self->exquisite,
-          "fake reboot and load your game.");
-    } else {
-      exquisite_object_text_add (self->exquisite,
-          "To load the selected game, reboot the console");
-      exquisite_object_text_add (self->exquisite,
-          "If you quit Eleganz from the XMB menu, it will");
-      exquisite_object_text_add (self->exquisite,
-          "fake reboot and load your game.");
-    }
+
+
     self->exquisite_done = EINA_TRUE;
     cobra_selection_made = EINA_TRUE;
+    cobra_manager_eject(&self->cobra);
+    cobra_manager_free (&self->cobra);
+    sysMemContainerDestroy(0);
+    sysProcessExit(0);
+
   } else {
 #endif
 #ifdef __lv2ppu__
@@ -417,6 +413,7 @@ _game_selected (Item *item)
     strncpy (launchargs[0], path, 512);
 
     printf ("Launching homebrew : %s\n", path);
+    sysMemContainerDestroy(0);
     sysProcessExitSpawn2 ( (const char*)path, (const char**)launchargs,
         (const char**)launchenv, 0, 0, 1001, SYS_PROCESS_SPAWN_STACK_SIZE_1M ) ;
 #else
@@ -1051,8 +1048,7 @@ _games_new (Eleganz *self, const char *path)
     game = calloc (1, sizeof(Game));
     game->path = NULL;
     game->name = strdup ("COBRA ODE");
-    game->title = _strdup_printf ("COBRA ODE v%d.%d", self->cobra.info.major,
-        self->cobra.info.minor);
+    game->title = _strdup_printf ("COBRA ODE v%d.%d", self->cobra.info.major, self->cobra.info.minor);
     game->icon = strdup (COBRA_ICON);
     game->picture = NULL;
     games = eina_list_append (games, game);
@@ -1061,10 +1057,13 @@ _games_new (Eleganz *self, const char *path)
       game->path = strdup (self->cobra.iso[i].run_path);
       game->name = strdup (self->cobra.iso[i].game_id);
       game->title = _param_sfo_get_string (self->cobra.iso[i].sfo_path, "TITLE");
-      if (self->cobra.iso[i].png)
-        game->icon = strdup (self->cobra.iso[i].png);
+      if (self->cobra.iso[i].png_path)
+        game->icon = strdup (self->cobra.iso[i].png_path);
       else
         game->icon = NULL;
+      if (self->cobra.iso[i].game_id)
+    	game->picture = _strdup_printf ("%s/%s.PNG", USB_PIC0_DIRECTORY_FMT, self->cobra.iso[i].game_id);
+      else
       game->picture = NULL;
       games = eina_list_append (games, game);
     }
@@ -1420,7 +1419,7 @@ _eleganz_init (Eleganz *self)
   self->homebrew = _games_new (self, HOMEBREW_DIRECTORY);
 
 
-  edje_frametime_set ( 1.0/60 );
+  edje_frametime_set ( 1.0/30 );
 }
 
 static void
