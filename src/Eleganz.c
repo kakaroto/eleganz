@@ -17,6 +17,8 @@
 #include <Ecore_Psl1ght.h>
 #include <Edje.h>
 #include <Exquisite.h>
+#include <sys/memory.h>
+
 
 #include "common.h"
 #include "menu.h"
@@ -34,9 +36,12 @@
 #ifdef __lv2ppu__
 #include <sys/process.h>
 
+
 #define DEV_HDD0 "/dev_hdd0/"
 #define DEV_BDVD "/dev_bdvd/"
 #define DEV_USB_FMT "/dev_usb%03d/"
+
+
 #define THEMES_DIRECTORY DEV_HDD0 "game/ELEGANZ00/USRDIR/data/themes/"
 #define KEYS_PATH DEV_HDD0 "game/ELEGANZ00/USRDIR/data/keys.conf"
 #define ELEGANZ_WIDTH 1920
@@ -45,6 +50,8 @@
 #define DEV_HDD0 "./dev_hdd0/"
 #define DEV_BDVD "./dev_bdvd/"
 #define DEV_USB_FMT "./dev_usb%03d/"
+
+
 #define THEMES_DIRECTORY "data/themes/"
 #define KEYS_PATH "data/keys.conf"
 #define ELEGANZ_WIDTH 640
@@ -56,13 +63,27 @@ Eina_Bool cobra_selection_made;
 #define GAMES_DIRECTORY DEV_BDVD "COBRA/"
 #define HOMEBREW_DIRECTORY DEV_BDVD "PS3_GAME/USRDIR/HOMEBREW/"
 #define USB_THEMES_DIRECTORY_FMT DEV_USB_FMT "PS3/THEMES/"
+#define USB_PICS_DIRECTORY_FMT DEV_USB_FMT "PICS/"
+
+
+
 #undef KEYS_PATH
 #ifdef __lv2ppu__
 #undef THEMES_DIRECTORY
 #define THEMES_DIRECTORY DEV_BDVD "PS3_GAME/USRDIR/data/themes/"
 #define COBRA_ICON DEV_BDVD "PS3_GAME/USRDIR/data/cobra.png"
+#define PSX_ICON DEV_BDVD "PS3_GAME/USRDIR/data/psx.png"
+#define PS2_ICON DEV_BDVD "PS3_GAME/USRDIR/data/ps2.png"
+#define DVD_ICON DEV_BDVD "PS3_GAME/USRDIR/data/dvd.png"
+#define BLU_ICON DEV_BDVD "PS3_GAME/USRDIR/data/blu.png"
+#define PSS_ICON DEV_BDVD "PS3_GAME/USRDIR/data/pss.png"
 #else
 #define COBRA_ICON "data/cobra.png"
+#define PSX_ICON "data/psx.png"
+#define PS2_ICON "data/ps2.png"
+#define DVD_ICON "data/dvd.png"
+#define BLU_ICON "data/blu.png"
+#define PSS_ICON "data/pss.png"
 #endif
 #else
 #define GAMES_DIRECTORY DEV_HDD0 "game/"
@@ -70,9 +91,17 @@ Eina_Bool cobra_selection_made;
 #define USB_HOMEBREW_DIRECTORY_FMT DEV_USB_FMT "PS3/HOMEBREW/"
 #define USB_PACKAGES_DIRECTORY_FMT DEV_USB_FMT "PS3/PACKAGES/"
 #define USB_THEMES_DIRECTORY_FMT DEV_USB_FMT "PS3/THEMES/"
+
+#define USB_PICS_DIRECTORY_FMT DEV_USB_FMT "PICS"
+
+
 /* TODO: Add support for installing themes from usb to dev_hdd0 */
 #define MAX_USB_DEVICES 10
 #endif
+
+
+
+
 
 typedef struct {
   char *path;
@@ -99,6 +128,7 @@ typedef struct {
   Theme *preview_theme;
   Eina_List *games;
   Eina_List *homebrew;
+
 #ifndef COBRA_ODE
   Eina_List *usb_homebrew[MAX_USB_DEVICES];
   Eina_List *usb_packages[MAX_USB_DEVICES];
@@ -118,7 +148,10 @@ static Eina_Bool load_theme (Eleganz *self, Theme *theme);
 static void set_current_theme (Eleganz *self, Theme *theme);
 #ifndef COBRA_ODE
 static Eina_Bool _device_check_cb (void *data);
+#else
+static int device_check_usb (char *PICS);
 #endif
+
 static void _exquisite_default_exit_cb (void *data);
 static Evas_Object *_exquisite_new (Eleganz *self, const char *title, const char *message);
 static void _menu_ready_cb (Menu *menu);
@@ -382,25 +415,15 @@ _game_selected (Item *item)
       fread (buffer, 1, 2048, f);
       fclose (f);
     }
-    _exquisite_new (self, "COBRA ODE", game->title);
-    exquisite_object_pulsate (self->exquisite);
-    if (self->cobra.info.major > 1 || self->cobra.info.minor >= 1) {
-      exquisite_object_text_add (self->exquisite,
-          "To load the selected game, reboot or eject disc");
-      exquisite_object_text_add (self->exquisite,
-          "If you quit Eleganz from the XMB menu, it will");
-      exquisite_object_text_add (self->exquisite,
-          "fake reboot and load your game.");
-    } else {
-      exquisite_object_text_add (self->exquisite,
-          "To load the selected game, reboot the console");
-      exquisite_object_text_add (self->exquisite,
-          "If you quit Eleganz from the XMB menu, it will");
-      exquisite_object_text_add (self->exquisite,
-          "fake reboot and load your game.");
-    }
+
+
     self->exquisite_done = EINA_TRUE;
     cobra_selection_made = EINA_TRUE;
+    cobra_manager_eject(&self->cobra);
+    cobra_manager_free (&self->cobra);
+    sysMemContainerDestroy(0);
+    sysProcessExit(0);
+
   } else {
 #endif
 #ifdef __lv2ppu__
@@ -417,6 +440,7 @@ _game_selected (Item *item)
     strncpy (launchargs[0], path, 512);
 
     printf ("Launching homebrew : %s\n", path);
+    sysMemContainerDestroy(0);
     sysProcessExitSpawn2 ( (const char*)path, (const char**)launchargs,
         (const char**)launchenv, 0, 0, 1001, SYS_PROCESS_SPAWN_STACK_SIZE_1M ) ;
 #else
@@ -1043,16 +1067,21 @@ _games_new (Eleganz *self, const char *path)
   Eina_List *l;
   Eina_List *games = NULL;
 
+
 #ifdef COBRA_ODE
   if (strcmp (path, GAMES_DIRECTORY) == 0) {
     Game *game = NULL;
+
+
+    char *PICS = device_check_usb (PICS);
+    /*if(!_file_exists(PICS))PICS=strdup((const char*)"/dev_usb000/PICS"); // you can put NULL if you are not going to use it*/
+
     int i;
 
     game = calloc (1, sizeof(Game));
     game->path = NULL;
     game->name = strdup ("COBRA ODE");
-    game->title = _strdup_printf ("COBRA ODE v%d.%d", self->cobra.info.major,
-        self->cobra.info.minor);
+    game->title = _strdup_printf ("COBRA ODE v%d.%d", self->cobra.info.major, self->cobra.info.minor);
     game->icon = strdup (COBRA_ICON);
     game->picture = NULL;
     games = eina_list_append (games, game);
@@ -1061,10 +1090,33 @@ _games_new (Eleganz *self, const char *path)
       game->path = strdup (self->cobra.iso[i].run_path);
       game->name = strdup (self->cobra.iso[i].game_id);
       game->title = _param_sfo_get_string (self->cobra.iso[i].sfo_path, "TITLE");
-      if (self->cobra.iso[i].png)
-        game->icon = strdup (self->cobra.iso[i].png);
-      else
-        game->icon = NULL;
+      if (game->title == NULL && (self->cobra.iso[i].type == 2||4||5  ) ){
+      if(self->cobra.iso[i].filename[strlen(self->cobra.iso[i].filename)-4]=='.') self->cobra.iso[i].filename[strlen(self->cobra.iso[i].filename)-4]=0;
+      game->title = _strdup_printf ("%s", self->cobra.iso[i].filename);} else game->title == NULL;
+      if (self->cobra.iso[i].png_path != NULL)
+		game->icon = _strdup_printf (self->cobra.iso[i].png_path);
+		if (_file_exists(game->icon));
+		else
+		if (self->cobra.iso[i].type == 0)
+		game->icon = _strdup_printf (PSS_ICON);
+		else
+		if (self->cobra.iso[i].type == 1)
+		game->icon = _strdup_printf (PSX_ICON);
+		else
+		if (self->cobra.iso[i].type == 2)
+		game->icon = _strdup_printf (PS2_ICON);
+		else
+		if (self->cobra.iso[i].type == 4)
+		game->icon = _strdup_printf (BLU_ICON);
+		else
+		if (self->cobra.iso[i].type == 5)
+		game->icon = _strdup_printf (DVD_ICON);
+		else
+		game->icon = NULL;
+		if ( self->cobra.iso[i].game_id != NULL && self->cobra.iso[i].type == 3 )
+		game->picture = _strdup_printf ("%s/%s.PNG", (char*)PICS, self->cobra.iso[i].game_id);
+		if (_file_exists(game->picture));
+		else
       game->picture = NULL;
       games = eina_list_append (games, game);
     }
@@ -1368,6 +1420,23 @@ _device_check_cb (void *data)
 }
 #endif
 
+#ifdef COBRA_ODE
+static int device_check_usb (char *PICS){
+
+char dev_path[1024], path[1024];
+int j;
+
+for (j = 0; j < 10; j++) {
+	  snprintf (dev_path, sizeof(dev_path), DEV_USB_FMT, j);
+	  snprintf (path, sizeof(path), USB_PICS_DIRECTORY_FMT, j);
+   if (_file_exists(dev_path) ||_file_exists(path) ){   snprintf(path, sizeof(path), USB_PICS_DIRECTORY_FMT, j); PICS=strdup((const char*)path); break; }
+   else PICS=NULL;
+
+	}
+return PICS;
+}
+#endif
+
 static void
 _eleganz_init (Eleganz *self)
 {
@@ -1420,7 +1489,7 @@ _eleganz_init (Eleganz *self)
   self->homebrew = _games_new (self, HOMEBREW_DIRECTORY);
 
 
-  edje_frametime_set ( 1.0/60 );
+  edje_frametime_set ( 1.0/30 );
 }
 
 static void
@@ -1516,3 +1585,4 @@ main (int argc, char *argv[])
 
   return ret;
 }
+

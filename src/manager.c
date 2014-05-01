@@ -1,4 +1,4 @@
-/* COBRA manager parsing library. v1.3
+/* COBRA manager parsing library. v1.6
  * This software is released into the public domain.
  */
 
@@ -33,7 +33,8 @@ static inline void set_name (char *out, char *name)
 static inline void cobra_iso_free (CobraIso *iso)
 {
   free (iso->filename);
-  free (iso->png);
+  free (iso->png_path);
+  free (iso->sfo_path);
 }
 
 int cobra_manager_init (CobraManager *manager)
@@ -52,7 +53,7 @@ int cobra_manager_init (CobraManager *manager)
   f = fopen (COBRA_PATH "/COBRA.NFO", "rb");
   if (f)
   {
-    fread (&manager->info, sizeof(CobraInfo), 1, f);
+    fread (&manager->info, 1, sizeof(CobraInfo), f);
     manager->info.disc_lba = be32 (manager->info.disc_lba);
     fclose (f);
   }
@@ -71,6 +72,11 @@ int cobra_manager_init (CobraManager *manager)
 
     if (strcmp (e->d_name, "DISC.ISO") == 0)
       set_name (manager->disc_iso, e->d_name);
+    if (strcmp (e->d_name, "EJECT") == 0)
+    {
+      set_name (path, e->d_name);
+      manager->eject = strdup (path);
+    }
     else if (strlen (e->d_name) == 9)
     {
       if (manager->num_iso < MAX_ISO)
@@ -95,6 +101,16 @@ int cobra_manager_init (CobraManager *manager)
             manager->iso[manager->num_iso].filename[len] = 0;
             fread (&manager->iso[manager->num_iso].size, sizeof(u64), 1, f);
 
+	    if (manager->info.major > 1 || manager->info.minor >= 9)
+	    {
+	      fread (&manager->iso[manager->num_iso].type, 1, 1, f);
+	      fread (manager->iso[manager->num_iso].volume_name, 32, 1, f);
+	    }
+	    else
+	    {
+	      manager->iso[manager->num_iso].type = COBRA_ISO_TYPE_PS3_GAME;
+	      memset(manager->iso[manager->num_iso].volume_name, ' ', 32);
+	    }
             manager->iso[manager->num_iso].size = be64 (manager->iso[manager->num_iso].size);
           }
           else
@@ -102,7 +118,7 @@ int cobra_manager_init (CobraManager *manager)
             manager->iso[manager->num_iso].filename = malloc (2049);
             manager->iso[manager->num_iso].filename[0] = zero;
             fread (manager->iso[manager->num_iso].filename + 1, 2047, 1, f);
-            manager->iso[manager->num_iso].filename[2049] = 0;
+            manager->iso[manager->num_iso].filename[2048] = 0;
           }
           fclose (f);
         }
@@ -136,11 +152,14 @@ int cobra_manager_init (CobraManager *manager)
         if (strcmp (e->d_name + 9, ".PNG") == 0)
         {
           set_name (path, e->d_name);
-          manager->iso[i].png = strdup (path);
+          manager->iso[i].png_path = strdup (path);
         }
         else if (strcmp (e->d_name + 9, ".SFO") == 0)
-          set_name (manager->iso[i].sfo_path, e->d_name);
-        else if (strcmp (e->d_name + 9, ".RUN") == 0)
+	{
+          set_name (path, e->d_name);
+          manager->iso[i].sfo_path = strdup (path);
+        }
+	else if (strcmp (e->d_name + 9, ".RUN") == 0)
           set_name (manager->iso[i].run_path, e->d_name);
         break;
       }
@@ -150,7 +169,7 @@ int cobra_manager_init (CobraManager *manager)
 
   for (i = 0; i < manager->num_iso; i++)
   {
-    if (manager->iso[i].sfo_path[0] == 0 ||
+    if ((manager->iso[i].type == COBRA_ISO_TYPE_PS3_GAME && manager->iso[i].sfo_path[0] == 0) ||
         manager->iso[i].run_path[0] == 0)
     {
       // Remove iso files with missing sfo/run
@@ -171,10 +190,10 @@ void cobra_manager_free (CobraManager *manager)
 
   for (i = 0; i < manager->num_iso; i++)
     cobra_iso_free (&manager->iso[i]);
-
+  free (manager->eject);
 }
 
-void cobra_iso_run (CobraIso *iso)
+u8 cobra_iso_run (CobraIso *iso)
 {
   FILE *f = fopen (iso->run_path, "rb");
 
@@ -184,7 +203,9 @@ void cobra_iso_run (CobraIso *iso)
 
     fread (buffer, 1, 2048, f);
     fclose (f);
+    return 1;
   }
+  return 0;
 }
 
 CobraDisc * cobra_disc_open (CobraManager *manager)
@@ -220,7 +241,7 @@ CobraDisc * cobra_disc_open (CobraManager *manager)
 u32 cobra_disc_write (CobraDisc *disc, s32 output)
 {
   u8 is_encrypted = 1;
-  u32 i;
+  int i;
   u32 sectors, bytes;
   u64 read, written;
 
@@ -280,4 +301,22 @@ void cobra_disc_close (CobraDisc *disc)
 {
   sysFsClose (disc->fd);
   free (disc);
+}
+
+u8 cobra_manager_eject (CobraManager *manager)
+{
+  FILE *f = NULL;
+
+  if (manager->eject)
+    f = fopen (manager->eject, "rb");
+
+  if (f)
+  {
+    char buffer[2048];
+
+    fread (buffer, 1, 2048, f);
+    fclose (f);
+    return 1;
+  }
+  return 0;
 }
